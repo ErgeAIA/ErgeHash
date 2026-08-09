@@ -1,9 +1,10 @@
-import { useState, useCallback, useRef, type DragEvent } from "react";
+import { useEffect, useState, useCallback, useRef, type DragEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { FolderPlus, FilePlus, Trash2, X, Copy, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/appStore";
 import { scanDirectory, openFileDialog, openFolderDialog } from "@/services/api";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { cn } from "@/lib/utils";
 
@@ -50,50 +51,67 @@ export function FileList() {
     setIsDragOver(false);
   }, []);
 
-  /** 处理文件放置 */
-  const handleDrop = useCallback(
-    async (e: DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragOver(false);
+  /** 处理文件放置（HTML5 事件仅阻止默认行为；真实路径由 Tauri onDragDropEvent 提供） */
+  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
 
-      const files = e.dataTransfer.files;
-      if (!files || files.length === 0) return;
-
-      const paths: string[] = [];
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        // webkitRelativePath 非空表示是文件夹中的文件
-        // 但 HTML5 DnD 中文件夹需要特殊处理
-        const path = (file as File & { path?: string }).path;
-        if (path) {
-          paths.push(path);
-        }
-      }
-
-      if (paths.length > 0) {
-        // 区分文件和文件夹：对每个路径尝试扫描目录
-        const allFiles: string[] = [];
-        for (const p of paths) {
-          try {
-            // 尝试扫描目录，如果是文件则返回空或自身
-            const scanned = await scanDirectory(p);
-            if (scanned.length > 0) {
-              allFiles.push(...scanned);
-            } else {
-              // 可能是单个文件
-              allFiles.push(p);
-            }
-          } catch {
-            // 扫描失败，当作文件添加
+  /** 处理 Tauri 拖放提供的真实路径：目录则扫描出文件，文件则直接加入 */
+  const processPaths = useCallback(
+    async (paths: string[]) => {
+      if (!paths || paths.length === 0) return;
+      const allFiles: string[] = [];
+      for (const p of paths) {
+        try {
+          // 目录则扫描出文件，文件则返回空数组
+          const scanned = await scanDirectory(p);
+          if (scanned.length > 0) {
+            allFiles.push(...scanned);
+          } else {
+            // 单个文件
             allFiles.push(p);
           }
+        } catch {
+          // 扫描失败，当作文件添加
+          allFiles.push(p);
         }
+      }
+      if (allFiles.length > 0) {
         addFiles(allFiles);
       }
     },
     [addFiles],
   );
+
+  /* 注册 Tauri 拖放事件：获取真实文件路径（替代已失效的 HTML5 File.path），并驱动拖拽高亮 */
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    getCurrentWebview()
+      .onDragDropEvent((event) => {
+        const ev = event.payload;
+        switch (ev.type) {
+          case "enter":
+          case "over":
+            setIsDragOver(true);
+            break;
+          case "leave":
+            setIsDragOver(false);
+            break;
+          case "drop":
+            setIsDragOver(false);
+            void processPaths(ev.paths);
+            break;
+        }
+      })
+      .then((fn) => {
+        unlisten = fn;
+      });
+    return () => {
+      unlisten?.();
+    };
+  }, [processPaths]);
 
   /** 点击添加文件按钮 */
   const handleAddFiles = useCallback(async () => {

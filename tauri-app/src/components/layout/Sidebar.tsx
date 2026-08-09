@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { NotepadText, History, Settings } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
+import { openNotepad } from "@/services/api";
 import { RadioGroup, type RadioItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import type { HashAlgorithm } from "@/services/types";
@@ -53,7 +54,9 @@ function Sidebar({ onShowHistory, onShowSettings }: SidebarProps) {
             "hover:bg-muted cursor-pointer",
           )}
           onClick={() => {
-            /* 记事本 - 后续通过 Tauri Command 实现 */
+            openNotepad().catch(() => {
+              /* 打开失败静默 */
+            });
           }}
         >
           <NotepadText className="h-4 w-4" />

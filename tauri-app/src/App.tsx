@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "./store/appStore";
-import { getConfig, clearHistory as apiClearHistory } from "./services/api";
+import {
+  getConfig,
+  clearHistory as apiClearHistory,
+  addHistory,
+  openFileDialog,
+  importVerificationFile,
+} from "./services/api";
 import { onHashProgress, onBatchFileComplete, onBatchComplete } from "./services/api";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { MainLayout } from "./components/layout/MainLayout";
@@ -13,6 +19,7 @@ import { ContentArea } from "./components/ContentArea";
 import { HistoryDialog } from "./components/dialogs/HistoryDialog";
 import { SettingsDialog } from "./components/dialogs/SettingsDialog";
 import { QuickGuideDialog } from "./components/dialogs/QuickGuideDialog";
+import { ExportDialog } from "./components/dialogs/ExportDialog";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
 function App() {
@@ -27,11 +34,14 @@ function App() {
   const setCalculating = useAppStore((s) => s.setCalculating);
   const setResultText = useAppStore((s) => s.setResultText);
   const setStatusMessage = useAppStore((s) => s.setStatusMessage);
+  const setLastResults = useAppStore((s) => s.setLastResults);
+  const setExpectedHash = useAppStore((s) => s.setExpectedHash);
 
   // 对话框状态
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showQuickGuide, setShowQuickGuide] = useState(false);
+  const [showExport, setShowExport] = useState(false);
 
   // 注册全局快捷键
   useKeyboardShortcuts();
@@ -101,10 +111,11 @@ function App() {
       );
 
       unlisteners.push(
-        await onBatchComplete((payload) => {
+        await onBatchComplete(async (payload) => {
           setCalculating(false);
           setProgress(100);
           setStatusMessage("completed");
+          setLastResults(payload.results);
           setResultText(
             (prev) =>
               prev +
@@ -114,6 +125,21 @@ function App() {
               `${t("error_count")}: ${payload.error}\n` +
               `${t("total_time")}: ${payload.totalTime.toFixed(2)}s`,
           );
+
+          // 成功结果写入历史记录（顺序 await，避免并发读写竞态）
+          for (const r of payload.results) {
+            if (r.status !== "success") continue;
+            try {
+              await addHistory({
+                filePath: r.filePath,
+                algorithm: r.algorithm,
+                hashValue: r.hashValue,
+                timestamp: new Date().toISOString(),
+              });
+            } catch {
+              // 单条历史写入失败不阻塞其余
+            }
+          }
         }),
       );
     }
@@ -130,6 +156,7 @@ function App() {
     setStatusMessage,
     setCalculating,
     setResultText,
+    setLastResults,
   ]);
 
   // 监听自定义事件（菜单栏和侧边栏触发）
@@ -137,22 +164,42 @@ function App() {
     const onShowHistory = () => setShowHistory(true);
     const onShowSettings = () => setShowSettings(true);
     const onShowQuickGuide = () => setShowQuickGuide(true);
+    const onExportResults = () => setShowExport(true);
     const onClearHistory = async () => {
       await apiClearHistory();
+    };
+    const onImportVerification = async () => {
+      const paths = await openFileDialog();
+      if (!paths || paths.length === 0) return;
+      try {
+        const entries = await importVerificationFile(paths[0]);
+        if (entries.length === 0) {
+          setStatusMessage(t("import_error"));
+          return;
+        }
+        setExpectedHash(entries.map((e) => e.hashValue).join("\n"));
+        setStatusMessage(`${t("import_success")} ${entries.length}`);
+      } catch {
+        setStatusMessage(t("import_error"));
+      }
     };
 
     window.addEventListener("show-history", onShowHistory);
     window.addEventListener("show-settings", onShowSettings);
     window.addEventListener("show-quick-guide", onShowQuickGuide);
+    window.addEventListener("export-results", onExportResults);
     window.addEventListener("clear-history", onClearHistory);
+    window.addEventListener("import-verification", onImportVerification);
 
     return () => {
       window.removeEventListener("show-history", onShowHistory);
       window.removeEventListener("show-settings", onShowSettings);
       window.removeEventListener("show-quick-guide", onShowQuickGuide);
+      window.removeEventListener("export-results", onExportResults);
       window.removeEventListener("clear-history", onClearHistory);
+      window.removeEventListener("import-verification", onImportVerification);
     };
-  }, []);
+  }, [t, setStatusMessage, setExpectedHash]);
 
   return (
     <MainLayout>
@@ -181,6 +228,7 @@ function App() {
       <HistoryDialog open={showHistory} onOpenChange={setShowHistory} />
       <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
       <QuickGuideDialog open={showQuickGuide} onOpenChange={setShowQuickGuide} />
+      <ExportDialog open={showExport} onOpenChange={setShowExport} />
     </MainLayout>
   );
 }

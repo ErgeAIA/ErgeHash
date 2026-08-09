@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "@/store/appStore";
-import { openFileDialog, openFolderDialog } from "@/services/api";
+import { openFileDialog, openFolderDialog, scanDirectory } from "@/services/api";
 import { cn } from "@/lib/utils";
 
 /** 菜单项定义 */
@@ -83,7 +83,11 @@ export function MenuBar() {
       case "batch_process": {
         const folder = await openFolderDialog();
         if (folder) {
-          addFiles([folder]);
+          // 扫描目录下所有文件加入列表（此前误将文件夹路径当文件加入）
+          const files = await scanDirectory(folder);
+          if (files.length > 0) {
+            addFiles(files);
+          }
         }
         break;
       }

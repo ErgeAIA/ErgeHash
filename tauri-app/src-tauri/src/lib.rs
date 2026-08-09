@@ -12,7 +12,9 @@ use commands::config::{add_history, clear_history, get_config, get_history, set_
 use commands::export::{
     export_csv, export_json, generate_verification_file, import_verification_file,
 };
-use commands::filesystem::{open_file_dialog, open_folder_dialog, save_file_dialog, scan_directory};
+use commands::filesystem::{
+    open_file_dialog, open_folder_dialog, open_notepad, save_file_dialog, scan_directory,
+};
 use commands::hash::{
     calculate_hash, cancel_hash_calculation, pause_hash_calculation, quick_calculate_hash,
     resume_hash_calculation,
@@ -84,6 +86,7 @@ pub fn run() {
             open_file_dialog,
             open_folder_dialog,
             save_file_dialog,
+            open_notepad,
         ])
         .run(tauri::generate_context!())
         .map_err(|e| eprintln!("Error while running tauri application: {}", e))

@@ -33,6 +33,22 @@ pub fn scan_directory(dir_path: String) -> Result<Vec<String>, String> {
     Ok(files)
 }
 
+/// 打开系统记事本（Windows）
+#[tauri::command]
+pub fn open_notepad() -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("notepad.exe")
+            .spawn()
+            .map_err(|e| format!("打开记事本失败: {}", e))?;
+        Ok(())
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("记事本仅支持 Windows 平台".to_string())
+    }
+}
+
 /// 打开文件选择对话框
 #[tauri::command]
 pub async fn open_file_dialog(app: AppHandle) -> Result<Option<Vec<String>>, String> {

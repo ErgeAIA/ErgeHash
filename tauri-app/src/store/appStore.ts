@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { FileItem, HashAlgorithm } from "../services/types";
+import type { FileItem, HashAlgorithm, HashResult } from "../services/types";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 
 /** 应用状态 */
@@ -26,6 +26,8 @@ interface AppState {
   statusMessage: string;
   /** 预期哈希值 */
   expectedHash: string;
+  /** 最近一次批量结果（供导出/复制使用） */
+  lastResults: HashResult[] | null;
 
   // ---- Actions ----
   /** 添加文件到列表 */
@@ -61,6 +63,8 @@ interface AppState {
   ) => void;
   /** 设置预期哈希值 */
   setExpectedHash: (hash: string) => void;
+  /** 设置最近一次批量结果 */
+  setLastResults: (results: HashResult[] | null) => void;
   /** 复制结果到剪贴板 */
   copyResult: () => void;
 }
@@ -77,6 +81,7 @@ export const useAppStore = create<AppState>((set) => ({
   resultText: "",
   statusMessage: "ready",
   expectedHash: "",
+  lastResults: null,
 
   addFiles: (files) =>
     set((state) => {
@@ -143,6 +148,8 @@ export const useAppStore = create<AppState>((set) => ({
     }),
 
   setExpectedHash: (hash) => set({ expectedHash: hash }),
+
+  setLastResults: (results) => set({ lastResults: results }),
 
   copyResult: () =>
     set((state) => {

@@ -78,16 +78,16 @@ export async function clearHistory(): Promise<void> {
 export async function exportCsv(
   data: HashResult[],
   filePath: string,
-): Promise<boolean> {
-  return invoke<boolean>("export_csv", { data, filePath });
+): Promise<void> {
+  return invoke("export_csv", { data, filePath });
 }
 
 /** 导出为 JSON */
 export async function exportJson(
   data: HashResult[],
   filePath: string,
-): Promise<boolean> {
-  return invoke<boolean>("export_json", { data, filePath });
+): Promise<void> {
+  return invoke("export_json", { data, filePath });
 }
 
 /** 生成验证文件 */
@@ -96,8 +96,8 @@ export async function generateVerificationFile(
   algorithm: HashAlgorithm,
   hashValue: string,
   outputPath: string,
-): Promise<boolean> {
-  return invoke<boolean>("generate_verification_file", {
+): Promise<void> {
+  return invoke("generate_verification_file", {
     filePath,
     algorithm,
     hashValue,
@@ -115,6 +115,11 @@ export async function importVerificationFile(
 /** 扫描目录获取文件列表 */
 export async function scanDirectory(dirPath: string): Promise<string[]> {
   return invoke<string[]>("scan_directory", { dirPath });
+}
+
+/** 打开系统记事本 */
+export async function openNotepad(): Promise<void> {
+  return invoke("open_notepad");
 }
 
 /** 打开文件选择对话框 */
