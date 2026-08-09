@@ -169,8 +169,21 @@ export const useAppStore = create<AppState>((set) => ({
 
   copyResult: () =>
     set((state) => {
-      if (state.resultText) {
-        writeText(state.resultText).catch(() => {
+      // 优先复制结构化哈希行（文件名: 哈希），对齐 PyQt 语义；无结果时回退复制整个结果区
+      let text = "";
+      if (state.lastResults && state.lastResults.length > 0) {
+        text = state.lastResults
+          .filter((r) => r.hashValue)
+          .map(
+            (r) =>
+              `${r.filePath.split(/[/\\]/).pop() ?? r.filePath}: ${r.hashValue}`,
+          )
+          .join("\n");
+      } else if (state.resultText) {
+        text = state.resultText;
+      }
+      if (text) {
+        void writeText(text).catch(() => {
           // 剪贴板写入失败时静默处理
         });
       }

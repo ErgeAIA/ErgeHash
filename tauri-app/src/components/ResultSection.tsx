@@ -10,7 +10,6 @@ import {
   resumeHashCalculation,
   cancelHashCalculation,
 } from "@/services/api";
-import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 
 
 /** 计算结果区域组件，对应原始 "计算结果" GroupBox */
@@ -27,6 +26,7 @@ export function ResultSection() {
   const setProgress = useAppStore((s) => s.setProgress);
   const setCurrentFile = useAppStore((s) => s.setCurrentFile);
   const setStatusMessage = useAppStore((s) => s.setStatusMessage);
+  const copyResult = useAppStore((s) => s.copyResult);
 
   /** 开始批量校验 */
   const handleStartBatch = useCallback(async () => {
@@ -95,17 +95,6 @@ export function ResultSection() {
     setResultText((prev) => prev + `\n${t("batch_cancelled")}\n`);
   }, [isCalculating, setCalculating, setPaused, setStatusMessage, setResultText, t]);
 
-  /** 复制结果到剪贴板 */
-  const handleCopyResult = useCallback(async () => {
-    if (!resultText) return;
-
-    try {
-      await writeText(resultText);
-    } catch {
-      // 剪贴板写入失败，忽略
-    }
-  }, [resultText]);
-
   return (
     <fieldset className="rounded-default border border-border p-3">
       <legend className="px-2 text-sm font-medium text-foreground">
@@ -171,7 +160,7 @@ export function ResultSection() {
           <Button
             variant="secondary"
             size="sm"
-            onClick={handleCopyResult}
+            onClick={copyResult}
             disabled={!resultText}
           >
             <Copy className="mr-1 h-4 w-4" />

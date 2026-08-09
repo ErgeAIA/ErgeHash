@@ -82,17 +82,29 @@ pub async fn quick_calculate_hash(
     }
 
     let file_size = path.metadata().map_err(|e| e.to_string())?.len();
-    let max_read = 10 * 1024 * 1024; // 10MB
+
+    // 快速比较语义（对齐 PyQt）：≤1GB 读全文件（真哈希，避免前缀误判），>1GB 只读前 5MB
+    let read_limit = if file_size > 1 * 1024 * 1024 * 1024 {
+        5 * 1024 * 1024
+    } else {
+        file_size
+    };
 
     let mut file = File::open(path).map_err(|e| e.to_string())?;
-    let bytes_to_read = std::cmp::min(file_size, max_read) as usize;
-    let mut buffer = vec![0u8; bytes_to_read];
-
+    let mut buffer = [0u8; 8192];
     let start_time = Instant::now();
-    file.read_exact(&mut buffer).map_err(|e| e.to_string())?;
 
     let mut hasher = make_hasher(algorithm);
-    hasher.update(&buffer);
+    let mut total_read = 0u64;
+    while total_read < read_limit {
+        let want = std::cmp::min(buffer.len() as u64, read_limit - total_read) as usize;
+        let bytes_read = file.read(&mut buffer[..want]).map_err(|e| e.to_string())?;
+        if bytes_read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..bytes_read]);
+        total_read += bytes_read as u64;
+    }
     let hash_value = hasher.finalize_hex();
 
     Ok(HashResult {

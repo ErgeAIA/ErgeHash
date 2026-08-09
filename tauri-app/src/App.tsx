@@ -11,6 +11,7 @@ import {
 } from "./services/api";
 import { onHashProgress, onBatchFileComplete, onBatchComplete } from "./services/api";
 import { getCurrentWindow, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
+import { ask } from "@tauri-apps/plugin-dialog";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { MainLayout } from "./components/layout/MainLayout";
 import { Sidebar } from "./components/layout/Sidebar";
@@ -213,7 +214,10 @@ function App() {
     const onShowQuickGuide = () => setShowQuickGuide(true);
     const onExportResults = () => setShowExport(true);
     const onClearHistory = async () => {
-      await apiClearHistory();
+      const ok = await ask(t("clear_history_confirm"), { title: t("warning") });
+      if (ok) {
+        await apiClearHistory();
+      }
     };
     const onImportVerification = async () => {
       const paths = await openFileDialog();

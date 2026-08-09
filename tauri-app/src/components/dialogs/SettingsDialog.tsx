@@ -111,15 +111,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <button
                   className="flex items-center gap-1 text-xs text-primary hover:underline"
                   onClick={() =>
-                    handleOpenLink("https://github.com/your-repo/HashValidatorPlus")
-                  }
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  GitHub
-                </button>
-                <button
-                  className="flex items-center gap-1 text-xs text-primary hover:underline"
-                  onClick={() =>
                     handleOpenLink("https://space.bilibili.com/67221461")
                   }
                 >

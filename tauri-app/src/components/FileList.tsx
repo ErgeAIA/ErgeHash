@@ -6,6 +6,7 @@ import { useAppStore } from "@/store/appStore";
 import { scanDirectory, openFileDialog, openFolderDialog } from "@/services/api";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { ask } from "@tauri-apps/plugin-dialog";
 import { cn } from "@/lib/utils";
 
 /** 文件拖放列表组件，对应原始 DragDropFileListWidget */
@@ -139,6 +140,14 @@ export function FileList() {
       // 用户取消选择，忽略
     }
   }, [addFiles]);
+
+  /** 点击清空列表按钮（带确认） */
+  const handleClearClick = useCallback(async () => {
+    const ok = await ask(t("confirm_clear_files"), { title: t("warning") });
+    if (ok) {
+      clearFiles();
+    }
+  }, [clearFiles, t]);
 
   /** 右键菜单事件 */
   const handleContextMenu = useCallback(
@@ -289,7 +298,7 @@ export function FileList() {
           {t("add_folder")}
         </Button>
         <div className="flex-1" />
-        <Button variant="destructive" size="sm" onClick={clearFiles}>
+        <Button variant="destructive" size="sm" onClick={handleClearClick}>
           <Trash2 className="mr-1 h-4 w-4" />
           {t("clear_list")}
         </Button>
