@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAppStore } from "@/store/appStore";
-import { openFileDialog, openFolderDialog } from "@/services/api";
+import { openFileDialog, openFolderDialog, scanDirectory } from "@/services/api";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 /** 全局快捷键 hook - 匹配原版快捷键绑定 */
@@ -19,14 +19,17 @@ export function useKeyboardShortcuts() {
         });
       }
 
-      // Ctrl+B: 批量处理（打开文件夹）
+      // Ctrl+B: 批量处理（打开文件夹，扫描文件加入列表）
       if (e.ctrlKey && e.key === "b") {
         e.preventDefault();
-        openFolderDialog().then((folder) => {
-          if (folder) {
-            addFiles([folder]);
+        void (async () => {
+          const folder = await openFolderDialog();
+          if (!folder) return;
+          const files = await scanDirectory(folder);
+          if (files.length > 0) {
+            addFiles(files);
           }
-        });
+        })();
       }
 
       // Ctrl+Q: 退出（走 close-requested，确保窗口几何保存）

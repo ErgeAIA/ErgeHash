@@ -40,19 +40,19 @@ export function MenuBar() {
     {
       label: t("menu_file"),
       items: [
-        { id: "open_file", label: t("menu_open_file"), shortcut: "Ctrl+O" },
-        { id: "batch_process", label: t("menu_batch_process"), shortcut: "Ctrl+B" },
+        { id: "open_file", label: t("menu_open"), shortcut: "Ctrl+O" },
+        { id: "batch_process", label: t("menu_batch"), shortcut: "Ctrl+B" },
         { separator: true },
-        { id: "export_results", label: t("menu_export_results") },
+        { id: "export_results", label: t("menu_export") },
         { separator: true },
-        { id: "quit", label: t("menu_quit"), shortcut: "Ctrl+Q" },
+        { id: "quit", label: t("menu_exit"), shortcut: "Ctrl+Q" },
       ],
     },
     {
       label: t("menu_edit"),
       items: [
-        { id: "copy_hash", label: t("menu_copy_hash"), shortcut: "Ctrl+C" },
-        { id: "view_history", label: t("menu_view_history") },
+        { id: "copy_hash", label: t("menu_copy") },
+        { id: "view_history", label: t("menu_history") },
       ],
     },
     {
@@ -60,7 +60,7 @@ export function MenuBar() {
       items: [
         { id: "clear_history", label: t("menu_clear_history") },
         { separator: true },
-        { id: "import_verification", label: t("menu_import_verification") },
+        { id: "import_verification", label: t("menu_import_verify") },
       ],
     },
     {
