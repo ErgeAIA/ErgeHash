@@ -4,11 +4,9 @@ use std::path::Path;
 use std::sync::atomic::Ordering;
 use std::time::Instant;
 
-use md5::Md5;
-use sha1::Sha1;
-use sha2::{Digest, Sha256, Sha512};
 use tauri::{AppHandle, Emitter, State};
 
+use crate::hashing::{file_cache_key, make_hasher};
 use crate::models::{BatchResult, HashAlgorithm, HashResult, HashStatus};
 use crate::AppState;
 
@@ -30,7 +28,7 @@ pub async fn start_batch_validation(
     let mut error_count = 0;
 
     for file_path in file_paths {
-        // 检查是否取消
+        // 检查是否取消（文件之间）
         if state.cancel_flag.load(Ordering::Relaxed) {
             break;
         }
@@ -86,6 +84,7 @@ pub async fn start_batch_validation(
     Ok(batch_result)
 }
 
+/// 处理单个文件：检查缓存，未命中则分块计算（逐块检查取消/暂停）
 fn process_single_file(
     file_path: &str,
     algorithm: HashAlgorithm,
@@ -101,74 +100,43 @@ fn process_single_file(
     let file_size = path.metadata().map_err(|e| e.to_string())?.len();
 
     // 检查缓存
-    let cache_key = (file_size, algorithm);
-    let cache = state.hash_cache.lock().unwrap();
-    if let Some(cached_hash) = cache.get(&cache_key) {
-        return Ok(HashResult {
-            file_path: file_path.to_string(),
-            algorithm,
-            hash_value: cached_hash.clone(),
-            elapsed_time: 0.0,
-            status: HashStatus::Success,
-            from_cache: true,
-            error_message: None,
-        });
+    let cache_key = file_cache_key(file_path, file_size, algorithm);
+    {
+        let cache = state.hash_cache.lock().unwrap();
+        if let Some(cached_hash) = cache.get(&cache_key) {
+            return Ok(HashResult {
+                file_path: file_path.to_string(),
+                algorithm,
+                hash_value: cached_hash.clone(),
+                elapsed_time: 0.0,
+                status: HashStatus::Success,
+                from_cache: true,
+                error_message: None,
+            });
+        }
     }
-    drop(cache);
 
     let mut file = File::open(path).map_err(|e| e.to_string())?;
     let mut buffer = [0u8; 8192];
 
-    let hash_value = match algorithm {
-        HashAlgorithm::SHA256 => {
-            let mut hasher = Sha256::new();
-            loop {
-                let bytes_read = file.read(&mut buffer).map_err(|e| e.to_string())?;
-                if bytes_read == 0 {
-                    break;
-                }
-                hasher.update(&buffer[..bytes_read]);
-            }
-            format!("{:x}", hasher.finalize())
+    let mut hasher = make_hasher(algorithm);
+    loop {
+        state.check_interrupted()?;
+
+        let bytes_read = file.read(&mut buffer).map_err(|e| e.to_string())?;
+        if bytes_read == 0 {
+            break;
         }
-        HashAlgorithm::MD5 => {
-            let mut hasher = Md5::new();
-            loop {
-                let bytes_read = file.read(&mut buffer).map_err(|e| e.to_string())?;
-                if bytes_read == 0 {
-                    break;
-                }
-                hasher.update(&buffer[..bytes_read]);
-            }
-            format!("{:x}", hasher.finalize())
-        }
-        HashAlgorithm::SHA1 => {
-            let mut hasher = Sha1::new();
-            loop {
-                let bytes_read = file.read(&mut buffer).map_err(|e| e.to_string())?;
-                if bytes_read == 0 {
-                    break;
-                }
-                hasher.update(&buffer[..bytes_read]);
-            }
-            format!("{:x}", hasher.finalize())
-        }
-        HashAlgorithm::SHA512 => {
-            let mut hasher = Sha512::new();
-            loop {
-                let bytes_read = file.read(&mut buffer).map_err(|e| e.to_string())?;
-                if bytes_read == 0 {
-                    break;
-                }
-                hasher.update(&buffer[..bytes_read]);
-            }
-            format!("{:x}", hasher.finalize())
-        }
-    };
+        hasher.update(&buffer[..bytes_read]);
+    }
+    let hash_value = hasher.finalize_hex();
 
     // 缓存结果
     let mut cache = state.hash_cache.lock().unwrap();
-    cache.insert((file_size, algorithm), hash_value.clone());
+    cache.insert(
+        file_cache_key(file_path, file_size, algorithm),
+        hash_value.clone(),
+    );
 
     Ok(HashResult {
         file_path: file_path.to_string(),

@@ -4,11 +4,9 @@ use std::path::Path;
 use std::sync::atomic::Ordering;
 use std::time::Instant;
 
-use md5::Md5;
-use sha1::Sha1;
-use sha2::{Digest, Sha256, Sha512};
 use tauri::{AppHandle, Emitter, State};
 
+use crate::hashing::{file_cache_key, make_hasher};
 use crate::models::{HashAlgorithm, HashProgress, HashResult, HashStatus};
 use crate::AppState;
 
@@ -30,7 +28,7 @@ pub async fn calculate_hash(
     let path = Path::new(&file_path);
     if let Ok(meta) = path.metadata() {
         let file_size = meta.len();
-        let cache_key = (file_size, algorithm);
+        let cache_key = file_cache_key(&file_path, file_size, algorithm);
         let cache = state.hash_cache.lock().unwrap();
         if let Some(cached_hash) = cache.get(&cache_key) {
             return Ok(HashResult {
@@ -52,7 +50,10 @@ pub async fn calculate_hash(
     // 缓存结果
     if let Ok(meta) = path.metadata() {
         let mut cache = state.hash_cache.lock().unwrap();
-        cache.insert((meta.len(), algorithm), hash_value.clone());
+        cache.insert(
+            file_cache_key(&file_path, meta.len(), algorithm),
+            hash_value.clone(),
+        );
     }
 
     Ok(HashResult {
@@ -84,36 +85,15 @@ pub async fn quick_calculate_hash(
     let max_read = 10 * 1024 * 1024; // 10MB
 
     let mut file = File::open(path).map_err(|e| e.to_string())?;
-    let mut buffer = Vec::with_capacity(std::cmp::min(file_size, max_read) as usize);
+    let bytes_to_read = std::cmp::min(file_size, max_read) as usize;
+    let mut buffer = vec![0u8; bytes_to_read];
 
     let start_time = Instant::now();
-
-    let bytes_to_read = std::cmp::min(file_size, max_read) as usize;
-    buffer.resize(bytes_to_read, 0);
     file.read_exact(&mut buffer).map_err(|e| e.to_string())?;
 
-    let hash_value = match algorithm {
-        HashAlgorithm::SHA256 => {
-            let mut hasher = Sha256::new();
-            hasher.update(&buffer);
-            format!("{:x}", hasher.finalize())
-        }
-        HashAlgorithm::MD5 => {
-            let mut hasher = Md5::new();
-            hasher.update(&buffer);
-            format!("{:x}", hasher.finalize())
-        }
-        HashAlgorithm::SHA1 => {
-            let mut hasher = Sha1::new();
-            hasher.update(&buffer);
-            format!("{:x}", hasher.finalize())
-        }
-        HashAlgorithm::SHA512 => {
-            let mut hasher = Sha512::new();
-            hasher.update(&buffer);
-            format!("{:x}", hasher.finalize())
-        }
-    };
+    let mut hasher = make_hasher(algorithm);
+    hasher.update(&buffer);
+    let hash_value = hasher.finalize_hex();
 
     Ok(HashResult {
         file_path,
@@ -148,6 +128,7 @@ pub fn cancel_hash_calculation(state: State<'_, AppState>) -> Result<(), String>
     Ok(())
 }
 
+/// 分块计算文件哈希值，逐块检查取消/暂停并发送进度
 fn do_calculate_hash(
     file_path: &str,
     algorithm: HashAlgorithm,
@@ -166,135 +147,35 @@ fn do_calculate_hash(
     let mut buffer = [0u8; 8192];
     let mut total_read = 0u64;
 
-    match algorithm {
-        HashAlgorithm::SHA256 => {
-            let mut hasher = Sha256::new();
-            loop {
-                if state.cancel_flag.load(Ordering::Relaxed) {
-                    return Err("计算已取消".into());
-                }
+    let mut hasher = make_hasher(algorithm);
 
-                let bytes_read = file.read(&mut buffer).map_err(|e| e.to_string())?;
-                if bytes_read == 0 {
-                    break;
-                }
+    loop {
+        state.check_interrupted()?;
 
-                hasher.update(&buffer[..bytes_read]);
-                total_read += bytes_read as u64;
-
-                // 发送进度
-                let progress = if file_size > 0 {
-                    (total_read as f64 / file_size as f64 * 100.0) as u8
-                } else {
-                    100
-                };
-                let _ = app.emit(
-                    "hash-progress",
-                    HashProgress {
-                        file_path: file_path.to_string(),
-                        progress,
-                        bytes_read: total_read,
-                        total_bytes: file_size,
-                    },
-                );
-            }
-            Ok((format!("{:x}", hasher.finalize()), file_size))
+        let bytes_read = file.read(&mut buffer).map_err(|e| e.to_string())?;
+        if bytes_read == 0 {
+            break;
         }
-        HashAlgorithm::MD5 => {
-            let mut hasher = Md5::new();
-            loop {
-                if state.cancel_flag.load(Ordering::Relaxed) {
-                    return Err("计算已取消".into());
-                }
 
-                let bytes_read = file.read(&mut buffer).map_err(|e| e.to_string())?;
-                if bytes_read == 0 {
-                    break;
-                }
+        hasher.update(&buffer[..bytes_read]);
+        total_read += bytes_read as u64;
 
-                hasher.update(&buffer[..bytes_read]);
-                total_read += bytes_read as u64;
-
-                let progress = if file_size > 0 {
-                    (total_read as f64 / file_size as f64 * 100.0) as u8
-                } else {
-                    100
-                };
-                let _ = app.emit(
-                    "hash-progress",
-                    HashProgress {
-                        file_path: file_path.to_string(),
-                        progress,
-                        bytes_read: total_read,
-                        total_bytes: file_size,
-                    },
-                );
-            }
-            Ok((format!("{:x}", hasher.finalize()), file_size))
-        }
-        HashAlgorithm::SHA1 => {
-            let mut hasher = Sha1::new();
-            loop {
-                if state.cancel_flag.load(Ordering::Relaxed) {
-                    return Err("计算已取消".into());
-                }
-
-                let bytes_read = file.read(&mut buffer).map_err(|e| e.to_string())?;
-                if bytes_read == 0 {
-                    break;
-                }
-
-                hasher.update(&buffer[..bytes_read]);
-                total_read += bytes_read as u64;
-
-                let progress = if file_size > 0 {
-                    (total_read as f64 / file_size as f64 * 100.0) as u8
-                } else {
-                    100
-                };
-                let _ = app.emit(
-                    "hash-progress",
-                    HashProgress {
-                        file_path: file_path.to_string(),
-                        progress,
-                        bytes_read: total_read,
-                        total_bytes: file_size,
-                    },
-                );
-            }
-            Ok((format!("{:x}", hasher.finalize()), file_size))
-        }
-        HashAlgorithm::SHA512 => {
-            let mut hasher = Sha512::new();
-            loop {
-                if state.cancel_flag.load(Ordering::Relaxed) {
-                    return Err("计算已取消".into());
-                }
-
-                let bytes_read = file.read(&mut buffer).map_err(|e| e.to_string())?;
-                if bytes_read == 0 {
-                    break;
-                }
-
-                hasher.update(&buffer[..bytes_read]);
-                total_read += bytes_read as u64;
-
-                let progress = if file_size > 0 {
-                    (total_read as f64 / file_size as f64 * 100.0) as u8
-                } else {
-                    100
-                };
-                let _ = app.emit(
-                    "hash-progress",
-                    HashProgress {
-                        file_path: file_path.to_string(),
-                        progress,
-                        bytes_read: total_read,
-                        total_bytes: file_size,
-                    },
-                );
-            }
-            Ok((format!("{:x}", hasher.finalize()), file_size))
-        }
+        // 发送进度
+        let progress = if file_size > 0 {
+            (total_read as f64 / file_size as f64 * 100.0) as u8
+        } else {
+            100
+        };
+        let _ = app.emit(
+            "hash-progress",
+            HashProgress {
+                file_path: file_path.to_string(),
+                progress,
+                bytes_read: total_read,
+                total_bytes: file_size,
+            },
+        );
     }
+
+    Ok((hasher.finalize_hex(), file_size))
 }
