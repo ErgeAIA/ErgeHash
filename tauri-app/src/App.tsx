@@ -3,12 +3,14 @@ import { useTranslation } from "react-i18next";
 import { useAppStore } from "./store/appStore";
 import {
   getConfig,
+  setConfig,
   clearHistory as apiClearHistory,
   addHistory,
   openFileDialog,
   importVerificationFile,
 } from "./services/api";
 import { onHashProgress, onBatchFileComplete, onBatchComplete } from "./services/api";
+import { getCurrentWindow, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { MainLayout } from "./components/layout/MainLayout";
 import { Sidebar } from "./components/layout/Sidebar";
@@ -27,8 +29,8 @@ function App() {
   const theme = useAppStore((s) => s.theme);
   const language = useAppStore((s) => s.language);
   const setAlgorithm = useAppStore((s) => s.setAlgorithm);
-  const toggleTheme = useAppStore((s) => s.toggleTheme);
-  const toggleLanguage = useAppStore((s) => s.toggleLanguage);
+  const setTheme = useAppStore((s) => s.setTheme);
+  const setLanguage = useAppStore((s) => s.setLanguage);
   const setProgress = useAppStore((s) => s.setProgress);
   const setCurrentFile = useAppStore((s) => s.setCurrentFile);
   const setCalculating = useAppStore((s) => s.setCalculating);
@@ -51,13 +53,26 @@ function App() {
     async function initConfig() {
       try {
         const config = await getConfig();
-        if (config.theme === "dark") {
-          toggleTheme();
-        }
-        if (config.language === "en") {
-          toggleLanguage();
-        }
+        setTheme(config.theme);
+        setLanguage(config.language);
         setAlgorithm(config.algorithm);
+
+        // 恢复窗口几何
+        if (config.windowGeometry) {
+          try {
+            const g = JSON.parse(config.windowGeometry) as {
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+            };
+            const win = getCurrentWindow();
+            await win.setPosition(new PhysicalPosition(g.x, g.y));
+            await win.setSize(new PhysicalSize(g.width, g.height));
+          } catch {
+            // 几何数据无效时忽略
+          }
+        }
       } catch {
         // 后端尚未就绪时忽略错误
       }
@@ -80,6 +95,38 @@ function App() {
       root.classList.remove("dark");
     }
   }, [theme]);
+
+  // 窗口关闭时保存几何信息
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    getCurrentWindow()
+      .onCloseRequested(async (event) => {
+        event.preventDefault();
+        try {
+          const win = getCurrentWindow();
+          const pos = await win.outerPosition();
+          const size = await win.outerSize();
+          await setConfig(
+            "windowGeometry",
+            JSON.stringify({
+              x: pos.x,
+              y: pos.y,
+              width: size.width,
+              height: size.height,
+            }),
+          );
+        } catch {
+          // 保存失败仍继续关闭
+        }
+        await getCurrentWindow().destroy();
+      })
+      .then((fn) => {
+        unlisten = fn;
+      });
+    return () => {
+      unlisten?.();
+    };
+  }, []);
 
   // 注册 Tauri 事件监听
   useEffect(() => {

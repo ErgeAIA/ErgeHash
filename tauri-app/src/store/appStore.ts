@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { FileItem, HashAlgorithm, HashResult } from "../services/types";
+import { setConfig } from "../services/api";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 
 /** 应用状态 */
@@ -36,11 +37,15 @@ interface AppState {
   removeFile: (index: number) => void;
   /** 清空文件列表 */
   clearFiles: () => void;
-  /** 设置算法 */
+  /** 设置算法（持久化） */
   setAlgorithm: (algo: HashAlgorithm) => void;
-  /** 切换主题 */
+  /** 直接设置主题（初始化用，不持久化） */
+  setTheme: (theme: "light" | "dark") => void;
+  /** 直接设置语言（初始化用，不持久化） */
+  setLanguage: (language: "zh" | "en") => void;
+  /** 切换主题（持久化） */
   toggleTheme: () => void;
-  /** 切换语言 */
+  /** 切换语言（持久化） */
   toggleLanguage: () => void;
   /** 设置计算状态 */
   setCalculating: (value: boolean) => void;
@@ -106,17 +111,28 @@ export const useAppStore = create<AppState>((set) => ({
       currentFile: null,
     }),
 
-  setAlgorithm: (algo) => set({ algorithm: algo }),
+  setAlgorithm: (algo) => {
+    set({ algorithm: algo });
+    void setConfig("algorithm", algo);
+  },
+
+  setTheme: (theme) => set({ theme }),
+
+  setLanguage: (language) => set({ language }),
 
   toggleTheme: () =>
-    set((state) => ({
-      theme: state.theme === "light" ? "dark" : "light",
-    })),
+    set((state) => {
+      const theme = state.theme === "light" ? "dark" : "light";
+      void setConfig("theme", theme);
+      return { theme };
+    }),
 
   toggleLanguage: () =>
-    set((state) => ({
-      language: state.language === "zh" ? "en" : "zh",
-    })),
+    set((state) => {
+      const language = state.language === "zh" ? "en" : "zh";
+      void setConfig("language", language);
+      return { language };
+    }),
 
   setCalculating: (value) => set({ isCalculating: value }),
 

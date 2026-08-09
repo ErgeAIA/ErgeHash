@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useAppStore } from "@/store/appStore";
 import { openFileDialog, openFolderDialog } from "@/services/api";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 /** 全局快捷键 hook - 匹配原版快捷键绑定 */
 export function useKeyboardShortcuts() {
@@ -28,10 +29,10 @@ export function useKeyboardShortcuts() {
         });
       }
 
-      // Ctrl+Q: 退出
+      // Ctrl+Q: 退出（走 close-requested，确保窗口几何保存）
       if (e.ctrlKey && e.key === "q") {
         e.preventDefault();
-        window.close();
+        void getCurrentWindow().close();
       }
     };
 

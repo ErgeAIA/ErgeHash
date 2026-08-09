@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "@/store/appStore";
 import { openFileDialog, openFolderDialog, scanDirectory } from "@/services/api";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { cn } from "@/lib/utils";
 
 /** 菜单项定义 */
@@ -96,7 +97,7 @@ export function MenuBar() {
         window.dispatchEvent(new CustomEvent("export-results"));
         break;
       case "quit":
-        window.close();
+        void getCurrentWindow().close();
         break;
       case "copy_hash":
         copyResult();
