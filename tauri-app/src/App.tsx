@@ -9,7 +9,7 @@ import {
   openFileDialog,
   importVerificationFile,
 } from "./services/api";
-import { onHashProgress, onBatchFileComplete, onBatchComplete } from "./services/api";
+import { onHashProgress, onBatchProgress, onBatchFileComplete, onBatchComplete } from "./services/api";
 import { getCurrentWindow, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
 import { ask } from "@tauri-apps/plugin-dialog";
 import type { UnlistenFn } from "@tauri-apps/api/event";
@@ -156,6 +156,7 @@ function App() {
               prev +
               `✓ ${fileName}${cacheNote}\n  ${payload.hashValue}${timeNote}\n\n`,
           );
+          setCurrentFile(payload.filePath);
 
           // 回填文件列表状态（供状态色与「比较哈希值」使用）
           updateFileByPath(
@@ -164,6 +165,15 @@ function App() {
             payload.status,
             payload.errorMessage,
           );
+        }),
+      );
+
+      unlisteners.push(
+        await onBatchProgress((p) => {
+          if (p.total > 0) {
+            setProgress(Math.round((p.done / p.total) * 100));
+          }
+          setStatusMessage("calculating");
         }),
       );
 

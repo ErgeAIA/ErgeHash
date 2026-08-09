@@ -24,6 +24,7 @@ pub async fn start_batch_validation(
 
     let start_time = Instant::now();
     let mut results = Vec::with_capacity(file_paths.len());
+    let total_files = file_paths.len();
     let mut success_count = 0;
     let mut error_count = 0;
 
@@ -61,6 +62,15 @@ pub async fn start_batch_validation(
                 let _ = app.emit("batch-file-complete", error_result);
             }
         }
+
+        // 发送批量进度
+        let _ = app.emit(
+            "batch-progress",
+            crate::models::BatchProgress {
+                done: results.len(),
+                total: total_files,
+            },
+        );
     }
 
     let total_time = start_time.elapsed().as_secs_f64();

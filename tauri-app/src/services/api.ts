@@ -146,6 +146,15 @@ export async function onHashProgress(
   });
 }
 
+/** 监听批量校验进度事件 */
+export async function onBatchProgress(
+  callback: (progress: { done: number; total: number }) => void,
+): Promise<UnlistenFn> {
+  return listen<{ done: number; total: number }>("batch-progress", (event) => {
+    callback(event.payload);
+  });
+}
+
 /** 监听批量校验单文件完成事件 */
 export async function onBatchFileComplete(
   callback: (result: HashResult) => void,

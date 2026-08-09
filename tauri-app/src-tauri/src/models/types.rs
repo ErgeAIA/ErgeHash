@@ -90,6 +90,16 @@ pub struct BatchResult {
     pub total_time: f64,
 }
 
+/// 批量处理进度（每完成一个文件发送一次）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchProgress {
+    /// 已完成文件数
+    pub done: usize,
+    /// 总文件数
+    pub total: usize,
+}
+
 /// 历史记录条目
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
