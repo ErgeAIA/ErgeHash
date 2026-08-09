@@ -4,6 +4,21 @@
 
 ---
 
+## DEC-007: 迁移收尾（清理 PyQt + tauri-app 上移根目录）暂缓至桌面验收完成
+
+- **日期**：2026-08-10
+- **背景**：迁移功能与打包已完成，考虑收尾——清理 PyQt 遗留、将 `tauri-app/` 上移为标准 Tauri 项目结构。
+- **决策**：
+  1. **暂缓收尾**，条件 = 桌面验收完成（`npm run tauri dev` 对照 `feature-checklist.md` 逐项通过运行期行为：拖放/暂停/导出/导入/历史/记事本/窗口几何）。
+  2. **PyQt `src/*.py` 验收前保留**作行为对照参考；验收通过即过期可删。
+  3. **已过期可直接删**：`scripts/`、`pyproject.toml`、`requirements.txt`、`uv.lock`、`HashValidatorPlus.spec`、`resources/`（打包件，Tauri 有替代）。
+  4. **上移前提**：`tauri-app/src/`（React）与根目录 `src/`（PyQt）重名，必须先清 PyQt 再 `git mv` 上移；前端 `src/ public/ index.html vite.config.ts tsconfig*.json package*.json pnpm-lock.yaml` + `src-tauri/` + `BUILD*.md`。
+  5. 收尾后同步：`CLAUDE.md` 路径、根 `.gitignore`（合并 node_modules/target/dist）、删除/归档 PyQt 版文档（docs/README、QUICK_START、AGENTS、迁移指令）。
+- **影响**：当前工作区保持"PyQt + Tauri 共存"直至验收；`ruff` 检查继续生效（pyproject 存在）。
+- **状态**：active（待桌面验收后触发执行）
+
+---
+
 ## DEC-006: P0-P3 实施决策（契约 / 缓存 / 历史 / 收敛）
 
 - **日期**：2026-08-10
