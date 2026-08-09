@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #f5f5f5;
+  --foreground: #333333;
+  --card: #ffffff;
+  --card-foreground: #333333;
+  --primary: #4CAF50;
+  --primary-foreground: #ffffff;
+  --secondary: #2196F3;
+  --secondary-foreground: #ffffff;
+  --destructive: #f44336;
+  --destructive-foreground: #ffffff;
+  --warning: #FF9800;
+  --warning-foreground: #ffffff;
+  --muted: #e0e0e0;
+  --muted-foreground: #666666;
+  --border: #cccccc;
+  --ring: #4CAF50;
+  --sidebar-bg: #f0f0f0;
+  --success-bg: #C8E6C9;
+  --mismatch-bg: #FFCDD2;
+  --error-bg: #FFE0B2;
+  --radius: 4px;
+}
+
+.dark {
+  --background: #1e1e1e;
+  --foreground: #e0e0e0;
+  --card: #2d2d2d;
+  --card-foreground: #e0e0e0;
+  --primary: #4CAF50;
+  --primary-foreground: #ffffff;
+  --secondary: #2196F3;
+  --secondary-foreground: #ffffff;
+  --destructive: #f44336;
+  --destructive-foreground: #ffffff;
+  --warning: #FF9800;
+  --warning-foreground: #ffffff;
+  --muted: #3d3d3d;
+  --muted-foreground: #999999;
+  --border: #4d4d4d;
+  --ring: #4CAF50;
+  --sidebar-bg: #252525;
+  --success-bg: #1B5E20;
+  --mismatch-bg: #B71C1C;
+  --error-bg: #E65100;
+  --radius: 4px;
+}
+
+/* 全局基础样式 */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Microsoft YaHei", "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+    sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--muted-foreground);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--foreground);
+}
+
+/* 工具类 */
+.bg-background {
+  background-color: var(--background);
+}
+
+.text-foreground {
+  color: var(--foreground);
+}
+
+.bg-card {
+  background-color: var(--card);
+}
+
+.text-card-foreground {
+  color: var(--card-foreground);
+}
+
+.bg-primary {
+  background-color: var(--primary);
+}
+
+.text-primary-foreground {
+  color: var(--primary-foreground);
+}
+
+.bg-secondary {
+  background-color: var(--secondary);
+}
+
+.text-secondary-foreground {
+  color: var(--secondary-foreground);
+}
+
+.bg-destructive {
+  background-color: var(--destructive);
+}
+
+.text-destructive-foreground {
+  color: var(--destructive-foreground);
+}
+
+.bg-warning {
+  background-color: var(--warning);
+}
+
+.text-warning-foreground {
+  color: var(--warning-foreground);
+}
+
+.bg-muted {
+  background-color: var(--muted);
+}
+
+.text-muted-foreground {
+  color: var(--muted-foreground);
+}
+
+.border-border {
+  border-color: var(--border);
+}
+
+.ring-ring {
+  --tw-ring-color: var(--ring);
+}
+
+.bg-sidebar {
+  background-color: var(--sidebar-bg);
+}
+
+.bg-success {
+  background-color: var(--success-bg);
+}
+
+.bg-mismatch {
+  background-color: var(--mismatch-bg);
+}
+
+.bg-error {
+  background-color: var(--error-bg);
+}
+
+.rounded-default {
+  border-radius: var(--radius);
+}
