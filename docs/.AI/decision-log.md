@@ -4,6 +4,22 @@
 
 ---
 
+## DEC-006: P0-P3 实施决策（契约 / 缓存 / 历史 / 收敛）
+
+- **日期**：2026-08-10
+- **背景**：按 `migration-plan.md` 实施 P0-P3，执行中对关键设计点做了第一性原理决策。
+- **决策**：
+  1. **HashAlgorithm serde 改 lowercase**：前端传小写算法名，此前 UPPERCASE 使所有带算法命令运行期反序列化失败（比 BUG-002 更严重的隐藏缺陷）。
+  2. **删除 getBatchStatistics 死代码而非注册命令**（BUG-003）：无任何调用点，注册即制造死命令。
+  3. **缓存键 `(path, size, mtime_nanos, algorithm)`**（BUG-004）：路径保证同文件正确、mtime 检测内容改动，消除跨文件误命中（放弃 PyQt 的跨文件同内容去重——那是错误源头）。
+  4. **历史记录写入**（P1-3）：PyQt 原版 `add_history` 从未被调用（历史恒空）。本次在 batch-complete 顺序 await 写入使其可用，避免并发读写竞态。
+  5. **Ctrl+C 复制哈希不实现**（P3-3）：webview 原生 Ctrl+C 复制选中文本，全局劫持不友好，记录偏离。
+  6. **移除 Settings 假 GitHub 占位链接**（P3-5）：无真实仓库地址，不发布假链接。
+- **影响**：见各阶段提交（`6bb0a83`/`4415131`/`11ff78a`/`ab66e75`/`642cec9`）。
+- **状态**：active
+
+---
+
 ## DEC-005: git 基线提交 + .gitignore 调整（docs/ 与 resources/icons/ 纳入跟踪）
 
 - **日期**：2026-08-09

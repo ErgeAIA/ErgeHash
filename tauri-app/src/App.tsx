@@ -39,6 +39,7 @@ function App() {
   const setStatusMessage = useAppStore((s) => s.setStatusMessage);
   const setLastResults = useAppStore((s) => s.setLastResults);
   const setExpectedHash = useAppStore((s) => s.setExpectedHash);
+  const updateFileByPath = useAppStore((s) => s.updateFileByPath);
 
   // 对话框状态
   const [showHistory, setShowHistory] = useState(false);
@@ -155,6 +156,14 @@ function App() {
               prev +
               `✓ ${fileName}${cacheNote}\n  ${payload.hashValue}${timeNote}\n\n`,
           );
+
+          // 回填文件列表状态（供状态色与「比较哈希值」使用）
+          updateFileByPath(
+            payload.filePath,
+            payload.hashValue,
+            payload.status,
+            payload.errorMessage,
+          );
         }),
       );
 
@@ -205,6 +214,7 @@ function App() {
     setCalculating,
     setResultText,
     setLastResults,
+    updateFileByPath,
   ]);
 
   // 监听自定义事件（菜单栏和侧边栏触发）

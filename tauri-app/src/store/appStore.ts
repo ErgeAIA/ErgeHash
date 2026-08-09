@@ -66,6 +66,13 @@ interface AppState {
     status: FileItem["status"],
     errorMessage?: string,
   ) => void;
+  /** 按路径更新文件状态（哈希计算完成后回填列表） */
+  updateFileByPath: (
+    path: string,
+    hashValue: string,
+    status: FileItem["status"],
+    errorMessage?: string,
+  ) => void;
   /** 设置预期哈希值 */
   setExpectedHash: (hash: string) => void;
   /** 设置最近一次批量结果 */
@@ -109,6 +116,7 @@ export const useAppStore = create<AppState>((set) => ({
       resultText: "",
       progress: 0,
       currentFile: null,
+      lastResults: null,
     }),
 
   setAlgorithm: (algo) => {
@@ -160,6 +168,20 @@ export const useAppStore = create<AppState>((set) => ({
           errorMessage,
         };
       }
+      return { fileList };
+    }),
+
+  updateFileByPath: (path, hashValue, status, errorMessage) =>
+    set((state) => {
+      const idx = state.fileList.findIndex((f) => f.path === path);
+      if (idx < 0) return state;
+      const fileList = [...state.fileList];
+      fileList[idx] = {
+        ...fileList[idx],
+        hashValue,
+        status,
+        errorMessage,
+      };
       return { fileList };
     }),
 

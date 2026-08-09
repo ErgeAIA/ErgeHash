@@ -6,9 +6,9 @@
 
 ## 当前状态
 
-- **当前分支**：`master`（基线已提交 `1aa9681`；包含遗留 PyQt 代码 + Tauri 2 应用 + 项目文档）
-- **最后更新**：2026-08-09
-- **当前阶段**：PyQt → Tauri 2 迁移（计划已定，待实施）
+- **当前分支**：`master`（基线 `1aa9681`；P0-P3 已实施完成）
+- **最后更新**：2026-08-10
+- **当前阶段**：PyQt → Tauri 2 迁移实施中（P0-P3 完成，P4 打包验证进行中，桌面验收待用户）
 
 ### 迁移阶段概览（依据 `docs/PyQt_to_Tauri2_迁移指令.md` 六阶段）
 
@@ -35,10 +35,7 @@
 
 ### 已核查的缺口 / 问题（详见 `debug-log.md`）
 
-- BUG-001：暂停/恢复无效——`pause_flag` 在哈希计算循环中从未被轮询。
-- BUG-002：前端 `types.ts`（camelCase）与 Rust serde 字段（snake_case）不一致，事件负载字段读取为 undefined。
-- BUG-003：`services/api.ts` 调用的 `get_batch_statistics` 命令未在 `lib.rs` 注册。
-- BUG-004：哈希缓存键 `(file_size, algorithm)`，同大小不同文件会误命中。
+- BUG-001~004 **全部已修复**（P0，提交 `6bb0a83`/`4415131`）：暂停/恢复生效、契约统一、缓存键加路径+mtime、批量取消内层响应。
 
 ### 遗留代码（仅迁移参考，默认不修改）
 
@@ -55,7 +52,7 @@
 
 ## 待办
 
-- 阶段 5 联调：逐功能验证、UI 对比、边界测试（需先明确验收口径，见讨论）
-- 阶段 6 打包：`npm run tauri build` 验证 NSIS 产物
-- 修复 BUG-001~004（涉及功能可用性，见 `migration-plan.md` P0）
-- ✅ git 基线提交（`1aa9681`，2026-08-09）
+- ✅ P0-P3 实施完成（提交：P0-1 `6bb0a83` / P0-2-4 `4415131` / P1 `11ff78a` / P2 `ab66e75` / P3 `642cec9`）
+- ⏳ P4 打包验证（`npm run tauri build`）
+- 桌面验收：`npm run tauri dev` 对照 `feature-checklist.md` 逐项确认（拖放/暂停/导出/历史/窗口几何等运行期行为）
+- 遗留 PyQt 代码删除（迁移收尾时执行）
