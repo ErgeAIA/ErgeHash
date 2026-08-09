@@ -145,7 +145,7 @@ export function HashVerification() {
       const name1 = file1.split(/[/\\]/).pop() ?? file1;
       const name2 = file2.split(/[/\\]/).pop() ?? file2;
 
-      if (result1.hash === result2.hash) {
+      if (result1.hashValue === result2.hashValue) {
         setResultText(
           (prev) =>
             prev +
@@ -155,7 +155,7 @@ export function HashVerification() {
         setResultText(
           (prev) =>
             prev +
-            `\n✗ ${t("hash_mismatch")}\n  ${name1}: ${result1.hash.substring(0, 32)}...\n  ${name2}: ${result2.hash.substring(0, 32)}...\n`,
+            `\n✗ ${t("hash_mismatch")}\n  ${name1}: ${result1.hashValue.substring(0, 32)}...\n  ${name2}: ${result2.hashValue.substring(0, 32)}...\n`,
         );
       }
     } catch {

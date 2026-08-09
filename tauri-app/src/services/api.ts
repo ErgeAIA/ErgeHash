@@ -5,7 +5,6 @@ import type {
   HashResult,
   HashProgress,
   BatchResult,
-  BatchStatistics,
   HistoryEntry,
   AppConfig,
   VerificationEntry,
@@ -48,11 +47,6 @@ export async function startBatchValidation(
   algorithm: HashAlgorithm,
 ): Promise<BatchResult> {
   return invoke<BatchResult>("start_batch_validation", { filePaths, algorithm });
-}
-
-/** 获取批量校验统计信息 */
-export async function getBatchStatistics(): Promise<BatchStatistics> {
-  return invoke<BatchStatistics>("get_batch_statistics");
 }
 
 /** 获取应用配置 */

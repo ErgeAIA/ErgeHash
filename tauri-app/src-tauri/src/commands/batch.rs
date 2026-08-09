@@ -9,7 +9,7 @@ use sha1::Sha1;
 use sha2::{Digest, Sha256, Sha512};
 use tauri::{AppHandle, Emitter, State};
 
-use crate::models::{BatchResult, BatchStatistics, HashAlgorithm, HashResult, HashStatus};
+use crate::models::{BatchResult, HashAlgorithm, HashResult, HashStatus};
 use crate::AppState;
 
 /// 开始批量校验
@@ -54,6 +54,7 @@ pub async fn start_batch_validation(
                     hash_value: String::new(),
                     elapsed_time: file_start.elapsed().as_secs_f64(),
                     status: HashStatus::Error,
+                    from_cache: false,
                     error_message: Some(e),
                 };
                 results.push(error_result.clone());
@@ -68,13 +69,11 @@ pub async fn start_batch_validation(
 
     let batch_result = BatchResult {
         results: results.clone(),
-        statistics: BatchStatistics {
-            total: results.len(),
-            success: success_count,
-            error: error_count,
-            mismatch: 0,
-            total_time,
-        },
+        total: results.len(),
+        success: success_count,
+        error: error_count,
+        mismatch: 0,
+        total_time,
     };
 
     // 存储结果
@@ -111,6 +110,7 @@ fn process_single_file(
             hash_value: cached_hash.clone(),
             elapsed_time: 0.0,
             status: HashStatus::Success,
+            from_cache: true,
             error_message: None,
         });
     }
@@ -176,6 +176,7 @@ fn process_single_file(
         hash_value,
         elapsed_time: 0.0,
         status: HashStatus::Success,
+        from_cache: false,
         error_message: None,
     })
 }

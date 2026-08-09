@@ -56,7 +56,7 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
   const handleUseSelected = React.useCallback(() => {
     if (selectedIndex < 0 || selectedIndex >= history.length) return;
     const entry = history[selectedIndex];
-    setExpectedHash(entry.hash);
+    setExpectedHash(entry.hashValue);
     setAlgorithm(entry.algorithm);
     onOpenChange(false);
   }, [selectedIndex, history, setExpectedHash, setAlgorithm, onOpenChange]);
@@ -65,7 +65,7 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
   const handleDoubleClick = React.useCallback(
     (index: number) => {
       const entry = history[index];
-      setExpectedHash(entry.hash);
+      setExpectedHash(entry.hashValue);
       setAlgorithm(entry.algorithm);
       onOpenChange(false);
     },
@@ -102,7 +102,7 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
             <div className="space-y-1">
               {history.map((entry, index) => (
                 <div
-                  key={`${entry.path}-${entry.timestamp}-${index}`}
+                  key={`${entry.filePath}-${entry.timestamp}-${index}`}
                   className={`
                     flex items-start gap-3 rounded-[var(--radius)] px-3 py-2 cursor-pointer transition-colors
                     ${
@@ -118,14 +118,14 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 text-sm">
                       <span className="font-medium truncate">
-                        {getFileName(entry.path)}
+                        {getFileName(entry.filePath)}
                       </span>
                       <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
                         {entry.algorithm.toUpperCase()}
                       </span>
                     </div>
                     <div className="text-xs text-muted-foreground truncate mt-0.5">
-                      {entry.hash}
+                      {entry.hashValue}
                     </div>
                     <div className="text-xs text-muted-foreground mt-0.5">
                       {entry.timestamp.slice(0, 19)}

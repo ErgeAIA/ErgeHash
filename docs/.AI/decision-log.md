@@ -4,6 +4,19 @@
 
 ---
 
+## DEC-005: git 基线提交 + .gitignore 调整（docs/ 与 resources/icons/ 纳入跟踪）
+
+- **日期**：2026-08-09
+- **背景**：master 零 commit，无法回滚迁移改动。经用户批准提交全量基线，并纳入项目文档与图标。
+- **决策**：
+  1. 首次提交基线 `1aa9681`（93 文件）：遗留 PyQt（`src/`、`scripts/`）+ Tauri 2 应用（`tauri-app/`）+ 项目文档（`docs/` 含 `.AI/` 过程文档）。
+  2. 仓库 `.gitignore` 取消 `docs/` 忽略（项目文档应受版本管理）；新增 `!resources/icons/` 放行图标（被全局 `Icon?` 规则误伤，打包需要）。
+  3. 全局 `C:/Users/GigaByte/.gitignore_global` 删除 `.ai/` 规则（`docs/.AI/` 目录名与之冲突；仅删此条，`.aiignore`/`AGENTS.md` 保留）。
+- **影响**：迁移改动可回滚；docs 与图标受版本管理。`docs/AGENTS.md` 与 `CLAUDE.md` 仍被全局规则忽略（尊重全局，不进库）。
+- **状态**：active
+
+---
+
 ## DEC-001: PyQt5 → Tauri 2 全量重构
 
 - **日期**：2026-08-09

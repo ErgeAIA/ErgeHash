@@ -86,16 +86,16 @@ function App() {
 
       unlisteners.push(
         await onBatchFileComplete((payload) => {
-          const fileName = payload.path.split(/[/\\]/).pop() ?? payload.path;
+          const fileName = payload.filePath.split(/[/\\]/).pop() ?? payload.filePath;
           const cacheNote = payload.fromCache ? ` [${t("from_cache")}]` : "";
           const timeNote =
-            payload.elapsed > 0
-              ? ` (${t("elapsed")}: ${payload.elapsed.toFixed(2)}s)`
+            payload.elapsedTime > 0
+              ? ` (${t("elapsed")}: ${payload.elapsedTime.toFixed(2)}s)`
               : "";
           setResultText(
             (prev) =>
               prev +
-              `✓ ${fileName}${cacheNote}\n  ${payload.hash}${timeNote}\n\n`,
+              `✓ ${fileName}${cacheNote}\n  ${payload.hashValue}${timeNote}\n\n`,
           );
         }),
       );
@@ -111,7 +111,7 @@ function App() {
               `---\n${t("batch_complete")}\n` +
               `${t("total_files")}: ${payload.total} | ` +
               `${t("success_count")}: ${payload.success} | ` +
-              `${t("error_count")}: ${payload.errors}\n` +
+              `${t("error_count")}: ${payload.error}\n` +
               `${t("total_time")}: ${payload.totalTime.toFixed(2)}s`,
           );
         }),

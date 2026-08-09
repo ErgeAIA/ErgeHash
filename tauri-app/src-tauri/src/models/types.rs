@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 /// 哈希算法枚举
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(rename_all = "lowercase")]
 pub enum HashAlgorithm {
     SHA256,
     MD5,
@@ -11,7 +11,7 @@ pub enum HashAlgorithm {
 }
 
 impl HashAlgorithm {
-    /// 获取算法的字符串名称（小写，用于 hashlib 兼容）
+    /// 获取算法的字符串名称（小写，与前端 HashAlgorithm 类型一致）
     pub fn as_str(&self) -> &'static str {
         match self {
             HashAlgorithm::SHA256 => "sha256",
@@ -39,6 +39,7 @@ pub enum HashStatus {
 
 /// 哈希计算结果
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HashResult {
     /// 文件路径
     pub file_path: String,
@@ -50,6 +51,8 @@ pub struct HashResult {
     pub elapsed_time: f64,
     /// 状态
     pub status: HashStatus,
+    /// 是否来自缓存
+    pub from_cache: bool,
     /// 错误信息（仅状态为 Error 或 Mismatch 时有值）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error_message: Option<String>,
@@ -57,6 +60,7 @@ pub struct HashResult {
 
 /// 哈希计算进度
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HashProgress {
     /// 文件路径
     pub file_path: String,
@@ -68,9 +72,12 @@ pub struct HashProgress {
     pub total_bytes: u64,
 }
 
-/// 批量处理统计信息
+/// 批量处理结果（扁平结构，统计信息直接平铺）
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BatchStatistics {
+#[serde(rename_all = "camelCase")]
+pub struct BatchResult {
+    /// 所有文件的结果
+    pub results: Vec<HashResult>,
     /// 总文件数
     pub total: usize,
     /// 成功数
@@ -83,17 +90,9 @@ pub struct BatchStatistics {
     pub total_time: f64,
 }
 
-/// 批量处理结果
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BatchResult {
-    /// 所有文件的结果
-    pub results: Vec<HashResult>,
-    /// 统计信息
-    pub statistics: BatchStatistics,
-}
-
 /// 历史记录条目
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HistoryEntry {
     /// 文件路径
     pub file_path: String,
@@ -107,6 +106,7 @@ pub struct HistoryEntry {
 
 /// 应用配置
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AppConfig {
     /// 默认算法
     pub algorithm: String,
@@ -132,6 +132,7 @@ impl Default for AppConfig {
 
 /// 验证文件导入条目
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct VerificationEntry {
     /// 算法
     pub algorithm: String,

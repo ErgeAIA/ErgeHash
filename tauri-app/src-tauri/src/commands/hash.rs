@@ -39,6 +39,7 @@ pub async fn calculate_hash(
                 hash_value: cached_hash.clone(),
                 elapsed_time: 0.0,
                 status: HashStatus::Success,
+                from_cache: true,
                 error_message: None,
             });
         }
@@ -60,6 +61,7 @@ pub async fn calculate_hash(
         hash_value,
         elapsed_time: elapsed,
         status: HashStatus::Success,
+        from_cache: false,
         error_message: None,
     })
 }
@@ -119,6 +121,7 @@ pub async fn quick_calculate_hash(
         hash_value,
         elapsed_time: start_time.elapsed().as_secs_f64(),
         status: HashStatus::Success,
+        from_cache: false,
         error_message: None,
     })
 }
