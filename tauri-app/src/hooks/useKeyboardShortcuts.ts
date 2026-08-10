@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { useAppStore } from "@/store/appStore";
-import { openFileDialog, openFolderDialog, scanDirectory } from "@/services/api";
+import { openFileDialog } from "@/services/api";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
-/** 全局快捷键 hook - 匹配原版快捷键绑定 */
+/** 全局快捷键 hook */
 export function useKeyboardShortcuts() {
   const addFiles = useAppStore((s) => s.addFiles);
 
@@ -19,17 +19,10 @@ export function useKeyboardShortcuts() {
         });
       }
 
-      // Ctrl+B: 批量处理（打开文件夹，扫描文件加入列表）
+      // Ctrl+B: 切换侧栏折叠（NavRail 规范快捷键）
       if (e.ctrlKey && e.key === "b") {
         e.preventDefault();
-        void (async () => {
-          const folder = await openFolderDialog();
-          if (!folder) return;
-          const files = await scanDirectory(folder);
-          if (files.length > 0) {
-            addFiles(files);
-          }
-        })();
+        window.dispatchEvent(new CustomEvent("toggle-sidebar"));
       }
 
       // Ctrl+Q: 退出（走 close-requested，确保窗口几何保存）

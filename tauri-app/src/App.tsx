@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "./store/appStore";
 import {
@@ -11,14 +11,16 @@ import {
 } from "./services/api";
 import { onHashProgress, onBatchProgress, onBatchFileComplete, onBatchComplete } from "./services/api";
 import { getCurrentWindow, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { ask } from "@tauri-apps/plugin-dialog";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { MainLayout } from "./components/layout/MainLayout";
-import { Sidebar } from "./components/layout/Sidebar";
-import { Header } from "./components/layout/Header";
-import { StatusBar } from "./components/layout/StatusBar";
-import { MenuBar } from "./components/layout/MenuBar";
-import { ContentArea } from "./components/ContentArea";
+import { NavRail } from "./components/layout/NavRail";
+import { TitleBar } from "./components/layout/TitleBar";
+import { FileList } from "./components/FileList";
+import { HashVerification } from "./components/HashVerification";
+import { ResultSection } from "./components/ResultSection";
+import { FloatingProgress } from "./components/FloatingProgress";
 import { HistoryDialog } from "./components/dialogs/HistoryDialog";
 import { SettingsDialog } from "./components/dialogs/SettingsDialog";
 import { QuickGuideDialog } from "./components/dialogs/QuickGuideDialog";
@@ -42,18 +44,66 @@ function App() {
   const setLastResults = useAppStore((s) => s.setLastResults);
   const setExpectedHash = useAppStore((s) => s.setExpectedHash);
   const updateFileByPath = useAppStore((s) => s.updateFileByPath);
+  const setBytesRead = useAppStore((s) => s.setBytesRead);
+  const setTotalBytes = useAppStore((s) => s.setTotalBytes);
+  const addFiles = useAppStore((s) => s.addFiles);
 
   // 对话框状态
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showQuickGuide, setShowQuickGuide] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  // 侧栏折叠状态（持久化到 localStorage，重启后保持）
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => localStorage.getItem("hvp.ui.nav_collapsed") === "true",
+  );
+
+  // 切换侧栏折叠（同步持久化）
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed((v) => {
+      const next = !v;
+      localStorage.setItem("hvp.ui.nav_collapsed", String(next));
+      return next;
+    });
+  }, []);
+
+  // 监听 Ctrl+B 触发的侧栏切换事件
+  useEffect(() => {
+    const onToggle = () => toggleSidebar();
+    window.addEventListener("toggle-sidebar", onToggle);
+    return () => window.removeEventListener("toggle-sidebar", onToggle);
+  }, [toggleSidebar]);
+
+  // 重要：Tauri 2 的文件拖放由 Rust 层接管（onDragDropEvent / WindowEvent::DragDrop），
+  // 与浏览器原生 drag/drop 事件是两套独立机制。前端 onDragDropEvent 注册成功后，
+  // Rust 侧 WindowEvent::DragDrop 不再派发（单消费者机制）。
+  // 因此**不要**在全局对 drop/dragover 做 preventDefault 来"辅助"拖放——这会：
+  //   1. 与 Tauri 拖放事件竞态，干扰 FileList 中基于 HTML5 drag 事件的拖拽高亮；
+  //   2. 在 WebView2 下可能吞掉原生事件，使 React 的 onDragEnter/Leave 高亮不稳定。
+  // 拖放的真实数据来源是 FileList.tsx 中的 getCurrentWebview().onDragDropEvent(payload.paths)。
+  useEffect(() => {
+    // 仅阻止"非文件拖放"（如拖入图片/链接）被浏览器直接打开，绝不影响文件拖放。
+    const preventNonFileDrop = (e: DragEvent) => {
+      if (e.dataTransfer && !Array.from(e.dataTransfer.types).includes("Files")) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("dragover", preventNonFileDrop);
+    window.addEventListener("drop", preventNonFileDrop);
+    return () => {
+      window.removeEventListener("dragover", preventNonFileDrop);
+      window.removeEventListener("drop", preventNonFileDrop);
+    };
+  }, []);
 
   // 注册全局快捷键
   useKeyboardShortcuts();
   const addToast = useToastStore((s) => s.addToast);
 
   // 初始化：从后端加载配置
+  // 注意：窗口 show 由 Rust 侧 setup 钩子负责，此处不调用 show()。
+  // 原因：JS 侧 show 依赖 React 挂载 + IPC 链路，若 getConfig() 慢/挂起则窗口永不显示；
+  // 且与 WebView2 渲染存在时序竞态。Rust 侧 setup 在事件循环前同步执行更稳健。
   useEffect(() => {
     async function initConfig() {
       try {
@@ -142,6 +192,8 @@ function App() {
         await onHashProgress((payload) => {
           setCurrentFile(payload.filePath);
           setProgress(payload.progress);
+          setBytesRead(payload.bytesRead);
+          setTotalBytes(payload.totalBytes);
           setStatusMessage("calculating");
         }),
       );
@@ -167,11 +219,12 @@ function App() {
           );
           setCurrentFile(payload.filePath);
 
-          // 回填文件列表状态（供状态色与「比较哈希值」使用）
+          // 后端 success 表示「计算成功」而非「验证通过」，映射为 computed
+          const displayStatus = payload.status === "success" ? "computed" : payload.status;
           updateFileByPath(
             payload.filePath,
             payload.hashValue,
-            payload.status,
+            displayStatus as "computed" | "mismatch" | "error",
             payload.errorMessage,
           );
         }),
@@ -218,6 +271,14 @@ function App() {
           }
         }),
       );
+
+      // Rust 侧文件拖放兜底（on_window_event 转发）
+      unlisteners.push(
+        await getCurrentWebview().listen<string[]>("files-dropped", (e) => {
+          const paths = e.payload;
+          if (paths && paths.length > 0) addFiles(paths);
+        }),
+      );
     }
 
     setupListeners();
@@ -234,6 +295,9 @@ function App() {
     setResultText,
     setLastResults,
     updateFileByPath,
+    setBytesRead,
+    setTotalBytes,
+    addFiles,
   ]);
 
   // 监听自定义事件（菜单栏和侧边栏触发）
@@ -290,25 +354,22 @@ function App() {
 
   return (
     <MainLayout>
-      {/* 左侧边栏 */}
-      <Sidebar
-        onShowHistory={() => setShowHistory(true)}
-        onShowSettings={() => setShowSettings(true)}
-      />
+      {/* 顶栏：横跨整个窗口顶部，与左侧 NavRail 同色一体 */}
+      <TitleBar collapsed={sidebarCollapsed} onToggleCollapsed={toggleSidebar} />
 
-      {/* 右侧主内容区 */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* 菜单栏 */}
-        <MenuBar />
+      {/* 下方横向：左侧导航（与顶栏一体浅黑） | 右侧深色圆角内容块 */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* 左侧导航栏：与顶栏同色一体，无圆角无边距 */}
+        <div className="flex shrink-0 flex-col overflow-hidden bg-sidebar transition-[width] duration-200" style={{ width: sidebarCollapsed ? 64 : 220 }}>
+          <NavRail collapsed={sidebarCollapsed} onToggleCollapsed={toggleSidebar} />
+        </div>
 
-        {/* 顶部标题栏 */}
-        <Header />
-
-        {/* 中间内容区 */}
-        <ContentArea />
-
-        {/* 底部状态栏 */}
-        <StatusBar />
+        {/* 右侧主内容区：深色圆角卡片，与左侧浅黑区形成对比 */}
+        <div className="m-2 flex flex-1 flex-col gap-8 overflow-y-auto overflow-x-hidden rounded-2xl bg-panel px-6 py-6">
+          <FileList />
+          <HashVerification />
+          <ResultSection />
+        </div>
       </div>
 
       {/* 对话框 */}
@@ -317,6 +378,8 @@ function App() {
       <QuickGuideDialog open={showQuickGuide} onOpenChange={setShowQuickGuide} />
       <ExportDialog open={showExport} onOpenChange={setShowExport} />
       <ToastHost />
+      {/* 悬浮计算进度 toast */}
+      <FloatingProgress />
     </MainLayout>
   );
 }

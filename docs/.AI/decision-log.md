@@ -4,6 +4,19 @@
 
 ---
 
+## DEC-008: 执行 DEC-007 清理（删除已过期打包件 + 归档旧文档）
+
+- **日期**：2026-08-10
+- **背景**：桌面验收仍在进行中（`npm run tauri dev`），用户确认先行执行 DEC-007 第 3 条的清理动作。
+- **决策**：
+  1. **删除已过期打包件**：`scripts/`、`pyproject.toml`、`requirements.txt`、`uv.lock`、`HashValidatorPlus.spec`、`resources/`（均仅服务于 PyQt 打包，Tauri 有替代）。
+  2. **保留 `src/`**（PyQt5 模块）作桌面验收行为对照；验收通过后另行确认删除。
+  3. **配套同步**：根 `.gitignore` 移除 `!resources/icons/` 放行规则；旧 PyQt 文档（`docs/README.md`、`docs/QUICK_START.md`、`docs/PyQt_to_Tauri2_迁移指令.md`）归档至 `docs/archive/`；`CLAUDE.md` 与 `.github/copilot-instructions.md` 更新为当前结构并标注过时。
+- **影响**：仓库根目录 Python 遗留仅剩 `src/`；`docs/.AI/` 过程文档（含本文件）中的历史路径引用保持原样，不回溯修改。
+- **状态**：active（待 `src/` 删除与 `tauri-app/` 上移，见 DEC-007）
+
+---
+
 ## DEC-007: 迁移收尾（清理 PyQt + tauri-app 上移根目录）暂缓至桌面验收完成
 
 - **日期**：2026-08-10

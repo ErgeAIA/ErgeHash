@@ -29,6 +29,10 @@ interface AppState {
   expectedHash: string;
   /** 最近一次批量结果（供导出/复制使用） */
   lastResults: HashResult[] | null;
+  /** 当前文件已读取字节数 */
+  bytesRead: number;
+  /** 当前文件总字节数 */
+  totalBytes: number;
 
   // ---- Actions ----
   /** 添加文件到列表 */
@@ -37,6 +41,8 @@ interface AppState {
   removeFile: (index: number) => void;
   /** 清空文件列表 */
   clearFiles: () => void;
+  /** 仅清空计算结果（保留文件列表与预期哈希值） */
+  clearResults: () => void;
   /** 设置算法（持久化） */
   setAlgorithm: (algo: HashAlgorithm) => void;
   /** 直接设置主题（初始化用，不持久化） */
@@ -77,6 +83,10 @@ interface AppState {
   setExpectedHash: (hash: string) => void;
   /** 设置最近一次批量结果 */
   setLastResults: (results: HashResult[] | null) => void;
+  /** 设置已读取字节数 */
+  setBytesRead: (value: number) => void;
+  /** 设置总字节数 */
+  setTotalBytes: (value: number) => void;
   /** 复制结果到剪贴板，返回是否成功 */
   copyResult: () => Promise<boolean>;
 }
@@ -94,6 +104,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   statusMessage: "ready",
   expectedHash: "",
   lastResults: null,
+  bytesRead: 0,
+  totalBytes: 0,
 
   addFiles: (files) =>
     set((state) => {
@@ -117,7 +129,22 @@ export const useAppStore = create<AppState>((set, get) => ({
       progress: 0,
       currentFile: null,
       lastResults: null,
+      expectedHash: "",
+      bytesRead: 0,
+      totalBytes: 0,
     }),
+
+  clearResults: () =>
+    set((state) => ({
+      resultText: "",
+      progress: 0,
+      currentFile: null,
+      lastResults: null,
+      bytesRead: 0,
+      totalBytes: 0,
+      statusMessage: "ready",
+      fileList: state.fileList.map((f) => ({ path: f.path })),
+    })),
 
   setAlgorithm: (algo) => {
     set({ algorithm: algo });
@@ -188,6 +215,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   setExpectedHash: (hash) => set({ expectedHash: hash }),
 
   setLastResults: (results) => set({ lastResults: results }),
+
+  setBytesRead: (value) => set({ bytesRead: value }),
+
+  setTotalBytes: (value) => set({ totalBytes: value }),
 
   copyResult: async () => {
     // 优先复制结构化哈希行（文件名: 哈希），对齐 PyQt 语义；无结果时回退复制整个结果区

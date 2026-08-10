@@ -4,9 +4,9 @@
   "version": "0.3.0",
   "identifier": "com.hashvalidatorplus.app",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "pnpm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "pnpm run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -17,8 +17,9 @@
         "height": 750,
         "minWidth": 800,
         "minHeight": 600,
-        "decorations": true,
-        "transparent": false
+        "decorations": false,
+        "visible": false,
+        "dragDropEnabled": true
       }
     ],
     "security": {

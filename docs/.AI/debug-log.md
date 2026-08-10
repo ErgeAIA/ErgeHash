@@ -4,6 +4,20 @@
 
 ---
 
+## BUG-005: 文件拖放（drag-drop）完全失效 — Tauri 2 拖放事件与全局 preventDefault 竞态
+
+- **日期**：2026-08-10
+- **现象**：文件只能通过点击窗口弹出文件选择对话框添加，无法把文件直接拖入窗口加载。
+- **根因分析**：
+  - Tauri 2 的拖放由 **Rust 层接管**（`getCurrentWebview().onDragDropEvent` / `WindowEvent::DragDrop`），与浏览器原生 `drag`/`drop` 事件是两套独立机制。前端 `onDragDropEvent` 注册成功后，Rust 侧 `WindowEvent::DragDrop` 不再派发（**单消费者**）。因此整条拖放链路唯一依赖 `FileList.tsx` 的 `onDragDropEvent` 成功，App.tsx 中监听的 `files-dropped`（Rust 兜底）在前端注册成功后**不会触发**——`.catch` 里"依赖 Rust 兜底"的注释是误导性的。
+  - `App.tsx` 第 77-90 行的 `useEffect` 在**整个 window** 上注册了原生 `dragover`/`drop` 的 `preventDefault`（注释误以为"WebView2 只有 preventDefault 才触发 onDragDropEvent"）。这与 Tauri 拖放机制**竞态**：在 WebView2 下会干扰页面原生 drag 事件，使 `FileList` 基于 `e.dataTransfer.types.includes("Files")` 的 HTML5 拖拽高亮不稳定，并制造两套机制同时处理同一拖放的竞态，导致拖放实际无效。
+  - 修复：移除全局 `preventDefault`，改为仅阻止"非文件拖放"（拖入图片/链接）被浏览器直接打开；明确 Tauri 拖放数据来自 `onDragDropEvent(payload.paths)`。
+- **影响**：拖放功能不可用，只能走文件选择对话框。
+- **状态**：resolved（移除冲突的全局 preventDefault；capabilities 中 `core:default` 已含 `core:webview:allow-on-drag-drop-event`，权限充足；`onDragDropEvent` 链路 `paths → processPaths → addFiles` 完整可用）
+- **验证建议**：`tauri dev` 运行后拖入文件，观察 `FileList.tsx` 第 95 行 `[drag-drop]` 日志；若仍无日志，检查 webview 构建是否带 drag-drop 支持（`tauri.conf.json` 中 `app.windows[].dragDropEnabled` 必须为 true，当前已为 true）。
+
+---
+
 ## BUG-001: 暂停/恢复功能无效 — pause_flag 在哈希计算循环中从未被轮询
 
 - **日期**：2026-08-09
@@ -43,3 +57,14 @@
 - **根因分析**：两个大小完全相同的不同文件命中同一缓存条目，返回错误的哈希值。该设计沿袭自 PyQt 原版（`batch_manager.py` 的 `hash_cache[(file_size, algorithm)]`），迁移时原样保留。
 - **影响**：同大小文件批量校验时可能得到错误哈希（正确性风险）。
 - **状态**：resolved（P0-4：缓存键改为 `(文件路径, 文件大小, 修改时间纳秒, 算法)`，路径保证同文件、mtime 检测改动）
+
+---
+
+## BUG-005: 自绘标题栏后窗口无法拖拽移动 — capabilities 缺少窗口操作权限
+
+- **日期**：2026-08-10
+- **现象**：适配自定义标题栏（`decorations: false` + `data-tauri-drag-region`）后，窗口能正常显示，但拖拽标题栏无法移动窗口；最小化/最大化/关闭按钮也无效。
+- **根因分析**：`src-tauri/capabilities/default.json` 从未配置任何 `core:window:*` 权限。Tauri 2 的 `data-tauri-drag-region` 属性底层调用 `window.start_dragging()` IPC 命令，与最小化/最大化/关闭/setSize/setPosition 一样都需要 capabilities 显式授权。无权限时属性被静默忽略，不报错但不生效。对比 AIVault（同款自绘标题栏，能正常拖拽）的 `capabilities/default.json` 显式包含 `core:window:allow-start-dragging` 等权限。
+- **影响**：窗口无法拖拽移动；TitleBar 的最小化/最大化/关闭按钮全部失效；App.tsx 恢复窗口几何的 setPosition/setSize 也被权限拦截。
+- **状态**：resolved（补齐 `core:window:allow-start-dragging` / `allow-minimize` / `allow-toggle-maximize` / `allow-is-maximized` / `allow-close` / `allow-set-size` / `allow-set-position` / `allow-show` 权限）
+- **教训**：Tauri 2 的 capabilities 权限模型是白名单制，HTML 属性（`data-tauri-drag-region`）和 JS API（`window.minimize()` 等）都依赖对应权限授权。新增自绘标题栏时必须同步配置窗口操作权限，否则属性/API 被静默忽略且无报错，难以定位。

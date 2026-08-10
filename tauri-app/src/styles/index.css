@@ -23,12 +23,21 @@
   --success-bg: #C8E6C9;
   --mismatch-bg: #FFCDD2;
   --error-bg: #FFE0B2;
+  --computed-bg: #E3F2FD;
+  --scrim: rgba(0, 0, 0, 0.5);
   --radius: 4px;
+  --close-btn-bg: transparent;
+  --close-btn-hover-bg: #e81123;
+  --close-btn-fg: var(--muted-foreground);
+  --close-btn-hover-fg: #ffffff;
 }
 
 .dark {
-  --background: #1e1e1e;
+  /* 根容器 / 全屏底色 + 顶栏/侧栏：浅黑一体（L 形区） */
+  --background: #1c1c1e;
   --foreground: #e0e0e0;
+  /* 右侧内容区圆角块：比 L 形区更深，形成对比 */
+  --panel: #0d0d0d;
   --card: #2d2d2d;
   --card-foreground: #e0e0e0;
   --primary: #4CAF50;
@@ -40,14 +49,21 @@
   --warning: #FF9800;
   --warning-foreground: #ffffff;
   --muted: #3d3d3d;
-  --muted-foreground: #999999;
-  --border: #4d4d4d;
+  --muted-foreground: #9ca3af;
+  --border: #3a3a3c;
   --ring: #4CAF50;
-  --sidebar-bg: #252525;
+  /* 侧边栏/标题栏底色：与 --background 一致，顶栏+NavRail 一体浅黑 */
+  --sidebar-bg: #1c1c1e;
   --success-bg: #1B5E20;
   --mismatch-bg: #B71C1C;
   --error-bg: #E65100;
+  --computed-bg: #0D47A1;
+  --scrim: rgba(0, 0, 0, 0.7);
   --radius: 4px;
+  --close-btn-bg: transparent;
+  --close-btn-hover-bg: #e81123;
+  --close-btn-fg: var(--muted-foreground);
+  --close-btn-hover-fg: #ffffff;
 }
 
 /* 全局基础样式 */
@@ -152,6 +168,10 @@ body {
   background-color: var(--sidebar-bg);
 }
 
+.bg-panel {
+  background-color: var(--panel);
+}
+
 .bg-success {
   background-color: var(--success-bg);
 }
@@ -164,6 +184,59 @@ body {
   background-color: var(--error-bg);
 }
 
+.bg-computed {
+  background-color: var(--computed-bg);
+}
+
+.bg-scrim {
+  background-color: var(--scrim);
+}
+
 .rounded-default {
   border-radius: var(--radius);
+}
+
+/* 顶栏菜单下拉动画（替代 framer-motion，150ms 淡入下移） */
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menu-panel {
+  animation: menuIn 0.15s ease;
+}
+
+/* 关闭按钮语义色：常态透明底灰字，hover 红底白字 */
+.close-btn {
+  background-color: var(--close-btn-bg);
+  color: var(--close-btn-fg);
+}
+
+.close-btn:hover {
+  background-color: var(--close-btn-hover-bg);
+  color: var(--close-btn-hover-fg);
+}
+
+/* NavRail：滚动条隐藏 */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* NavRail：分组展开/收起动画（max-height 方案，200ms cubic-bezier 与宽度过渡一致） */
+.nav-group-children {
+  max-height: 0;
+  transition: max-height 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-group-children--expanded {
+  max-height: 500px;
 }

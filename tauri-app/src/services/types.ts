@@ -81,8 +81,8 @@ export interface VerificationEntry {
   algorithm: string;
 }
 
-/** 文件列表项状态 */
-export type FileItemStatus = "success" | "mismatch" | "error" | undefined;
+/** 文件列表项状态：computed=已计算但未验证, success=验证匹配, mismatch=验证不匹配, error=计算出错 */
+export type FileItemStatus = "computed" | "success" | "mismatch" | "error" | undefined;
 
 /** 文件列表项（前端 store 内部结构，非后端 DTO） */
 export interface FileItem {

@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 
+use tauri::{DragDropEvent, Emitter, Manager, WindowEvent};
+
 mod commands;
 mod hashing;
 mod models;
@@ -52,6 +54,30 @@ pub fn run() {
             cancel_flag: Arc::new(AtomicBool::new(false)),
             hash_cache: Arc::new(Mutex::new(HashMap::new())),
             batch_results: Arc::new(Mutex::new(Vec::new())),
+        })
+        // 窗口配置 visible:false——在 setup 中尺寸定好后再显示，杜绝首帧闪屏
+        // 注意：show 必须在 Rust 侧调用，而非 JS 侧。
+        // 原因：JS 侧 show 依赖 React 挂载 + IPC 链路，若 getConfig() 慢/挂起则窗口永不显示；
+        // 且 JS show 与 WebView2 渲染存在时序竞态。Rust 侧 setup 在 run() 前同步执行，
+        // 此时 WebView2 尚未加载页面，show 只显示空窗口容器，页面随后填充，无白屏。
+        // 文件拖放兜底：Rust 侧捕获 DragDrop 事件并转发前端
+        // 前端 onDragDropEvent 依赖 tauri://drag-* 事件链路，若该链路异常（权限/版本问题）
+        // 拖入文件会显示"被拒"图标且列表不加文件；此兜底走 on_window_event 最底层事件，
+        // 只要 wry 拖放生效即可捕获，与前端事件系统解耦。
+        .on_window_event(|window, event| {
+            if let WindowEvent::DragDrop(DragDropEvent::Drop { paths, .. }) = event {
+                let paths_vec: Vec<String> = paths
+                    .iter()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .collect();
+                let _ = window.emit("files-dropped", paths_vec);
+            }
+        })
+        .setup(|app| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+            }
+            Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             // 哈希计算

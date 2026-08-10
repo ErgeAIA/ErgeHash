@@ -9,10 +9,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { getHistory } from "@/services/api";
+import { getHistory, clearHistory as apiClearHistory } from "@/services/api";
 import { useAppStore } from "@/store/appStore";
+import { useToastStore } from "@/store/toastStore";
 import type { HistoryEntry } from "@/services/types";
-import { History, FileText } from "lucide-react";
+import { History, FileText, Trash2 } from "lucide-react";
+import { ask } from "@tauri-apps/plugin-dialog";
 
 interface HistoryDialogProps {
   open: boolean;
@@ -24,6 +26,7 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
   const { t } = useTranslation();
   const setExpectedHash = useAppStore((s) => s.setExpectedHash);
   const setAlgorithm = useAppStore((s) => s.setAlgorithm);
+  const addToast = useToastStore((s) => s.addToast);
 
   const [history, setHistory] = React.useState<HistoryEntry[]>([]);
   const [selectedIndex, setSelectedIndex] = React.useState<number>(-1);
@@ -60,6 +63,20 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
     setAlgorithm(entry.algorithm);
     onOpenChange(false);
   }, [selectedIndex, history, setExpectedHash, setAlgorithm, onOpenChange]);
+
+  /** 清空历史记录 */
+  const handleClearHistory = React.useCallback(async () => {
+    const ok = await ask(t("clear_history_confirm"), { title: t("warning") });
+    if (!ok) return;
+    try {
+      await apiClearHistory();
+      setHistory([]);
+      setSelectedIndex(-1);
+      addToast("success", t("history_cleared"));
+    } catch {
+      addToast("error", t("clear_history_failed"));
+    }
+  }, [t, addToast]);
 
   /** 双击使用历史记录项 */
   const handleDoubleClick = React.useCallback(
@@ -138,6 +155,16 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
         </div>
 
         <DialogFooter>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleClearHistory}
+            disabled={history.length === 0}
+          >
+            <Trash2 className="mr-1 h-4 w-4" />
+            {t("clear_history")}
+          </Button>
+          <div className="flex-1" />
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

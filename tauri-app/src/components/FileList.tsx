@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback, useRef, type DragEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { FolderPlus, FilePlus, Trash2, X, Copy, Hash } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { X, Copy, Hash, FileSearch } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
-import { scanDirectory, openFileDialog, openFolderDialog } from "@/services/api";
+import { scanDirectory, openFileDialog } from "@/services/api";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { ask } from "@tauri-apps/plugin-dialog";
@@ -92,6 +91,8 @@ export function FileList() {
     getCurrentWebview()
       .onDragDropEvent((event) => {
         const ev = event.payload;
+        // 调试日志：确认拖放事件链路是否触发
+        console.log("[drag-drop]", ev.type, ev);
         switch (ev.type) {
           case "enter":
           case "over":
@@ -108,38 +109,44 @@ export function FileList() {
       })
       .then((fn) => {
         unlisten = fn;
+      })
+      .catch((err) => {
+        // 事件监听注册失败（权限/版本问题）。注意：Tauri 2 前端 onDragDropEvent 注册成功后
+        // Rust 侧 WindowEvent::DragDrop 不再派发（单消费者），此处无法回退到 Rust 兜底，
+        // 拖放将完全失效——需确保 capabilities 已授权 core:webview:allow-on-drag-drop-event。
+        console.error("[drag-drop] onDragDropEvent 注册失败", err);
       });
     return () => {
       unlisten?.();
     };
   }, [processPaths]);
 
-  /** 点击添加文件按钮 */
-  const handleAddFiles = useCallback(async () => {
-    try {
-      const paths = await openFileDialog();
-      if (paths && paths.length > 0) {
-        addFiles(paths);
-      }
-    } catch {
-      // 用户取消选择，忽略
-    }
-  }, [addFiles]);
+  /** 对话框打开状态锁：防止对话框关闭后 WebView2 重放点击导致无限弹窗 */
+  const dialogOpenRef = useRef(false);
 
-  /** 点击添加文件夹按钮 */
-  const handleAddFolder = useCallback(async () => {
-    try {
-      const dirPath = await openFolderDialog();
-      if (dirPath) {
-        const files = await scanDirectory(dirPath);
-        if (files.length > 0) {
-          addFiles(files);
+  /** 点击加载区（空态）弹出添加文件对话框 */
+  const handleZoneClick = useCallback(
+    async (e?: React.MouseEvent) => {
+      // 忽略对话框关闭瞬间的重放点击，避免无限弹窗
+      if (dialogOpenRef.current) return;
+      e?.preventDefault();
+      dialogOpenRef.current = true;
+      try {
+        const paths = await openFileDialog();
+        if (paths && paths.length > 0) {
+          addFiles(paths);
         }
+      } catch {
+        // 用户取消选择，忽略
+      } finally {
+        // 延迟释放锁，吞掉对话框关闭后立即重放的一次点击
+        setTimeout(() => {
+          dialogOpenRef.current = false;
+        }, 300);
       }
-    } catch {
-      // 用户取消选择，忽略
-    }
-  }, [addFiles]);
+    },
+    [addFiles],
+  );
 
   /** 点击清空列表按钮（带确认） */
   const handleClearClick = useCallback(async () => {
@@ -209,34 +216,53 @@ export function FileList() {
         return "bg-mismatch";
       case "error":
         return "bg-error";
+      case "computed":
+        return "bg-computed";
       default:
         return "";
     }
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      {/* 标签 */}
-      <label className="text-xs text-muted-foreground">
+    <section className="flex flex-col gap-3">
+      {/* 二级标题 */}
+      <h2 className="text-lg font-semibold text-foreground">
         {t("file_list_label")}
-      </label>
+      </h2>
 
-      {/* 拖放区域 + 文件列表 */}
+      {/* 拖放区域 + 文件列表：常驻圆角边框卡片，拖拽时显示主色虚线框 */}
       <div
         className={cn(
-          "min-h-[120px] max-h-[200px] overflow-y-auto rounded-default border bg-card",
+          "relative min-h-[200px] overflow-y-auto rounded-xl border border-white/10 bg-white/5",
           isDragOver
-            ? "border-2 border-dashed border-[var(--primary)] bg-primary/5"
-            : "border-border",
+            ? "border-2 border-dashed border-[var(--primary)] bg-primary/10"
+            : "",
+          fileList.length === 0 ? "cursor-pointer" : "",
         )}
+        onClick={fileList.length === 0 ? handleZoneClick : undefined}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
+        {/* 浮动清除图标（列表非空时显示在右上角） */}
+        {fileList.length > 0 && (
+          <button
+            className="absolute right-2 top-2 z-10 rounded-full bg-muted p-1 text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
+            onClick={(e) => {
+              e.stopPropagation();
+              void handleClearClick();
+            }}
+            title={t("clear_list")}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+
         {fileList.length === 0 ? (
-          <div className="flex h-[120px] items-center justify-center text-sm text-muted-foreground">
-            {t("quick_tip")}
+          <div className="flex h-[200px] flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+            <FileSearch className="h-10 w-10 opacity-30" />
+            <span>{t("drag_hint")}</span>
           </div>
         ) : (
           <ul className="divide-y divide-border">
@@ -247,6 +273,7 @@ export function FileList() {
                   "flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 cursor-default",
                   getStatusBg(file.status),
                 )}
+                onClick={(e) => e.stopPropagation()}
                 onContextMenu={(e) => handleContextMenu(e, index)}
                 title={file.path}
               >
@@ -263,6 +290,9 @@ export function FileList() {
                 )}
 
                 {/* 状态图标 */}
+                {file.status === "computed" && (
+                  <span className="text-xs text-muted-foreground">&#10003;</span>
+                )}
                 {file.status === "success" && (
                   <span className="text-xs text-primary">&#10003;</span>
                 )}
@@ -285,23 +315,6 @@ export function FileList() {
             ))}
           </ul>
         )}
-      </div>
-
-      {/* 操作按钮 */}
-      <div className="flex items-center gap-2">
-        <Button variant="default" size="sm" onClick={handleAddFiles}>
-          <FilePlus className="mr-1 h-4 w-4" />
-          {t("add_files")}
-        </Button>
-        <Button variant="secondary" size="sm" onClick={handleAddFolder}>
-          <FolderPlus className="mr-1 h-4 w-4" />
-          {t("add_folder")}
-        </Button>
-        <div className="flex-1" />
-        <Button variant="destructive" size="sm" onClick={handleClearClick}>
-          <Trash2 className="mr-1 h-4 w-4" />
-          {t("clear_list")}
-        </Button>
       </div>
 
       {/* 右键菜单 */}
@@ -349,6 +362,6 @@ export function FileList() {
           </div>
         </>
       )}
-    </div>
+    </section>
   );
 }
