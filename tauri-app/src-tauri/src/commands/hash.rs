@@ -6,7 +6,7 @@ use std::time::Instant;
 
 use tauri::{AppHandle, Emitter, State};
 
-use crate::hashing::{file_cache_key, make_hasher};
+use crate::hashing::{file_cache_key, make_hasher, CHUNK_SIZE};
 use crate::models::{HashAlgorithm, HashProgress, HashResult, HashStatus};
 use crate::AppState;
 
@@ -91,7 +91,7 @@ pub async fn quick_calculate_hash(
     };
 
     let mut file = File::open(path).map_err(|e| e.to_string())?;
-    let mut buffer = [0u8; 8192];
+    let mut buffer = vec![0u8; CHUNK_SIZE];
     let start_time = Instant::now();
 
     let mut hasher = make_hasher(algorithm);
@@ -156,7 +156,7 @@ fn do_calculate_hash(
     let file_size = path.metadata().map_err(|e| e.to_string())?.len();
 
     let mut file = File::open(path).map_err(|e| e.to_string())?;
-    let mut buffer = [0u8; 8192];
+    let mut buffer = vec![0u8; CHUNK_SIZE];
     let mut total_read = 0u64;
 
     let mut hasher = make_hasher(algorithm);
