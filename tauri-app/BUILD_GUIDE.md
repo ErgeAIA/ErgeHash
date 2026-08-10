@@ -12,12 +12,12 @@
 
 ### 开发模式
 ```bash
-npm run tauri dev
+pnpm run tauri dev
 ```
 
 ### 生产打包
 ```bash
-npm run tauri build
+pnpm run tauri build
 ```
 
 ## 打包输出

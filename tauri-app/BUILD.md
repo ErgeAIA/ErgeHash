@@ -8,7 +8,7 @@ HashValidatorPlus 是一个使用 Tauri 2 + React + Rust 构建的文件哈希�
 
 - Node.js 18+ (用于前端构建)
 - Rust 1.75+ (用于后端编译)
-- Tauri CLI (如果未安装，运行 `npm install -g @tauri-apps/cli`)
+- Tauri CLI (如果未安装，运行 `pnpm add -g @tauri-apps/cli`)
 
 ## 快速开始
 
@@ -16,16 +16,16 @@ HashValidatorPlus 是一个使用 Tauri 2 + React + Rust 构建的文件哈希�
 
 ```bash
 cd tauri-app
-npm install
-npm run tauri dev
+pnpm install
+pnpm run tauri dev
 ```
 
 ### 生产打包
 
 ```bash
 cd tauri-app
-npm install
-npm run tauri build
+pnpm install
+pnpm run tauri build
 ```
 
 ## 打包输出
