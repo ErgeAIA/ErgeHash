@@ -15,6 +15,7 @@ import {
   generateVerificationFile,
 } from "@/services/api";
 import { FileDown, FileSpreadsheet, FileJson, ShieldCheck } from "lucide-react";
+import { useToastStore } from "@/store/toastStore";
 
 interface ExportDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
   const { t } = useTranslation();
   const lastResults = useAppStore((s) => s.lastResults);
   const setStatusMessage = useAppStore((s) => s.setStatusMessage);
+  const addToast = useToastStore((s) => s.addToast);
 
   const hasResults = !!lastResults && lastResults.length > 0;
   const canVerification = lastResults?.length === 1;
@@ -58,9 +60,11 @@ export function ExportDialog({ open, onOpenChange }: ExportDialogProps) {
       }
 
       setStatusMessage(`${t("export_success")} ${path}`);
+      addToast("success", `${t("export_success")} ${path}`);
       onOpenChange(false);
     } catch {
       setStatusMessage(t("export_failed"));
+      addToast("error", t("export_failed"));
     }
   };
 

@@ -25,6 +25,7 @@ import { QuickGuideDialog } from "./components/dialogs/QuickGuideDialog";
 import { ExportDialog } from "./components/dialogs/ExportDialog";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { ToastHost } from "./components/ui/toast";
+import { useToastStore } from "./store/toastStore";
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -50,6 +51,7 @@ function App() {
 
   // 注册全局快捷键
   useKeyboardShortcuts();
+  const addToast = useToastStore((s) => s.addToast);
 
   // 初始化：从后端加载配置
   useEffect(() => {
@@ -238,6 +240,7 @@ function App() {
       const ok = await ask(t("clear_history_confirm"), { title: t("warning") });
       if (ok) {
         await apiClearHistory();
+        addToast("success", t("history_cleared"));
       }
     };
     const onImportVerification = async () => {
@@ -251,6 +254,7 @@ function App() {
         }
         setExpectedHash(entries.map((e) => e.hashValue).join("\n"));
         setStatusMessage(`${t("import_success")} ${entries.length}`);
+        addToast("success", t("import_success", { count: entries.length }));
       } catch {
         setStatusMessage(t("import_error"));
       }
@@ -271,7 +275,7 @@ function App() {
       window.removeEventListener("clear-history", onClearHistory);
       window.removeEventListener("import-verification", onImportVerification);
     };
-  }, [t, setStatusMessage, setExpectedHash]);
+  }, [t, setStatusMessage, setExpectedHash, addToast]);
 
   return (
     <MainLayout>
