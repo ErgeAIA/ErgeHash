@@ -77,11 +77,11 @@ interface AppState {
   setExpectedHash: (hash: string) => void;
   /** 设置最近一次批量结果 */
   setLastResults: (results: HashResult[] | null) => void;
-  /** 复制结果到剪贴板 */
-  copyResult: () => void;
+  /** 复制结果到剪贴板，返回是否成功 */
+  copyResult: () => Promise<boolean>;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
   fileList: [],
   algorithm: "sha256",
   theme: "light",
@@ -189,26 +189,28 @@ export const useAppStore = create<AppState>((set) => ({
 
   setLastResults: (results) => set({ lastResults: results }),
 
-  copyResult: () =>
-    set((state) => {
-      // 优先复制结构化哈希行（文件名: 哈希），对齐 PyQt 语义；无结果时回退复制整个结果区
-      let text = "";
-      if (state.lastResults && state.lastResults.length > 0) {
-        text = state.lastResults
-          .filter((r) => r.hashValue)
-          .map(
-            (r) =>
-              `${r.filePath.split(/[/\\]/).pop() ?? r.filePath}: ${r.hashValue}`,
-          )
-          .join("\n");
-      } else if (state.resultText) {
-        text = state.resultText;
-      }
-      if (text) {
-        void writeText(text).catch(() => {
-          // 剪贴板写入失败时静默处理
-        });
-      }
-      return state;
-    }),
+  copyResult: async () => {
+    // 优先复制结构化哈希行（文件名: 哈希），对齐 PyQt 语义；无结果时回退复制整个结果区
+    const { lastResults, resultText } = get();
+    let text = "";
+    if (lastResults && lastResults.length > 0) {
+      text = lastResults
+        .filter((r) => r.hashValue)
+        .map(
+          (r) =>
+            `${r.filePath.split(/[/\\]/).pop() ?? r.filePath}: ${r.hashValue}`,
+        )
+        .join("\n");
+    } else if (resultText) {
+      text = resultText;
+    }
+    if (!text) return false;
+    try {
+      await writeText(text);
+      return true;
+    } catch {
+      // 剪贴板写入失败
+      return false;
+    }
+  },
 }));

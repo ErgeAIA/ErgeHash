@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "@/store/appStore";
+import { useToastStore } from "@/store/toastStore";
 import { openFileDialog, openFolderDialog, scanDirectory } from "@/services/api";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,7 @@ export function MenuBar() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const addFiles = useAppStore((s) => s.addFiles);
   const copyResult = useAppStore((s) => s.copyResult);
+  const addToast = useToastStore((s) => s.addToast);
 
   // 菜单组定义
   const menuGroups: MenuGroup[] = [
@@ -100,7 +102,9 @@ export function MenuBar() {
         void getCurrentWindow().close();
         break;
       case "copy_hash":
-        copyResult();
+        if (await copyResult()) {
+          addToast("success", t("copied_to_clipboard"));
+        }
         break;
       case "view_history":
         window.dispatchEvent(new CustomEvent("show-history"));

@@ -4,6 +4,7 @@ import { Play, Pause, Square, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppStore } from "@/store/appStore";
+import { useToastStore } from "@/store/toastStore";
 import {
   startBatchValidation,
   pauseHashCalculation,
@@ -27,6 +28,11 @@ export function ResultSection() {
   const setCurrentFile = useAppStore((s) => s.setCurrentFile);
   const setStatusMessage = useAppStore((s) => s.setStatusMessage);
   const copyResult = useAppStore((s) => s.copyResult);
+  const addToast = useToastStore((s) => s.addToast);
+  const handleCopyResult = useCallback(async () => {
+    const ok = await copyResult();
+    if (ok) addToast("success", t("copied_to_clipboard"));
+  }, [copyResult, addToast, t]);
 
   /** 开始批量校验 */
   const handleStartBatch = useCallback(async () => {
@@ -60,6 +66,7 @@ export function ResultSection() {
     setCurrentFile,
     setResultText,
     setStatusMessage,
+    handleCopyResult,
   ]);
 
   /** 暂停/继续切换 */
@@ -160,7 +167,7 @@ export function ResultSection() {
           <Button
             variant="secondary"
             size="sm"
-            onClick={copyResult}
+            onClick={handleCopyResult}
             disabled={!resultText}
           >
             <Copy className="mr-1 h-4 w-4" />
