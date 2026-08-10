@@ -107,7 +107,25 @@ mod tests {
             hash_cache: Arc::new(Mutex::new(HashMap::new())),
             batch_results: Arc::new(Mutex::new(Vec::new())),
         };
+        let err = state.check_interrupted().unwrap_err();
+        assert!(err.contains("取消"), "错误信息应包含取消提示，实际: {}", err);
+    }
+
+    /// 暂停中收到取消 → 立即返回错误（不被暂停阻塞）
+    #[test]
+    fn check_interrupted_cancel_during_pause_returns_error() {
+        let state = AppState {
+            pause_flag: Arc::new(AtomicBool::new(true)),
+            cancel_flag: Arc::new(AtomicBool::new(true)),
+            hash_cache: Arc::new(Mutex::new(HashMap::new())),
+            batch_results: Arc::new(Mutex::new(Vec::new())),
+        };
+        let start = Instant::now();
         assert!(state.check_interrupted().is_err());
+        assert!(
+            start.elapsed() < Duration::from_millis(150),
+            "暂停中取消应立即返回，不应被暂停阻塞"
+        );
     }
 
     /// 暂停中阻塞等待；恢复后返回 Ok（轮询间隔 50ms，200ms 后恢复）
@@ -130,7 +148,7 @@ mod tests {
         assert!(state.check_interrupted().is_ok());
         assert!(
             start.elapsed() >= Duration::from_millis(150),
-            "暂停应在恢复前阻塞至少约 200ms"
+            "暂停应在恢复前阻塞至少约 150ms"
         );
     }
 }
