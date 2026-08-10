@@ -1,5 +1,7 @@
+use std::collections::HashMap;
 use std::path::Path;
-use std::time::UNIX_EPOCH;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::{Duration, UNIX_EPOCH};
 
 use md5::Md5;
 use sha1::Sha1;
@@ -59,6 +61,27 @@ pub fn make_hasher(algorithm: HashAlgorithm) -> Box<dyn HashSink> {
         HashAlgorithm::SHA1 => Box::new(Sha1::new()),
         HashAlgorithm::SHA512 => Box::new(Sha512::new()),
     }
+}
+
+/// 哈希读取块大小：1MB，减少系统调用次数（相对 8KB 显著降低 syscall 开销）
+pub const CHUNK_SIZE: usize = 1024 * 1024;
+
+/// 哈希缓存类型别名：键 (路径, 大小, mtime纳秒, 算法) → 哈希值
+pub type HashCache = HashMap<(String, u64, u128, HashAlgorithm), String>;
+
+/// 中断检查：已取消返回错误；已暂停阻塞等待（期间仍检查取消）。
+/// 独立于 AppState，供 blocking 线程中的批量处理使用。
+pub fn check_interrupted(pause_flag: &AtomicBool, cancel_flag: &AtomicBool) -> Result<(), String> {
+    if cancel_flag.load(Ordering::Relaxed) {
+        return Err("计算已取消".into());
+    }
+    while pause_flag.load(Ordering::Relaxed) {
+        if cancel_flag.load(Ordering::Relaxed) {
+            return Err("计算已取消".into());
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    Ok(())
 }
 
 /// 计算哈希缓存键：加入文件路径与修改时间，避免同大小不同文件/内容修改后误命中。

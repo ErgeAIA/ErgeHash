@@ -1,7 +1,6 @@
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 
 mod commands;
 mod hashing;
@@ -20,6 +19,8 @@ use commands::hash::{
     resume_hash_calculation,
 };
 
+use crate::hashing::{check_interrupted, HashCache};
+
 /// 应用共享状态
 pub struct AppState {
     /// 暂停标志
@@ -27,25 +28,16 @@ pub struct AppState {
     /// 取消标志
     pub cancel_flag: Arc<AtomicBool>,
     /// 哈希缓存：(文件路径, 文件大小, 修改时间纳秒, 算法) -> 哈希值
-    pub hash_cache: Arc<Mutex<HashMap<(String, u64, u128, models::HashAlgorithm), String>>>,
+    pub hash_cache: Arc<Mutex<HashCache>>,
     /// 批量处理结果
     pub batch_results: Arc<Mutex<Vec<models::HashResult>>>,
 }
 
 impl AppState {
     /// 中断检查：已取消则返回错误；已暂停则阻塞等待恢复（期间仍检查取消）。
-    /// 供哈希计算分块循环逐块调用。
+    /// 供哈希计算分块循环逐块调用。实现委托给 hashing::check_interrupted。
     pub fn check_interrupted(&self) -> Result<(), String> {
-        if self.cancel_flag.load(Ordering::Relaxed) {
-            return Err("计算已取消".into());
-        }
-        while self.pause_flag.load(Ordering::Relaxed) {
-            if self.cancel_flag.load(Ordering::Relaxed) {
-                return Err("计算已取消".into());
-            }
-            std::thread::sleep(Duration::from_millis(50));
-        }
-        Ok(())
+        check_interrupted(self.pause_flag.as_ref(), self.cancel_flag.as_ref())
     }
 }
 
@@ -96,7 +88,8 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Instant;
+    use std::sync::atomic::Ordering;
+    use std::time::{Duration, Instant};
 
     /// 已取消 → 立即返回错误
     #[test]
