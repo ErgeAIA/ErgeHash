@@ -1,5 +1,9 @@
 # HashValidatorPlus - AI Coding Agent Instructions
 
+> **过时说明（2026-08-10）**：本文件描述的是 **PyQt5 旧版架构**，已随 PyQt 清理而归档。
+> 当前实际应用为 **Tauri 2 版本**（`tauri-app/`，Rust 后端 + React 19 + TypeScript 前端）。
+> **请以仓库根目录 `CLAUDE.md` 为准**，勿依据本文件操作已删除的文件（`scripts/`、`pyproject.toml`、`HashValidatorPlus.spec` 等）。以下内容仅作历史参考。
+
 ## Project Overview
 HashValidatorPlus is a PyQt5-based file hash validator GUI application (v0.4.0). It computes and verifies file hashes using multiple algorithms (SHA-256, MD5, SHA-1, SHA-512) with support for **batch processing**, multi-file drag-and-drop, pause/resume operations, and intelligent caching. The app is internationalized in Chinese (Simplified).
 
@@ -130,10 +134,8 @@ hashvalidatorplus
 
 ### Building Standalone EXE
 ```bash
-# Uses build_exe.py and PyInstaller
-python build_exe.py
-pyinstaller HashValidatorPlus.spec
-# Output: dist/HashValidatorPlus.exe
+# PyQt 版打包脚本（已随清理删除）；当前 Tauri 版打包方式见 CLAUDE.md：
+cd tauri-app && npm run tauri build
 ```
 
 ### Testing
@@ -240,7 +242,5 @@ DataExporter.export_to_json(results, "hashes.json")
 - [config.py](config.py) - ConfigManager for persistent settings and history
 - [exporter.py](exporter.py) - CSV/JSON export and verification file generation
 - [app.py](app.py) - Entry point with dependency validation
-- [pyproject.toml](pyproject.toml) - Project metadata, dependencies, entry point
-- [build_exe.py](build_exe.py) - PyInstaller configuration generator
 - [BATCH_FEATURES.md](BATCH_FEATURES.md) - Batch processing feature documentation
 - [README.md](README.md) - User-facing documentation (Chinese)

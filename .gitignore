@@ -41,6 +41,3 @@ htmlcov/
 
 # Trae
 .trae/
-
-# Resources (icons needed for packaging; re-include despite global Icon? rule)
-!resources/icons/
