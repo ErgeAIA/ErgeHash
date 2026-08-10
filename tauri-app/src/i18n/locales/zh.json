@@ -70,6 +70,7 @@
   "use_selected": "使用选中项",
   "clear_history_confirm": "确定要清空所有历史记录吗？",
   "history_cleared": "历史记录已清空",
+  "clear_history_failed": "清空历史记录失败",
   "notepad_error": "无法打开记事本: {{error}}",
   "verification_file_single": "验证文件只支持导出单个文件的哈希值",
   "calculating": "计算中...",

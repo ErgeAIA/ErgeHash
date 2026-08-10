@@ -101,11 +101,15 @@ export function MenuBar() {
       case "quit":
         void getCurrentWindow().close();
         break;
-      case "copy_hash":
-        if (await copyResult()) {
+      case "copy_hash": {
+        const ok = await copyResult();
+        if (ok) {
           addToast("success", t("copied_to_clipboard"));
+        } else {
+          addToast("error", t("clipboard_error"));
         }
         break;
+      }
       case "view_history":
         window.dispatchEvent(new CustomEvent("show-history"));
         break;

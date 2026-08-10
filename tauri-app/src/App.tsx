@@ -154,10 +154,16 @@ function App() {
             payload.elapsedTime > 0
               ? ` (${t("elapsed")}: ${payload.elapsedTime.toFixed(2)}s)`
               : "";
+          const mark =
+            payload.status === "success"
+              ? "✓"
+              : payload.status === "mismatch"
+                ? "✗"
+                : "!";
           setResultText(
             (prev) =>
               prev +
-              `✓ ${fileName}${cacheNote}\n  ${payload.hashValue}${timeNote}\n\n`,
+              `${mark} ${fileName}${cacheNote}\n  ${payload.hashValue}${timeNote}\n\n`,
           );
           setCurrentFile(payload.filePath);
 
@@ -238,9 +244,12 @@ function App() {
     const onExportResults = () => setShowExport(true);
     const onClearHistory = async () => {
       const ok = await ask(t("clear_history_confirm"), { title: t("warning") });
-      if (ok) {
+      if (!ok) return;
+      try {
         await apiClearHistory();
         addToast("success", t("history_cleared"));
+      } catch {
+        addToast("error", t("clear_history_failed"));
       }
     };
     const onImportVerification = async () => {
@@ -250,6 +259,7 @@ function App() {
         const entries = await importVerificationFile(paths[0]);
         if (entries.length === 0) {
           setStatusMessage(t("import_error"));
+          addToast("error", t("import_error"));
           return;
         }
         setExpectedHash(entries.map((e) => e.hashValue).join("\n"));
@@ -257,6 +267,7 @@ function App() {
         addToast("success", t("import_success", { count: entries.length }));
       } catch {
         setStatusMessage(t("import_error"));
+        addToast("error", t("import_error"));
       }
     };
 

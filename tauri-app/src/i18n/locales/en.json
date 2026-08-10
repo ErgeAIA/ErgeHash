@@ -70,6 +70,7 @@
   "use_selected": "Use Selected",
   "clear_history_confirm": "Are you sure to clear all history records?",
   "history_cleared": "History records cleared",
+  "clear_history_failed": "Failed to clear history",
   "notepad_error": "Cannot open notepad: {{error}}",
   "verification_file_single": "Verification file only supports exporting single file hash",
   "calculating": "Calculating...",

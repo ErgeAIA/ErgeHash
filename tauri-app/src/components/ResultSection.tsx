@@ -31,7 +31,11 @@ export function ResultSection() {
   const addToast = useToastStore((s) => s.addToast);
   const handleCopyResult = useCallback(async () => {
     const ok = await copyResult();
-    if (ok) addToast("success", t("copied_to_clipboard"));
+    if (ok) {
+      addToast("success", t("copied_to_clipboard"));
+    } else {
+      addToast("error", t("clipboard_error"));
+    }
   }, [copyResult, addToast, t]);
 
   /** 开始批量校验 */
