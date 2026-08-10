@@ -92,3 +92,45 @@ pub fn run() {
         .map_err(|e| eprintln!("Error while running tauri application: {}", e))
         .ok();
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Instant;
+
+    /// 已取消 → 立即返回错误
+    #[test]
+    fn check_interrupted_cancel_returns_error() {
+        let state = AppState {
+            pause_flag: Arc::new(AtomicBool::new(false)),
+            cancel_flag: Arc::new(AtomicBool::new(true)),
+            hash_cache: Arc::new(Mutex::new(HashMap::new())),
+            batch_results: Arc::new(Mutex::new(Vec::new())),
+        };
+        assert!(state.check_interrupted().is_err());
+    }
+
+    /// 暂停中阻塞等待；恢复后返回 Ok（轮询间隔 50ms，200ms 后恢复）
+    #[test]
+    fn check_interrupted_pause_blocks_until_resume() {
+        let state = AppState {
+            pause_flag: Arc::new(AtomicBool::new(true)),
+            cancel_flag: Arc::new(AtomicBool::new(false)),
+            hash_cache: Arc::new(Mutex::new(HashMap::new())),
+            batch_results: Arc::new(Mutex::new(Vec::new())),
+        };
+        // 200ms 后在另一个线程恢复
+        let resume_flag = state.pause_flag.clone();
+        std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(200));
+            resume_flag.store(false, Ordering::Relaxed);
+        });
+
+        let start = Instant::now();
+        assert!(state.check_interrupted().is_ok());
+        assert!(
+            start.elapsed() >= Duration::from_millis(150),
+            "暂停应在恢复前阻塞至少约 200ms"
+        );
+    }
+}
