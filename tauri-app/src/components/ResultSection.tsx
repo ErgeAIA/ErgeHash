@@ -66,7 +66,6 @@ export function ResultSection() {
     setCurrentFile,
     setResultText,
     setStatusMessage,
-    handleCopyResult,
   ]);
 
   /** 暂停/继续切换 */
