@@ -91,7 +91,9 @@ pub async fn quick_calculate_hash(
     };
 
     let mut file = File::open(path).map_err(|e| e.to_string())?;
-    let mut buffer = vec![0u8; CHUNK_SIZE];
+    // 缓冲按实际读取量分配：至少 1MB 但不超过文件大小，避免小文件白白分配 1MB
+    let buffer_len = CHUNK_SIZE.min(read_limit as usize);
+    let mut buffer = vec![0u8; buffer_len];
     let start_time = Instant::now();
 
     let mut hasher = make_hasher(algorithm);

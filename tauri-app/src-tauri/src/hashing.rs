@@ -191,4 +191,23 @@ mod tests {
         let k2 = file_cache_key("/tmp/a.bin", 100, HashAlgorithm::SHA256);
         assert_eq!(k1, k2);
     }
+
+    /// 分块更新与一次更新等价（保护 CHUNK_SIZE 分块读取语义）
+    #[test]
+    fn chunked_update_equals_single_update() {
+        // 数据跨越多个 1MB 块 + 余数
+        let data = vec![0xABu8; CHUNK_SIZE * 2 + 7];
+
+        let mut single = make_hasher(HashAlgorithm::SHA256);
+        single.update(&data);
+        let expected = single.finalize_hex();
+
+        let mut chunked = make_hasher(HashAlgorithm::SHA256);
+        for chunk in data.chunks(CHUNK_SIZE) {
+            chunked.update(chunk);
+        }
+        let actual = chunked.finalize_hex();
+
+        assert_eq!(actual, expected, "分块更新应与一次更新产生相同哈希");
+    }
 }
