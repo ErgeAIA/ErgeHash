@@ -24,6 +24,7 @@ import { SettingsDialog } from "./components/dialogs/SettingsDialog";
 import { QuickGuideDialog } from "./components/dialogs/QuickGuideDialog";
 import { ExportDialog } from "./components/dialogs/ExportDialog";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { ToastHost } from "./components/ui/toast";
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -300,6 +301,7 @@ function App() {
       <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
       <QuickGuideDialog open={showQuickGuide} onOpenChange={setShowQuickGuide} />
       <ExportDialog open={showExport} onOpenChange={setShowExport} />
+      <ToastHost />
     </MainLayout>
   );
 }
