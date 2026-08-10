@@ -253,7 +253,7 @@ function App() {
           return;
         }
         setExpectedHash(entries.map((e) => e.hashValue).join("\n"));
-        setStatusMessage(`${t("import_success")} ${entries.length}`);
+        setStatusMessage(t("import_success", { count: entries.length }));
         addToast("success", t("import_success", { count: entries.length }));
       } catch {
         setStatusMessage(t("import_error"));
