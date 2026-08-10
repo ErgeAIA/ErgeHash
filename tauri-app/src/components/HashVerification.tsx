@@ -15,6 +15,7 @@ export function HashVerification() {
   const fileList = useAppStore((s) => s.fileList);
   const setResultText = useAppStore((s) => s.setResultText);
   const algorithm = useAppStore((s) => s.algorithm);
+  const updateFileByPath = useAppStore((s) => s.updateFileByPath);
 
   /** 比较哈希值 */
   const handleCompareHash = useCallback(() => {
@@ -59,8 +60,12 @@ export function HashVerification() {
       for (const item of calculatedResults) {
         const fileName = item.path.split(/[/\\]/).pop() ?? item.path;
         const calculatedClean = item.hash.toLowerCase().replace(/\s/g, "");
+        const isMatch = calculatedClean === expectedClean;
 
-        if (calculatedClean === expectedClean) {
+        // 回填列表状态，供状态色与后续操作使用
+        updateFileByPath(item.path, item.hash, isMatch ? "success" : "mismatch");
+
+        if (isMatch) {
           resultText += `✓ ${fileName} ${t("match")}\n`;
           matchCount++;
         } else {
@@ -90,10 +95,22 @@ export function HashVerification() {
         if (!/^[0-9a-f]+$/i.test(expectedClean)) {
           resultText += `${i + 1}. ✗ ${t("format_error")}\n`;
           mismatchCount++;
+          updateFileByPath(
+            calculatedResults[i].path,
+            calculatedResults[i].hash,
+            "mismatch",
+          );
           continue;
         }
 
-        if (calculatedClean === expectedClean) {
+        const isMatch = calculatedClean === expectedClean;
+        updateFileByPath(
+          calculatedResults[i].path,
+          calculatedResults[i].hash,
+          isMatch ? "success" : "mismatch",
+        );
+
+        if (isMatch) {
           resultText += `${i + 1}. ✓ ${fileName} ${t("match")}\n`;
           matchCount++;
         } else {
@@ -106,7 +123,7 @@ export function HashVerification() {
     resultText += `\n---\n${t("total_summary")}: ${calculatedResults.length} | ${t("match")}: ${matchCount} | ${t("mismatch")}: ${mismatchCount}\n`;
 
     setResultText((prev) => prev + resultText);
-  }, [expectedHash, fileList, setResultText, t]);
+  }, [expectedHash, fileList, setResultText, updateFileByPath, t]);
 
   /** 快速比较 */
   const handleQuickCompare = useCallback(async () => {
