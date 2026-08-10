@@ -28,7 +28,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
       )}
       <span className="flex-1 text-foreground">{toast.message}</span>
       <button
-        className="text-muted-foreground"
+        className="text-muted-foreground opacity-80 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring rounded-sm"
         onClick={onClose}
         title="Close"
       >
@@ -46,7 +46,11 @@ export function ToastHost() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-[320px] flex-col gap-2">
+    <div
+      role="status"
+      aria-live="polite"
+      className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-[320px] flex-col gap-2"
+    >
       {toasts.map((t) => (
         <div key={t.id} className="pointer-events-auto">
           <ToastItem toast={t} onClose={() => removeToast(t.id)} />

@@ -18,6 +18,9 @@ interface ToastState {
 
 let nextId = 1;
 
+/** Toast 自动消失时长（毫秒） */
+const TOAST_DURATION_MS = 3000;
+
 /** Toast 状态：3 秒后自动消失 */
 export const useToastStore = create<ToastState>((set) => ({
   toasts: [],
@@ -26,7 +29,7 @@ export const useToastStore = create<ToastState>((set) => ({
     set((state) => ({ toasts: [...state.toasts, { id, type, message }] }));
     setTimeout(() => {
       set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
-    }, 3000);
+    }, TOAST_DURATION_MS);
   },
   removeToast: (id) =>
     set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
