@@ -80,7 +80,6 @@ pub fn file_cache_key(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::HashAlgorithm;
 
     /// 用已知标准测试向量验证各算法哈希正确性（回归基线）
     #[test]
@@ -156,8 +155,10 @@ mod tests {
         let k1 = file_cache_key("/tmp/a.bin", 100, HashAlgorithm::SHA256);
         let k2 = file_cache_key("/tmp/b.bin", 100, HashAlgorithm::SHA256);
         let k3 = file_cache_key("/tmp/a.bin", 100, HashAlgorithm::MD5);
+        let k4 = file_cache_key("/tmp/a.bin", 200, HashAlgorithm::SHA256);
         assert_ne!(k1, k2);
         assert_ne!(k1, k3);
+        assert_ne!(k1, k4);
     }
 
     /// 缓存键：同路径同大小同算法，两次调用结果一致（mtime 取不到时为 0，稳定）
