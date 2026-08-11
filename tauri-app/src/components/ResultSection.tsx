@@ -106,22 +106,22 @@ export function ResultSection() {
   const hasResults = fileList.some((f) => f.hashValue || f.status);
 
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex min-h-0 flex-1 flex-col gap-3">
       {/* 二级标题 */}
-      <h2 className="text-lg font-semibold text-foreground">
+      <h2 className="shrink-0 text-lg font-semibold text-foreground">
         {t("result_group")}
       </h2>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
         {/* 无结果时的空状态 */}
         {!hasResults ? (
-          <div className="flex h-[120px] items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             {t("no_results_yet")}
           </div>
         ) : (
           <>
             {/* 过滤器 + 摘要 */}
-            <div className="flex items-center gap-1 overflow-x-auto">
+            <div className="flex shrink-0 items-center gap-1 overflow-x-auto">
               {filterButtons.map((btn) => (
                 <button
                   key={btn.value}
@@ -139,7 +139,7 @@ export function ResultSection() {
             </div>
 
             {/* 结果表格 */}
-            <div className="max-h-[300px] overflow-auto rounded-xl border border-white/10">
+            <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-white/10">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-white/5">
                   <tr className="border-b border-white/10">
@@ -208,7 +208,7 @@ export function ResultSection() {
         )}
 
         {/* 操作按钮：与开始校验同风格的大圆形纯图标按钮 */}
-        <div className="flex items-center justify-center gap-4 pt-2">
+        <div className="flex shrink-0 items-center justify-center gap-4 pt-2">
           <IconActionButton
             icon={<Copy className="h-6 w-6" />}
             label={t("copy_result")}

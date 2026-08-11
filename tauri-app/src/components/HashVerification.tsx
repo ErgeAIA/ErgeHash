@@ -61,9 +61,9 @@ export function HashVerification() {
   );
 
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex shrink-0 flex-col gap-3">
       {/* 二级标题 */}
-      <h2 className="text-lg font-semibold text-foreground">
+      <h2 className="shrink-0 text-lg font-semibold text-foreground">
         {t("verify_group")}
       </h2>
 

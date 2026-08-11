@@ -13,10 +13,10 @@
     "windows": [
       {
         "title": "文件哈希校验工具",
-        "width": 1100,
-        "height": 750,
-        "minWidth": 800,
-        "minHeight": 600,
+        "width": 1300,
+        "height": 850,
+        "minWidth": 900,
+        "minHeight": 750,
         "decorations": false,
         "visible": false,
         "dragDropEnabled": true

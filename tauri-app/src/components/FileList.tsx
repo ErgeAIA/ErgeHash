@@ -215,16 +215,16 @@ export function FileList() {
   };
 
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex min-h-0 flex-[1.4] flex-col gap-3">
       {/* 二级标题 */}
-      <h2 className="text-lg font-semibold text-foreground">
+      <h2 className="shrink-0 text-lg font-semibold text-foreground">
         {t("file_list_label")}
       </h2>
 
-      {/* 拖放区域 + 文件列表：常驻圆角边框卡片，拖拽时显示主色虚线框 */}
+      {/* 拖放区域 + 文件列表：固定高度，内容超出时内部滚动 */}
       <div
         className={cn(
-          "relative min-h-[200px] overflow-y-auto rounded-xl border border-white/10 bg-white/5",
+          "relative min-h-0 flex-1 overflow-y-auto rounded-xl border border-white/10 bg-white/5",
           isDragOver
             ? "border-2 border-dashed border-[var(--primary)] bg-primary/10"
             : "",
@@ -237,7 +237,7 @@ export function FileList() {
         onDrop={handleDrop}
       >
         {fileList.length === 0 ? (
-          <div className="flex h-[200px] flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
             <FileSearch className="h-10 w-10 opacity-30" />
             <span>{t("drag_hint")}</span>
           </div>
@@ -295,7 +295,9 @@ export function FileList() {
       </div>
 
       {/* 文件操作按钮：开始校验 + 清空列表 */}
-      <FileActions />
+      <div className="shrink-0">
+        <FileActions />
+      </div>
 
       {/* 右键菜单 */}
       {contextMenu && (

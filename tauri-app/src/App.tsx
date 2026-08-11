@@ -364,8 +364,8 @@ function App() {
           <NavRail collapsed={sidebarCollapsed} onToggleCollapsed={toggleSidebar} />
         </div>
 
-        {/* 右侧主内容区：深色圆角卡片，与左侧浅黑区形成对比 */}
-        <div className="m-2 flex flex-1 flex-col gap-8 overflow-y-auto overflow-x-hidden rounded-2xl bg-panel px-6 py-6">
+        {/* 右侧主内容区：三栏固定高度 + 内部滚动，禁止主窗口滚动 */}
+        <div className="m-2 flex flex-1 flex-col gap-6 overflow-hidden rounded-2xl bg-panel px-6 py-6">
           <FileList />
           <HashVerification />
           <ResultSection />
