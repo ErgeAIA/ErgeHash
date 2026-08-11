@@ -1,3 +1,19 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies / build artifacts
+node_modules
+node_modules/
+dist
+dist-ssr
+*.local
+
 # Python-generated files
 __pycache__/
 *.py[oc]
@@ -6,7 +22,6 @@ __pycache__/
 *.pyd
 .Python
 build/
-dist/
 wheels/
 *.egg-info/
 .eggs/
@@ -18,9 +33,15 @@ venv/
 ENV/
 env/
 
-# IDE
-.vscode/
-.idea/
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 *.swp
 *.swo
 *~
@@ -34,6 +55,11 @@ Thumbs.db
 .coverage
 htmlcov/
 .tox/
+
+# Tauri specific
+src-tauri/target
+src-tauri/*.log
+*.pdb
 
 # User config (keep structure, ignore content)
 .hashvalidatorplus/config.json
