@@ -311,10 +311,10 @@ export function FileList({ className }: { className?: string }) {
                           ✓
                         </span>
                       )}
+                      <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+                        {typeof file.size === "number" ? formatBytes(file.size) : ""}
+                      </span>
                     </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {typeof file.size === "number" ? formatBytes(file.size) : ""}
-                    </span>
                     <button
                       className="ml-1 shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
                       onClick={() => removeFile(fileIndex)}
@@ -333,19 +333,21 @@ export function FileList({ className }: { className?: string }) {
                     <span className="w-20 shrink-0 font-medium uppercase text-foreground/70">
                       {r.algorithm}
                     </span>
-                    <span
-                      className={cn(
-                        "flex-1 truncate font-mono text-foreground/80",
-                        r.status === "error" ? "text-warning" : "",
-                      )}
-                      title={r.hashValue || r.errorMessage}
-                    >
-                      {r.status === "error"
-                        ? r.errorMessage ?? t("error")
-                        : r.hashValue || "—"}
-                    </span>
-                    <span className="w-16 shrink-0 text-right text-muted-foreground/80">
-                      {r.elapsedTime > 0 ? `${r.elapsedTime.toFixed(2)}s` : "—"}
+                    <span className="min-w-0 flex-1 flex items-baseline gap-2">
+                      <span
+                        className={cn(
+                          "flex-1 truncate font-mono text-foreground/80",
+                          r.status === "error" ? "text-warning" : "",
+                        )}
+                        title={r.hashValue || r.errorMessage}
+                      >
+                        {r.status === "error"
+                          ? r.errorMessage ?? t("error")
+                          : r.hashValue || "—"}
+                      </span>
+                      <span className="shrink-0 text-muted-foreground/80">
+                        {r.elapsedTime > 0 ? `${r.elapsedTime.toFixed(2)}s` : "—"}
+                      </span>
                     </span>
                     {r.status !== "error" && r.hashValue && (
                       <button
