@@ -22,6 +22,7 @@
   --ring: #BA4D0F;
   --sidebar-bg: #F3F3F5;
   --panel: #FFFFFF;
+  --primary-alpha: color-mix(in srgb, var(--primary) 10%, transparent);
   --success-bg: #2E8A5F;
   --mismatch-bg: #E0564A;
   --error-bg: #B2820B;
@@ -57,6 +58,7 @@
   --ring: #F26A1B;
   /* 侧边栏/标题栏底色：与 --background 一致，顶栏+NavRail 一体浅黑 */
   --sidebar-bg: #18181A;
+  --primary-alpha: color-mix(in srgb, var(--primary) 10%, transparent);
   --success-bg: #39D7A2;
   --mismatch-bg: #FF6B6B;
   --error-bg: #E8B23A;
@@ -127,8 +129,16 @@ body {
   background-color: var(--primary);
 }
 
+.text-primary {
+  color: var(--primary);
+}
+
 .text-primary-foreground {
   color: var(--primary-foreground);
+}
+
+.bg-primary-alpha {
+  background-color: var(--primary-alpha);
 }
 
 .bg-secondary {
@@ -141,6 +151,10 @@ body {
 
 .bg-destructive {
   background-color: var(--destructive);
+}
+
+.text-destructive {
+  color: var(--destructive);
 }
 
 .text-destructive-foreground {
