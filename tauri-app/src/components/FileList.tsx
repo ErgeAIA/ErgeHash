@@ -7,7 +7,6 @@ import { scanDirectory, openFileDialog } from "@/services/api";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { cn } from "@/lib/utils";
-import { FileActions } from "./FileActions";
 
 /** 文件拖放列表组件，对应原始 DragDropFileListWidget */
 export function FileList({ className }: { className?: string }) {
@@ -208,6 +207,19 @@ export function FileList({ className }: { className?: string }) {
     return path.split(/[/\\]/).pop() ?? path;
   };
 
+  /** 字节数格式化为可读大小 */
+  const formatBytes = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    const units = ["KB", "MB", "GB", "TB"];
+    let value = bytes / 1024;
+    let i = 0;
+    while (value >= 1024 && i < units.length - 1) {
+      value /= 1024;
+      i++;
+    }
+    return `${value.toFixed(value >= 100 ? 0 : 1)} ${units[i]}`;
+  };
+
   /** 复制单个算法子结果行 */
   const handleCopyChild = useCallback(
     async (file: { path: string }, r: FileResult) => {
@@ -300,19 +312,34 @@ export function FileList({ className }: { className?: string }) {
               <span>{t("drag_hint")}</span>
             </div>
           ) : (
-            <ul className="divide-y divide-border">
+            <ul>
               {fileList.flatMap((file, fileIndex) => {
                 const children: FileResult[] = file.results ?? [];
                 const parent = (
                   <li
                     key={`p-${file.path}`}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted/30 cursor-default"
+                    className="flex items-center gap-2 px-3 py-2 cursor-default hover:bg-muted/30"
                     onClick={(e) => e.stopPropagation()}
                     onContextMenu={(e) => handleContextMenu(e, fileIndex)}
-                    title={file.path}
                   >
-                    <span className="flex-1 truncate" title={file.path}>
-                      {getBasename(file.path)}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-baseline gap-2">
+                        <span
+                          className="truncate text-base font-bold text-foreground"
+                          title={getBasename(file.path)}
+                        >
+                          {getBasename(file.path)}
+                        </span>
+                        <span
+                          className="truncate text-xs text-muted-foreground"
+                          title={file.path}
+                        >
+                          {file.path}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {typeof file.size === "number" ? formatBytes(file.size) : ""}
                     </span>
                     <StatusBadge status={file.status} />
                     <button
@@ -334,19 +361,39 @@ export function FileList({ className }: { className?: string }) {
                 const childRows = children.map((r, ci) => (
                   <li
                     key={`c-${file.path}-${r.algorithm}`}
-                    className="flex items-center gap-2 bg-muted/10 pl-8 pr-3 py-1 text-xs text-foreground hover:bg-muted/30"
+                    className={cn(
+                      "group relative flex items-center gap-2 py-1 pr-3 text-xs text-muted-foreground hover:bg-muted/20",
+                      ci === children.length - 1 ? "pb-2" : "",
+                    )}
                     title={file.path}
                   >
-                    <span className="select-none text-muted-foreground">
-                      {ci === children.length - 1 ? "└─" : "├─"}
+                    {/* 连续竖线引导 + 拐角：父级与子级视觉成一体 */}
+                    <span className="relative flex w-8 shrink-0 justify-center">
+                      <span
+                        className={cn(
+                          "absolute top-0 w-px bg-muted-foreground/40",
+                          ci === children.length - 1 ? "bottom-1/2" : "bottom-0",
+                        )}
+                        style={{ left: "1rem" }}
+                      />
+                      {ci === children.length - 1 && (
+                        <span
+                          className="absolute h-px w-4 bg-muted-foreground/40"
+                          style={{ left: "1rem", top: "50%" }}
+                        />
+                      )}
+                      <span
+                        className="absolute z-10 h-1.5 w-1.5 rounded-full bg-muted-foreground/40"
+                        style={{ left: "1rem", top: "50%", transform: "translate(-50%, -50%)" }}
+                      />
                     </span>
-                    <span className="w-20 shrink-0 font-medium uppercase text-foreground/80">
+                    <span className="w-20 shrink-0 font-medium uppercase text-foreground/70">
                       {r.algorithm}
                     </span>
                     <span
                       className={cn(
-                        "flex-1 truncate font-mono",
-                        r.status === "error" ? "text-warning" : "text-muted-foreground",
+                        "flex-1 truncate font-mono text-foreground/80",
+                        r.status === "error" ? "text-warning" : "",
                       )}
                       title={r.hashValue || r.errorMessage}
                     >
@@ -354,12 +401,12 @@ export function FileList({ className }: { className?: string }) {
                         ? r.errorMessage ?? t("error")
                         : r.hashValue || "—"}
                     </span>
-                    <span className="w-20 shrink-0 text-right text-muted-foreground">
+                    <span className="w-20 shrink-0 text-right text-muted-foreground/80">
                       {r.elapsedTime > 0 ? `${r.elapsedTime.toFixed(2)}s` : "—"}
                     </span>
                     {r.status !== "error" && (
                       <button
-                        className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                        className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground"
                         onClick={() => handleCopyChild(file, r)}
                         title={t("copy")}
                       >
@@ -374,14 +421,6 @@ export function FileList({ className }: { className?: string }) {
           )}
         </div>
 
-        {/* 浮动操作按钮：透明背景，悬浮在区域上方，与三区风格一致 */}
-        {fileList.length > 0 && (
-          <div className="pointer-events-none absolute bottom-4 right-20 z-10">
-            <div className="pointer-events-auto">
-              <FileActions />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 右键菜单 */}

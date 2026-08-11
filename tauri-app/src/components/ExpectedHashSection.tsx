@@ -4,25 +4,7 @@ import { X } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import type { HashAlgorithm } from "@/services/types";
-
-/** 哈希值长度与算法的映射表 */
-const HASH_LENGTH_ALGO_MAP: Record<number, HashAlgorithm> = {
-  8: "crc32",
-  32: "md5",
-  40: "sha1",
-  64: "sha256",
-  128: "sha512",
-};
-
-/** 算法显示名（大写形式，与后端 serde UPPERCASE 序列化一致） */
-const ALGO_DISPLAY_NAME: Record<HashAlgorithm, string> = {
-  md5: "MD5",
-  sha1: "SHA1",
-  sha256: "SHA256",
-  sha512: "SHA512",
-  crc32: "CRC32",
-};
+import { detectHashAlgorithm } from "@/lib/hash";
 
 /** 预期哈希值输入区块（二区）：输入哈希值并按长度自动推断算法 */
 export function ExpectedHashSection({ className }: { className?: string }) {
@@ -33,8 +15,6 @@ export function ExpectedHashSection({ className }: { className?: string }) {
 
   /* 输入框聚焦状态 */
   const [hashFocused, setHashFocused] = useState(false);
-  /* 自动检测到的算法提示状态 */
-  const [detectedAlgo, setDetectedAlgo] = useState<HashAlgorithm | null>(null);
 
   /** 预期哈希值变更：同步到 store 并按长度推断算法 */
   const handleExpectedHashChange = useCallback(
@@ -42,22 +22,10 @@ export function ExpectedHashSection({ className }: { className?: string }) {
       const value = e.target.value;
       setExpectedHash(value);
 
-      const trimmed = value.trim();
-      if (trimmed.includes("\n")) {
-        setDetectedAlgo(null);
-        return;
+      const algo = detectHashAlgorithm(value);
+      if (algo) {
+        setSelectedAlgorithms([algo]);
       }
-
-      const cleaned = trimmed.replace(/\s/g, "");
-      if (cleaned.length > 0 && /^[0-9a-f]+$/i.test(cleaned)) {
-        const algo = HASH_LENGTH_ALGO_MAP[cleaned.length];
-        if (algo) {
-          setSelectedAlgorithms([algo]);
-          setDetectedAlgo(algo);
-          return;
-        }
-      }
-      setDetectedAlgo(null);
     },
     [setExpectedHash, setSelectedAlgorithms],
   );
@@ -72,7 +40,7 @@ export function ExpectedHashSection({ className }: { className?: string }) {
           onFocus={() => setHashFocused(true)}
           onBlur={() => setHashFocused(false)}
           placeholder=""
-          className="h-[72px] resize-none pr-8 border-primary focus-visible:ring-1 focus-visible:ring-primary hover:border-primary"
+          className="h-[72px] resize-none pr-8 border-primary transition-colors hover:border-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
         />
         {/* 空态居中提示：与文件列表/结果区空态提示风格一致 */}
         {!expectedHash.trim() && !hashFocused && (
@@ -91,12 +59,6 @@ export function ExpectedHashSection({ className }: { className?: string }) {
         )}
       </div>
 
-      {/* 自动检测到的算法提示 */}
-      {detectedAlgo && (
-        <div className="shrink-0 text-xs text-muted-foreground">
-          {t("auto_detected")}: {ALGO_DISPLAY_NAME[detectedAlgo]}
-        </div>
-      )}
     </section>
   );
 }

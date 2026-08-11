@@ -18,6 +18,8 @@ import { NavRail } from "./components/layout/NavRail";
 import { TitleBar } from "./components/layout/TitleBar";
 import { FileList } from "./components/FileList";
 import { ExpectedHashSection } from "./components/ExpectedHashSection";
+import { StatusReportBar } from "./components/StatusReportBar";
+import { BottomActionBar } from "./components/BottomActionBar";
 import { FloatingProgress } from "./components/FloatingProgress";
 import { HistoryDialog } from "./components/dialogs/HistoryDialog";
 import { SettingsDialog } from "./components/dialogs/SettingsDialog";
@@ -392,6 +394,8 @@ function App() {
                 计算结果直接回填到文件树，取代独立结果区。 */}
             <FileList className="flex-[1.2]" />
             <ExpectedHashSection className="shrink-0" />
+            <BottomActionBar className="shrink-0" />
+            <StatusReportBar className="shrink-0" />
           </div>
         </div>
       </div>
