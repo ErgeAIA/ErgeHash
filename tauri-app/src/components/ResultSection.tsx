@@ -112,7 +112,7 @@ export function ResultSection() {
         {t("result_group")}
       </h2>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+      <div className="relative flex min-h-0 flex-1 flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
         {/* 无结果时的空状态 */}
         {!hasResults ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -204,32 +204,35 @@ export function ResultSection() {
                 </tbody>
               </table>
             </div>
+
           </>
         )}
 
-        {/* 操作按钮：与开始校验同风格的大圆形纯图标按钮 */}
-        <div className="flex shrink-0 items-center justify-center gap-4 pt-2">
-          <IconActionButton
-            icon={<Copy className="h-6 w-6" />}
-            label={t("copy_result")}
-            onClick={handleCopyResult}
-            disabled={!hasResults}
-            theme="blue"
-          />
-          <IconActionButton
-            icon={<FileDown className="h-6 w-6" />}
-            label={t("export")}
-            onClick={handleExport}
-            disabled={!hasResults}
-            theme="emerald"
-          />
-          <IconActionButton
-            icon={<Trash2 className="h-6 w-6" />}
-            label={t("clear_results")}
-            onClick={handleClearResults}
-            disabled={!hasResults}
-            theme="destructive"
-          />
+        {/* 浮动操作按钮：复制/导出/清空结果，悬浮在结果区右下偏左；空态时仍可见（半透明灰显） */}
+        <div className="pointer-events-none absolute bottom-4 right-20 z-10">
+          <div className="pointer-events-auto flex flex-col items-center gap-3">
+            <IconActionButton
+              icon={<Copy className="h-6 w-6" />}
+              label={t("copy_result")}
+              onClick={handleCopyResult}
+              disabled={!hasResults}
+              theme="blue"
+            />
+            <IconActionButton
+              icon={<FileDown className="h-6 w-6" />}
+              label={t("export")}
+              onClick={handleExport}
+              disabled={!hasResults}
+              theme="emerald"
+            />
+            <IconActionButton
+              icon={<Trash2 className="h-6 w-6" />}
+              label={t("clear_results")}
+              onClick={handleClearResults}
+              disabled={!hasResults}
+              theme="destructive"
+            />
+          </div>
         </div>
       </div>
     </section>

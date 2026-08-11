@@ -18,7 +18,6 @@ import { MainLayout } from "./components/layout/MainLayout";
 import { NavRail } from "./components/layout/NavRail";
 import { TitleBar } from "./components/layout/TitleBar";
 import { FileList } from "./components/FileList";
-import { HashVerification } from "./components/HashVerification";
 import { ResultSection } from "./components/ResultSection";
 import { FloatingProgress } from "./components/FloatingProgress";
 import { HistoryDialog } from "./components/dialogs/HistoryDialog";
@@ -364,10 +363,9 @@ function App() {
           <NavRail collapsed={sidebarCollapsed} onToggleCollapsed={toggleSidebar} />
         </div>
 
-        {/* 右侧主内容区：三栏固定高度 + 内部滚动，禁止主窗口滚动 */}
+        {/* 右侧主内容区：文件列表 + 计算结果，禁止主窗口滚动 */}
         <div className="m-2 flex flex-1 flex-col gap-6 overflow-hidden rounded-2xl bg-panel px-6 py-6">
           <FileList />
-          <HashVerification />
           <ResultSection />
         </div>
       </div>

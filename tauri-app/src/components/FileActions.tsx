@@ -147,7 +147,7 @@ export function FileActions() {
   }, [clearFiles, t]);
 
   return (
-    <div className="flex items-center justify-center gap-4 py-3">
+    <div className="flex flex-col items-center gap-3">
       <button
         type="button"
         onClick={(e) => {
