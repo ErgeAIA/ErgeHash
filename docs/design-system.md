@@ -143,7 +143,10 @@
      - 可折叠分组「工具」（导出、记事本）、「视图」（主题切换、语言切换）。
   3. **底部固定区**：设置 + 退出（`shrink-0`），折叠态竖排图标，展开态横向文字按钮。
 
-- **导航项选中态**：左竖条（`before:` 伪元素，`bg-primary`）+ 主题主色文字 + `bg-primary/10` 底；未选中：灰文字，hover 仅变主题主色文字（不变底色）。主题主色随主题切换：亮 `#BA4D0F` / 暗 `#F26A1B`（对齐 ThemeVault #005/#003）。
+- **导航项选中态**（用户项目对比确认）：菜单项左侧出现**主题品牌色竖线** + 文字变为**主题品牌色** + 背景使用**半透明品牌色**。
+  - 实现：左竖线通过 `before:` 伪元素 `bg-primary`；文字用 `text-primary`；背景用 `--primary-alpha`（`color-mix(in srgb, var(--primary) 10%, transparent)`），并映射为 `.bg-primary-alpha`，避免 Tailwind 的 `bg-primary/10` 在自定义变量体系下失效。
+  - 未选中态：灰文字 `text-muted-foreground`，hover 仅文字变品牌色（不变底色）。
+  - 主题主色随主题切换：亮 `#BA4D0F` / 暗 `#F26A1B`（对齐 ThemeVault #005/#003）。
 - **分组动画**：`max-height` 方案 200ms，与宽度过渡一致。
 
 ### 3.6 右侧内容区布局
