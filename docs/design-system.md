@@ -153,13 +153,13 @@
 
 - **父容器**：`flex flex-1 flex-col gap-6 overflow-hidden bg-sidebar p-2`，与 L 形框架 `--sidebar-bg` 同色，消除 m-2/p-2 间隙在亮色下的"残留直角块"。
 - **内容容器**：`flex flex-1 flex-col gap-4 overflow-hidden rounded-2xl bg-panel px-6 py-6`。暗色 `--panel:#0d0d0d` 比 L 形区 `--sidebar-bg:#18181A` 更深，亮色 `--panel:#FFFFFF` 比框架色 `#F3F3F5` 略亮，均形成"内容浮于框架"层级。
-- **内部结构（纵向，三区块，按视觉重点分配高度占比）**：
-  1. **一区 · 文件列表区**（`FileList`，`flex-[1.1]`）：拖放/文件表格（`rounded-xl border border-border bg-card`）。高度适当减小，仅承载文件清单。
-  2. **二区 · 预期哈希输入区**（`ExpectedHashSection`，`flex-[0.9]`）：哈希输入框 + 自动识别算法提示。单独成块（从原 FileList 拆出），高度适度，输入框实际通常无需多行。
+- **内部结构（纵向，三区块，按视觉重点分配高度）**：
+  1. **一区 · 文件列表区**（`FileList`，`flex-[1.2]`）：拖放/文件表格（`rounded-xl border border-border bg-card`）。高度适当减小，仅承载文件清单。
+  2. **二区 · 预期哈希输入区**（`ExpectedHashSection`，`shrink-0`）：哈希输入框 + 自动识别算法提示。单独成块（从原 FileList 拆出），高度由内容撑开，不参与 flex 拉伸，避免出现空白的未使用区域。
   3. **三区 · 计算结果区**（`ResultSection`，`flex-[2]`）：过滤器 + 结果表格（`rounded-xl border border-border bg-card`）。**占比最大、视觉重点**，主用于显示结果。
-  - 高度比例依据视觉重点原则：结果区 ≈ 一区 1.8 倍、二区 2.2 倍，文件列表区略高于输入区。
+  - 高度分配原则：二区按内容高度；剩余空间按 1.2 : 2 分配给文件列表区和结果区，结果区明显最大。
 - **内部卡片统一线框**：三个区块均为 `border-border bg-card` 的圆角卡片风格，避免亮主题下 `border-white/10` 等硬编码透明度边框不可见。
-- 三区块均为固定高度、内部滚动，主窗口不滚动；区块间 `gap-4`。
+- 文件列表区与结果区内部滚动，主窗口不滚动；二区按内容高度自然撑开；区块间 `gap-4`。
 
 ### 3.7 浮动操作按钮（FAB）
 
@@ -197,10 +197,10 @@ MainLayout (h-screen w-screen, flex-col, overflow-hidden)
 │   │       ├── 滚动区 (算法 / 一级项 / 分组)
 │   │       └── 底部固定区 (设置 / 退出)
 │   └── 右侧内容区 (m-2 rounded-2xl bg-panel)
-│       ├── 一区 FileList (flex-[1.1])
+│       ├── 一区 FileList (flex-[1.2])
 │       │   └── 拖放/文件表格卡片 (relative)
 │       │       └── 浮动 FAB：开始检测 + 清空列表 (absolute bottom-4 right-20)
-│       ├── 二区 ExpectedHashSection (flex-[0.9])
+│       ├── 二区 ExpectedHashSection (shrink-0)
 │       │   └── 预期哈希输入 (居中占位覆盖层) + 自动识别算法提示
 │       └── 三区 ResultSection (flex-[2])
 │           └── 结果卡片 (relative)

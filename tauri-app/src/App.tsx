@@ -368,9 +368,9 @@ function App() {
             父容器用 bg-sidebar，与顶栏/侧栏 L 形框架同色，消除 m-2 间隙在亮色下的“残留直角块”视觉。 */}
         <div className="flex flex-1 flex-col gap-6 overflow-hidden bg-sidebar p-2">
           <div className="flex flex-1 flex-col gap-4 overflow-hidden rounded-2xl bg-panel px-6 py-6">
-            {/* 右侧三区块：一区文件列表 / 二区预期哈希输入 / 结果区（占比最大，视觉重点） */}
-            <FileList className="flex-[1.1]" />
-            <ExpectedHashSection className="flex-[0.9]" />
+            {/* 右侧三区块：一区文件列表 / 二区预期哈希输入（按内容高度） / 结果区（视觉重点，最大） */}
+            <FileList className="flex-[1.2]" />
+            <ExpectedHashSection className="shrink-0" />
             <ResultSection className="flex-[2]" />
           </div>
         </div>
