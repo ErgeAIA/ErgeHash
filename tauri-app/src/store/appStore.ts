@@ -47,6 +47,8 @@ interface AppState {
   clearFiles: () => void;
   /** 仅清空计算结果（保留文件列表与预期哈希值） */
   clearResults: () => void;
+  /** 清空工作区：文件列表、预期哈希、计算结果 */
+  clearAll: () => void;
   /** 切换算法选中状态（持久化） */
   toggleAlgorithm: (algo: HashAlgorithm) => void;
   /** 全选算法 */
@@ -157,6 +159,19 @@ export const useAppStore = create<AppState>((set, get) => ({
       statusMessage: "ready",
       fileList: state.fileList.map((f) => ({ path: f.path })),
     })),
+
+  clearAll: () =>
+    set({
+      fileList: [],
+      expectedHash: "",
+      resultText: "",
+      progress: 0,
+      currentFile: null,
+      lastResults: null,
+      bytesRead: 0,
+      totalBytes: 0,
+      statusMessage: "ready",
+    }),
 
   toggleAlgorithm: (algo) =>
     set((state) => {
