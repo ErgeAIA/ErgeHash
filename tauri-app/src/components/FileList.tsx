@@ -276,7 +276,7 @@ export function FileList() {
       {/* 拖放区域 + 文件列表：固定高度，内容超出时内部滚动 */}
       <div
         className={cn(
-          "relative min-h-0 flex-1 overflow-y-auto rounded-xl border border-white/10 bg-white/5",
+          "relative min-h-0 flex-1 overflow-y-auto rounded-xl border border-border bg-card",
           isDragOver
             ? "border-2 border-dashed border-[var(--primary)] bg-primary/10"
             : "",

@@ -112,7 +112,7 @@ export function ResultSection() {
         {t("result_group")}
       </h2>
 
-      <div className="relative flex min-h-0 flex-1 flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+      <div className="relative flex min-h-0 flex-1 flex-col gap-3 rounded-xl border border-border bg-card p-3">
         {/* 无结果时的空状态 */}
         {!hasResults ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -139,10 +139,10 @@ export function ResultSection() {
             </div>
 
             {/* 结果表格 */}
-            <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-white/10">
+            <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-border">
               <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-white/5">
-                  <tr className="border-b border-white/10">
+                <thead className="sticky top-0 bg-muted/50">
+                  <tr className="border-b border-border">
                     <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("path")}</th>
                     <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("status")}</th>
                     <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("algorithm")}</th>

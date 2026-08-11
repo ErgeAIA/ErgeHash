@@ -363,10 +363,13 @@ function App() {
           <NavRail collapsed={sidebarCollapsed} onToggleCollapsed={toggleSidebar} />
         </div>
 
-        {/* 右侧主内容区：文件列表 + 计算结果，禁止主窗口滚动 */}
-        <div className="m-2 flex flex-1 flex-col gap-6 overflow-hidden rounded-2xl bg-panel px-6 py-6">
-          <FileList />
-          <ResultSection />
+        {/* 右侧主内容区：文件列表 + 计算结果，禁止主窗口滚动。
+            父容器用 bg-sidebar，与顶栏/侧栏 L 形框架同色，消除 m-2 间隙在亮色下的“残留直角块”视觉。 */}
+        <div className="flex flex-1 flex-col gap-6 overflow-hidden bg-sidebar p-2">
+          <div className="flex flex-1 flex-col gap-6 overflow-hidden rounded-2xl bg-panel px-6 py-6">
+            <FileList />
+            <ResultSection />
+          </div>
         </div>
       </div>
 

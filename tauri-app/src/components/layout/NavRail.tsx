@@ -97,7 +97,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
       collapsed && "justify-center px-0",
       active
         ? "text-primary bg-primary/10 before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary before:content-['']"
-        : "text-gray-300 hover:text-primary",
+        : "text-muted-foreground hover:text-primary",
     );
 
   return (
@@ -108,7 +108,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
       <div className="flex h-12 shrink-0 items-center gap-2 px-3">
         <Hash className="h-5 w-5 shrink-0 text-primary" />
         {!collapsed && (
-          <span className="truncate text-sm font-semibold text-gray-100">
+          <span className="truncate text-sm font-semibold text-foreground">
             HashValidatorPlus
           </span>
         )}
@@ -122,7 +122,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
             <button
               onClick={onToggleCollapsed}
               title={t("algorithms")}
-              className="flex h-9 w-full items-center justify-center rounded-[var(--radius)] text-gray-300 transition-colors hover:text-primary"
+              className="flex h-9 w-full items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-primary"
             >
               <Hash className="h-[18px] w-[18px]" />
             </button>
@@ -237,14 +237,14 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
                 )
               }
               title={t("settings")}
-              className="flex h-8 w-8 items-center justify-center rounded-[var(--radius)] text-gray-300 transition-colors hover:text-primary"
+              className="flex h-8 w-8 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-primary"
             >
               <Settings className="h-[18px] w-[18px]" />
             </button>
             <button
               onClick={() => handleItemClick(() => getCurrentWindow().close())}
               title={t("quit")}
-              className="flex h-8 w-8 items-center justify-center rounded-[var(--radius)] text-gray-300 transition-colors hover:text-destructive"
+              className="flex h-8 w-8 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-destructive"
             >
               <LogOut className="h-[18px] w-[18px]" />
             </button>
@@ -255,14 +255,14 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
               onClick={() =>
                 window.dispatchEvent(new CustomEvent("show-settings"))
               }
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--radius)] px-2 py-1.5 text-sm text-gray-300 transition-colors hover:text-primary"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--radius)] px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
             >
               <Settings className="h-4 w-4" />
               {t("settings")}
             </button>
             <button
               onClick={() => getCurrentWindow().close()}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--radius)] px-2 py-1.5 text-sm text-gray-300 transition-colors hover:text-destructive"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--radius)] px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-destructive"
             >
               <LogOut className="h-4 w-4" />
               {t("quit")}
