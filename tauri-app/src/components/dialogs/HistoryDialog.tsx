@@ -14,7 +14,7 @@ import { useAppStore } from "@/store/appStore";
 import { useToastStore } from "@/store/toastStore";
 import type { HashAlgorithm, HistoryEntry } from "@/services/types";
 import { History, FileText, Trash2 } from "lucide-react";
-import { ask } from "@tauri-apps/plugin-dialog";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 interface HistoryDialogProps {
   open: boolean;
@@ -31,6 +31,7 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
   const [history, setHistory] = React.useState<HistoryEntry[]>([]);
   const [selectedIndex, setSelectedIndex] = React.useState<number>(-1);
   const [loading, setLoading] = React.useState(false);
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
 
   /* 打开时加载历史记录 */
   React.useEffect(() => {
@@ -64,10 +65,13 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
     onOpenChange(false);
   }, [selectedIndex, history, setExpectedHash, setSelectedAlgorithms, onOpenChange]);
 
-  /** 清空历史记录 */
-  const handleClearHistory = React.useCallback(async () => {
-    const ok = await ask(t("clear_history_confirm"), { title: t("warning") });
-    if (!ok) return;
+  /** 点击清空历史记录按钮：弹出主题自适应确认对话框 */
+  const handleClearHistory = React.useCallback(() => {
+    setConfirmOpen(true);
+  }, []);
+
+  /** 确认清空历史记录 */
+  const handleConfirmClearHistory = React.useCallback(async () => {
     try {
       await apiClearHistory();
       setHistory([]);
@@ -76,7 +80,7 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
     } catch {
       addToast("error", t("clear_history_failed"));
     }
-  }, [t, addToast]);
+  }, [addToast, t]);
 
   /** 双击使用历史记录项 */
   const handleDoubleClick = React.useCallback(
@@ -95,9 +99,18 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[600px] max-h-[400px] flex flex-col">
-        <DialogHeader>
+    <>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t("warning")}
+        description={t("clear_history_confirm")}
+        variant="destructive"
+        onConfirm={handleConfirmClearHistory}
+      />
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[600px] max-h-[400px] flex flex-col">
+          <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="h-5 w-5" />
             {t("history_title")}
@@ -180,5 +193,6 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  </>
   );
 }

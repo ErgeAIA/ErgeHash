@@ -12,7 +12,6 @@ import {
 import { onHashProgress, onBatchProgress, onBatchFileComplete, onBatchComplete } from "./services/api";
 import { getCurrentWindow, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
-import { ask } from "@tauri-apps/plugin-dialog";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { MainLayout } from "./components/layout/MainLayout";
 import { NavRail } from "./components/layout/NavRail";
@@ -25,6 +24,7 @@ import { HistoryDialog } from "./components/dialogs/HistoryDialog";
 import { SettingsDialog } from "./components/dialogs/SettingsDialog";
 import { QuickGuideDialog } from "./components/dialogs/QuickGuideDialog";
 import { ExportDialog } from "./components/dialogs/ExportDialog";
+import { ConfirmDialog } from "./components/dialogs/ConfirmDialog";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { ToastHost } from "./components/ui/toast";
 import { useToastStore } from "./store/toastStore";
@@ -64,6 +64,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showQuickGuide, setShowQuickGuide] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [confirmClearHistory, setConfirmClearHistory] = useState(false);
   // 侧栏折叠状态（持久化到 localStorage，重启后保持）
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => localStorage.getItem("hvp.ui.nav_collapsed") === "true",
@@ -319,22 +320,23 @@ function App() {
     addFiles,
   ]);
 
+  /** 确认清空历史记录 */
+  const handleConfirmClearHistory = useCallback(async () => {
+    try {
+      await apiClearHistory();
+      addToast("success", t("history_cleared"));
+    } catch {
+      addToast("error", t("clear_history_failed"));
+    }
+  }, [addToast, t]);
+
   // 监听自定义事件（菜单栏和侧边栏触发）
   useEffect(() => {
     const onShowHistory = () => setShowHistory(true);
     const onShowSettings = () => setShowSettings(true);
     const onShowQuickGuide = () => setShowQuickGuide(true);
     const onExportResults = () => setShowExport(true);
-    const onClearHistory = async () => {
-      const ok = await ask(t("clear_history_confirm"), { title: t("warning") });
-      if (!ok) return;
-      try {
-        await apiClearHistory();
-        addToast("success", t("history_cleared"));
-      } catch {
-        addToast("error", t("clear_history_failed"));
-      }
-    };
+    const onClearHistory = () => setConfirmClearHistory(true);
     const onImportVerification = async () => {
       const paths = await openFileDialog();
       if (!paths || paths.length === 0) return;
@@ -400,6 +402,14 @@ function App() {
       <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
       <QuickGuideDialog open={showQuickGuide} onOpenChange={setShowQuickGuide} />
       <ExportDialog open={showExport} onOpenChange={setShowExport} />
+      <ConfirmDialog
+        open={confirmClearHistory}
+        onOpenChange={setConfirmClearHistory}
+        title={t("warning")}
+        description={t("clear_history_confirm")}
+        variant="destructive"
+        onConfirm={handleConfirmClearHistory}
+      />
       <ToastHost />
       {/* 悬浮计算进度 toast */}
       <FloatingProgress />
