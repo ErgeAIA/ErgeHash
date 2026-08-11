@@ -1,4 +1,4 @@
-# HashValidatorPlus 设计系统规范（Design System）
+# ErgeHash 设计系统规范（Design System）
 
 > 适用范围：基于 Tauri 2 + React + TS + Tailwind 的桌面端应用主窗口。
 > 目标：沉淀可复用的布局、配色、组件层级与交互约束，使新项目可快速复现，减少重复劳动。
@@ -163,7 +163,7 @@
 - **底色**：`bg-sidebar`，与顶栏一体；无圆角、无边距、无分隔线。
 - **纵向结构（上 → 下）**：
 
-  1. **LOGO 区**（`h-12`）：`Hash` 图标 + 应用名 `HashValidatorPlus`（仅展示，**不触发折叠**）。
+  1. **LOGO 区**（`h-12`）：`Hash` 图标 + 应用名 `ErgeHash`（仅展示，**不触发折叠**）。
   2. **滚动区**（`flex-1 overflow-y-auto`，滚动条隐藏）：
      - 算法选择组（SHA-256 / MD5 / SHA-1 / SHA-512）。
      - 一级平级项：历史、快速指南。

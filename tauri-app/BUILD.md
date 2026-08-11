@@ -1,8 +1,8 @@
-# HashValidatorPlus 打包指南
+# ErgeHash 打包指南
 
 ## 项目简介
 
-HashValidatorPlus 是一个使用 Tauri 2 + React + Rust 构建的文件哈希校验工具，支持 SHA256、MD5、SHA1 和 SHA512 算法。
+ErgeHash（中文名：二哈，二哥的文件哈希检验工具）是一个使用 Tauri 2 + React + Rust 构建的文件哈希校验工具，支持 SHA256、MD5、SHA1 和 SHA512 算法。
 
 ## 前置要求
 
@@ -34,8 +34,8 @@ pnpm run tauri build
 
 ### Windows 平台
 
-- **独立 exe 文件**：位于 `tauri-app/src-tauri/target/release/hash_validator_plus.exe`
-- **NSIS 安装包**：位于 `bundle/nsis/HashValidatorPlus_0.3.0_x64-setup.exe`
+- **独立 exe 文件**：位于 `tauri-app/src-tauri/target/release/erge_hash.exe`
+- **NSIS 安装包**：位于 `bundle/nsis/ErgeHash_0.3.0_x64-setup.exe`
 - **其他格式**：如果配置了其他 targets，会生成对应的打包文件
 
 ## 配置说明
@@ -82,8 +82,8 @@ npm run tauri build
 
 打包完成后，查看：
 
-- **独立 exe**：`src-tauri/target/release/hash_validator_plus.exe`
-- **NSIS 安装包**：`src-tauri/target/release/bundle/nsis/HashValidatorPlus_0.3.0_x64-setup.exe`
+- **独立 exe**：`src-tauri/target/release/erge_hash.exe`
+- **NSIS 安装包**：`src-tauri/target/release/bundle/nsis/ErgeHash_0.3.0_x64-setup.exe`
 
 ## 自定义打包配置
 

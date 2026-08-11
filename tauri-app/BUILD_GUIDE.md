@@ -1,4 +1,4 @@
-# HashValidatorPlus 打包指南
+# ErgeHash 打包指南
 
 ## 前置要求
 
@@ -27,16 +27,16 @@ pnpm run tauri build
 ### Windows 平台
 
 1. **NSIS 安装包** (`nsis/`)
-   - `HashValidatorPlus_0.3.0_x64-setup.exe` - 带界面的安装程序
+   - `ErgeHash_0.3.0_x64-setup.exe` - 带界面的安装程序
    - 包含中文/英文语言选择
    - 自动创建桌面快捷方式和开始菜单项
 
 2. **MSI 安装包** (`msi/`)
-   - `HashValidatorPlus_0.3.0_x64_en-US.msi` - MSI 安装程序
+   - `ErgeHash_0.3.0_x64_en-US.msi` - MSI 安装程序
    - 适合企业环境部署
 
 3. **独立 EXE** (`msi/` 或直接在 `release/` 中)
-   - `HashValidatorPlus.exe` - 独立可执行文件
+   - `ErgeHash.exe` - 独立可执行文件
    - 无需安装，双击即可运行
 
 ## 配置说明
@@ -58,7 +58,7 @@ panic = "abort"      # 发生 panic 时直接终止
 
 主要配置在 `tauri.conf.json` 中：
 
-- `identifier`: `com.hashvalidatorplus.app` (反向域名格式)
+- `identifier`: `com.ergehash.app` (反向域名格式)
 - `targets`: `["nsis", "msi", "updater"]` (打包类型)
 - 图标: 已配置多种尺寸的图标
 - 安全: CSP 已禁用（如需更严格安全可启用）
@@ -86,7 +86,7 @@ panic = "abort"      # 发生 panic 时直接终止
 
 ### 独立 EXE
 
-独立 exe 位于 `src-tauri/target/release/` 目录，文件名通常是 `hash_validator_plus.exe` 或 `HashValidatorPlus.exe`
+独立 exe 位于 `src-tauri/target/release/` 目录，文件名通常是 `erge_hash.exe` 或 `ErgeHash.exe`
 
 ## 发布前检查清单
 
@@ -101,5 +101,5 @@ panic = "abort"      # 发生 panic 时直接终止
 
 构建成功后，可将以下文件分发给用户：
 
-- `HashValidatorPlus_0.3.0_x64-setup.exe` (推荐)
-- 或独立的 `HashValidatorPlus.exe`
+- `ErgeHash_0.3.0_x64-setup.exe` (推荐)
+- 或独立的 `ErgeHash.exe`

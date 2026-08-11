@@ -349,7 +349,7 @@ interface AlgorithmResult {
 
 ### 5.2 系统级右键菜单（参考截图 FileHash 的"FH"菜单）
 
-在 Windows 资源管理器中右键文件/文件夹，显示 `HashValidatorPlus` 子菜单：
+在 Windows 资源管理器中右键文件/文件夹，显示 `ErgeHash` 子菜单：
 
 | 子菜单项 | 功能 |
 | --- | --- |
@@ -362,8 +362,8 @@ interface AlgorithmResult {
 
 实现方式（Tauri 2）：
 - 选项 A：**`tauri-plugin-context-menu`** —— 仅在应用窗口内生效，实现成本低。
-- 选项 B：**Windows 注册表 + Shell 扩展** —— 在资源管理器右键注册项，调用 `hashvalidatorplus.exe "--hash=sha256" "path"` 或 URI scheme。需要管理员权限安装/卸载，与截图中的"添加鼠标右键菜单"/"移除鼠标右键菜单"按钮一致。
-- 选项 C：**URI scheme / 自定义协议** —— `hashvalidatorplus://hash?path=...&algos=...`，由应用启动时解析。
+- 选项 B：**Windows 注册表 + Shell 扩展** —— 在资源管理器右键注册项，调用 `ergehash.exe "--hash=sha256" "path"` 或 URI scheme。需要管理员权限安装/卸载，与截图中的"添加鼠标右键菜单"/"移除鼠标右键菜单"按钮一致。
+- 选项 C：**URI scheme / 自定义协议** —— `ergehash://hash?path=...&algos=...`，由应用启动时解析。
 
 推荐分阶段：先实现选项 A（应用内右键），后续再实现选项 B（系统右键）作为高级功能。
 
