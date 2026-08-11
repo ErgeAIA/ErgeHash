@@ -93,7 +93,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
    * 未选中：灰文字，hover 只变品牌色文字（不变底色） */
   const navItemClass = (active: boolean) =>
     cn(
-      "relative flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-sm transition-colors duration-100",
+      "relative flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-[15px] font-medium transition-colors duration-100",
       collapsed && "justify-center px-0",
       active
         ? "relative text-primary bg-primary-alpha before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary before:content-['']"
@@ -108,7 +108,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
       <div className="flex h-12 shrink-0 items-center gap-2 px-3">
         <Hash className="h-5 w-5 shrink-0 text-primary" />
         {!collapsed && (
-          <span className="truncate text-sm font-semibold text-foreground">
+          <span className="truncate text-[15px] font-semibold text-foreground">
             HashValidatorPlus
           </span>
         )}
@@ -255,14 +255,14 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
               onClick={() =>
                 window.dispatchEvent(new CustomEvent("show-settings"))
               }
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--radius)] px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--radius)] px-2 py-1.5 text-[15px] font-medium text-muted-foreground transition-colors hover:text-primary"
             >
               <Settings className="h-4 w-4" />
               {t("settings")}
             </button>
             <button
               onClick={() => getCurrentWindow().close()}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--radius)] px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-destructive"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-[var(--radius)] px-2 py-1.5 text-[15px] font-medium text-muted-foreground transition-colors hover:text-destructive"
             >
               <LogOut className="h-4 w-4" />
               {t("quit")}
@@ -300,7 +300,7 @@ function NavGroup({
         onClick={onClick}
         title={collapsed ? label : undefined}
         className={cn(
-          "flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-sm transition-colors duration-100",
+        "flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-[15px] font-medium transition-colors duration-100",
           collapsed && "justify-center px-0",
           expanded
             ? "text-foreground"
@@ -350,7 +350,7 @@ function NavSubItem({ icon, label, onClick }: NavSubItemProps) {
   return (
     <button
       onClick={onClick}
-      className="relative flex items-center gap-2 rounded-[var(--radius)] py-2 pl-[52px] pr-3 text-sm text-muted-foreground transition-colors duration-100 hover:text-primary"
+      className="relative flex items-center gap-2 rounded-[var(--radius)] py-2 pl-[52px] pr-3 text-[15px] text-muted-foreground transition-colors duration-100 hover:text-primary"
     >
       <span className="absolute left-[28px] flex h-3.5 w-3.5 items-center justify-center opacity-70">
         {icon}

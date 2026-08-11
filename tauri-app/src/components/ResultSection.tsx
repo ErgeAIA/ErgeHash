@@ -174,7 +174,7 @@ export function ResultSection({ className }: { className?: string }) {
 
                     {/* 哈希值 */}
                     <span
-                      className="w-40 shrink-0 truncate text-xs text-muted-foreground"
+                      className="w-40 shrink-0 truncate font-mono text-xs text-muted-foreground"
                       title={file.hashValue ?? ""}
                     >
                       {file.hashValue

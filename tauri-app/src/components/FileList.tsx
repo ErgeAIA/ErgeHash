@@ -237,7 +237,7 @@ export function FileList({ className }: { className?: string }) {
 
                 {/* 哈希值（如果有） */}
                 {file.hashValue && (
-                  <span className="max-w-[200px] truncate text-xs text-muted-foreground" title={file.hashValue}>
+                  <span className="max-w-[200px] truncate font-mono text-xs text-muted-foreground" title={file.hashValue}>
                     {file.hashValue}
                   </span>
                 )}
