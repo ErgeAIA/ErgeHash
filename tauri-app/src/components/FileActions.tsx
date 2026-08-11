@@ -1,20 +1,20 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Play, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/appStore";
 import { useToastStore } from "@/store/toastStore";
-import { ask } from "@tauri-apps/plugin-dialog";
+import { ConfirmDialog } from "@/components/dialogs/ConfirmDialog";
 
 /** 文件列表底部的全局操作按钮：开始校验 + 清空列表 */
 export function FileActions() {
   const { t } = useTranslation();
   const fileList = useAppStore((s) => s.fileList);
   const isCalculating = useAppStore((s) => s.isCalculating);
-  const clearFiles = useAppStore((s) => s.clearFiles);
   const addToast = useToastStore((s) => s.addToast);
-
+  const clearAll = useAppStore((s) => s.clearAll);
   const hasFiles = fileList.length > 0;
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   /** 开始校验：委托 store.startValidation（单一来源，自动/手动共用） */
   const handleStartVerify = useCallback(async () => {
@@ -26,16 +26,26 @@ export function FileActions() {
     await useAppStore.getState().startValidation();
   }, [isCalculating, fileList.length, addToast, t]);
 
-  /** 点击清空列表按钮（带确认） */
-  const handleClearClick = useCallback(async () => {
-    const ok = await ask(t("confirm_clear_files"), { title: t("warning") });
-    if (ok) {
-      clearFiles();
-    }
-  }, [clearFiles, t]);
+  /** 点击清空列表按钮：弹出主题自适应确认对话框 */
+  const handleClearClick = useCallback(() => {
+    setConfirmOpen(true);
+  }, []);
+
+  const handleConfirmClear = useCallback(() => {
+    clearAll();
+  }, [clearAll]);
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t("warning")}
+        description={t("confirm_clear_files")}
+        variant="destructive"
+        onConfirm={handleConfirmClear}
+      />
+      <div className="flex flex-col items-center gap-3">
       <button
         type="button"
         onClick={(e) => {
@@ -64,8 +74,8 @@ export function FileActions() {
           void handleClearClick();
         }}
         disabled={!hasFiles}
-        title={t("clear_list")}
-        aria-label={t("clear_list")}
+        title={t("clear_list_pending")}
+        aria-label={t("clear_list_pending")}
         className={cn(
           "flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-lg shadow-destructive/30 transition-all",
           "hover:scale-105 hover:bg-destructive/90 active:scale-95",
@@ -75,5 +85,6 @@ export function FileActions() {
         <X className="h-6 w-6" />
       </button>
     </div>
+  </>
   );
 }

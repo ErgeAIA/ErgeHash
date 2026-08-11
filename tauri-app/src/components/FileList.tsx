@@ -49,6 +49,8 @@ export function FileList({ className }: { className?: string }) {
 
     menu.style.left = `${x}px`;
     menu.style.top = `${y}px`;
+    // 菜单打开后自动聚焦，使失去焦点/ESC 时能够自动关闭
+    menu.focus();
   }, [contextMenu]);
 
   /** 处理拖拽进入 */
@@ -294,10 +296,10 @@ export function FileList({ className }: { className?: string }) {
           )}
         </div>
 
-        {/* 固定在列表底部的操作按钮：开始检测 + 清空列表 */}
+        {/* 浮动操作按钮：透明背景，悬浮在区域上方，与三区风格一致 */}
         {fileList.length > 0 && (
-          <div className="shrink-0 border-t border-border bg-card/50 px-4 py-3">
-            <div className="flex justify-end">
+          <div className="pointer-events-none absolute bottom-4 right-20 z-10">
+            <div className="pointer-events-auto">
               <FileActions />
             </div>
           </div>
@@ -318,8 +320,20 @@ export function FileList({ className }: { className?: string }) {
           />
           <div
             ref={menuRef}
-            className="fixed z-50 min-w-[140px] rounded-default border border-border bg-card py-1 shadow-lg"
+            tabIndex={-1}
+            className="fixed z-50 min-w-[140px] rounded-default border border-border bg-card py-1 shadow-lg outline-none"
             style={{ left: contextMenu.x, top: contextMenu.y }}
+            onBlur={(e) => {
+              if (!menuRef.current?.contains(e.relatedTarget as Node)) {
+                closeContextMenu();
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                closeContextMenu();
+              }
+            }}
           >
             <button
               className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted"
