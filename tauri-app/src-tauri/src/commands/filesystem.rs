@@ -1,8 +1,27 @@
+use std::fs;
 use std::path::Path;
 
 use tauri::AppHandle;
 use tauri_plugin_dialog::DialogExt;
 use walkdir::WalkDir;
+
+/// 文件元数据（路径、大小）
+#[derive(Debug, serde::Serialize)]
+pub struct FileMetadata {
+    pub path: String,
+    pub size: u64,
+}
+
+/// 获取文件的元数据（路径、大小）
+#[tauri::command]
+pub fn get_file_metadata(file_path: String) -> Result<FileMetadata, String> {
+    let path = Path::new(&file_path);
+    let metadata = fs::metadata(path).map_err(|e| e.to_string())?;
+    Ok(FileMetadata {
+        path: file_path,
+        size: metadata.len(),
+    })
+}
 
 /// 递归扫描目录，返回所有文件路径
 #[tauri::command]

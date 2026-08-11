@@ -2,11 +2,11 @@ import { useEffect, useLayoutEffect, useState, useCallback, useRef, type DragEve
 import { useTranslation } from "react-i18next";
 import { X, Copy, Hash, FileSearch } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
+import type { FileResult, FileItemStatus } from "@/services/types";
 import { scanDirectory, openFileDialog } from "@/services/api";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { cn } from "@/lib/utils";
-import { FileActions } from "./FileActions";
 
 /** 文件拖放列表组件，对应原始 DragDropFileListWidget */
 export function FileList({ className }: { className?: string }) {
@@ -202,25 +202,90 @@ export function FileList({ className }: { className?: string }) {
     [fileList, closeContextMenu],
   );
 
-  /** 复制哈希值 */
-  const handleCopyHash = useCallback(
-    async (index: number) => {
-      const file = fileList[index];
-      if (file?.hashValue) {
-        try {
-          await writeText(file.hashValue);
-        } catch {
-          // 剪贴板写入失败，忽略
-        }
-      }
-      closeContextMenu();
-    },
-    [fileList, closeContextMenu],
-  );
-
   /** 从路径提取文件名 */
   const getBasename = (path: string) => {
     return path.split(/[/\\]/).pop() ?? path;
+  };
+
+  /** 字节数格式化为可读大小 */
+  const formatBytes = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    const units = ["KB", "MB", "GB", "TB"];
+    let value = bytes / 1024;
+    let i = 0;
+    while (value >= 1024 && i < units.length - 1) {
+      value /= 1024;
+      i++;
+    }
+    return `${value.toFixed(value >= 100 ? 0 : 1)} ${units[i]}`;
+  };
+
+  /** 复制单个算法子结果行 */
+  const handleCopyChild = useCallback(
+    async (file: { path: string }, r: FileResult) => {
+      try {
+        await writeText(`${getBasename(file.path)} ${r.algorithm}: ${r.hashValue}`);
+      } catch {
+        // 剪贴板写入失败，忽略
+      }
+    },
+    [],
+  );
+
+  /** 复制该文件所有算法结果 */
+  const handleCopyAll = useCallback(
+    async (file: { path: string; results: FileResult[] }) => {
+      const lines = (file.results ?? []).map(
+        (r) => `${r.algorithm}: ${r.hashValue}`,
+      );
+      try {
+        await writeText(
+          lines.length > 0
+            ? `${getBasename(file.path)}\n${lines.join("\n")}`
+            : getBasename(file.path),
+        );
+      } catch {
+        // 剪贴板写入失败，忽略
+      }
+    },
+    [],
+  );
+
+  /** 父级汇总状态徽章 */
+  const StatusBadge = ({ status }: { status?: FileItemStatus }) => {
+    if (!status) {
+      return (
+        <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-muted-foreground">
+          {t("unverified")}
+        </span>
+      );
+    }
+    if (status === "success") {
+      return (
+        <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-primary">
+          {t("match")}
+        </span>
+      );
+    }
+    if (status === "mismatch") {
+      return (
+        <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-destructive">
+          {t("mismatch")}
+        </span>
+      );
+    }
+    if (status === "error") {
+      return (
+        <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-warning">
+          {t("error")}
+        </span>
+      );
+    }
+    return (
+      <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-muted-foreground">
+        {t("computed")}
+      </span>
+    );
   };
 
   return (
@@ -247,63 +312,115 @@ export function FileList({ className }: { className?: string }) {
               <span>{t("drag_hint")}</span>
             </div>
           ) : (
-            <ul className="divide-y divide-border">
-              {fileList.map((file, index) => (
-                <li
-                  key={file.path}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted/30 cursor-default"
-                  onClick={(e) => e.stopPropagation()}
-                  onContextMenu={(e) => handleContextMenu(e, index)}
-                  title={file.path}
-                >
-                  {/* 文件名 */}
-                  <span className="flex-1 truncate" title={file.path}>
-                    {getBasename(file.path)}
-                  </span>
-
-                  {/* 哈希值（如果有） */}
-                  {file.hashValue && (
-                    <span className="max-w-[200px] truncate font-mono text-xs text-muted-foreground" title={file.hashValue}>
-                      {file.hashValue}
-                    </span>
-                  )}
-
-                  {/* 状态图标 */}
-                  {file.status === "computed" && (
-                    <span className="text-xs text-muted-foreground">&#10003;</span>
-                  )}
-                  {file.status === "success" && (
-                    <span className="text-xs text-primary">&#10003;</span>
-                  )}
-                  {file.status === "mismatch" && (
-                    <span className="text-xs text-destructive">&#10007;</span>
-                  )}
-                  {file.status === "error" && (
-                    <span className="text-xs text-warning">!</span>
-                  )}
-
-                  {/* 删除按钮 */}
-                  <button
-                    className="ml-1 shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeFile(index)}
-                    title={t("remove_selected")}
+            <ul>
+              {fileList.flatMap((file, fileIndex) => {
+                const children: FileResult[] = file.results ?? [];
+                const parent = (
+                  <li
+                    key={`p-${file.path}`}
+                    className="flex items-center gap-2 px-3 py-2 cursor-default hover:bg-muted/30"
+                    onClick={(e) => e.stopPropagation()}
+                    onContextMenu={(e) => handleContextMenu(e, fileIndex)}
                   >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </li>
-              ))}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-baseline gap-2">
+                        <span
+                          className="truncate text-base font-bold text-foreground"
+                          title={getBasename(file.path)}
+                        >
+                          {getBasename(file.path)}
+                        </span>
+                        <span
+                          className="truncate text-xs text-muted-foreground"
+                          title={file.path}
+                        >
+                          {file.path}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {typeof file.size === "number" ? formatBytes(file.size) : ""}
+                    </span>
+                    <StatusBadge status={file.status} />
+                    <button
+                      className="ml-1 shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                      onClick={() => handleCopyAll(file)}
+                      title={t("menu_copy")}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      className="ml-1 shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeFile(fileIndex)}
+                      title={t("remove_selected")}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                );
+                const childRows = children.map((r, ci) => (
+                  <li
+                    key={`c-${file.path}-${r.algorithm}`}
+                    className={cn(
+                      "group relative flex items-center gap-2 py-1 pr-3 text-xs text-muted-foreground hover:bg-muted/20",
+                      ci === children.length - 1 ? "pb-2" : "",
+                    )}
+                    title={file.path}
+                  >
+                    {/* 连续竖线引导 + 拐角：父级与子级视觉成一体 */}
+                    <span className="relative flex w-8 shrink-0 justify-center">
+                      <span
+                        className={cn(
+                          "absolute top-0 w-px bg-muted-foreground/40",
+                          ci === children.length - 1 ? "bottom-1/2" : "bottom-0",
+                        )}
+                        style={{ left: "1rem" }}
+                      />
+                      {ci === children.length - 1 && (
+                        <span
+                          className="absolute h-px w-4 bg-muted-foreground/40"
+                          style={{ left: "1rem", top: "50%" }}
+                        />
+                      )}
+                      <span
+                        className="absolute z-10 h-1.5 w-1.5 rounded-full bg-muted-foreground/40"
+                        style={{ left: "1rem", top: "50%", transform: "translate(-50%, -50%)" }}
+                      />
+                    </span>
+                    <span className="w-20 shrink-0 font-medium uppercase text-foreground/70">
+                      {r.algorithm}
+                    </span>
+                    <span
+                      className={cn(
+                        "flex-1 truncate font-mono text-foreground/80",
+                        r.status === "error" ? "text-warning" : "",
+                      )}
+                      title={r.hashValue || r.errorMessage}
+                    >
+                      {r.status === "error"
+                        ? r.errorMessage ?? t("error")
+                        : r.hashValue || "—"}
+                    </span>
+                    <span className="w-20 shrink-0 text-right text-muted-foreground/80">
+                      {r.elapsedTime > 0 ? `${r.elapsedTime.toFixed(2)}s` : "—"}
+                    </span>
+                    {r.status !== "error" && (
+                      <button
+                        className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground"
+                        onClick={() => handleCopyChild(file, r)}
+                        title={t("copy")}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </button>
+                    )}
+                  </li>
+                ));
+                return [parent, ...childRows];
+              })}
             </ul>
           )}
         </div>
 
-        {/* 浮动操作按钮：透明背景，悬浮在区域上方，与三区风格一致 */}
-        {fileList.length > 0 && (
-          <div className="pointer-events-none absolute bottom-4 right-20 z-10">
-            <div className="pointer-events-auto">
-              <FileActions />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 右键菜单 */}
@@ -353,9 +470,8 @@ export function FileList({ className }: { className?: string }) {
               {t("copy_path")}
             </button>
             <button
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted disabled:opacity-50"
-              onClick={() => handleCopyHash(contextMenu.index)}
-              disabled={!fileList[contextMenu.index]?.hashValue}
+              className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted"
+              onClick={() => handleCopyAll(fileList[contextMenu.index])}
             >
               <Hash className="h-3.5 w-3.5" />
               {t("menu_copy")}

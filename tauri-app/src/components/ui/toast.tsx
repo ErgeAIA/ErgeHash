@@ -49,7 +49,7 @@ export function ToastHost() {
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-[320px] flex-col gap-2"
+      className="pointer-events-none fixed right-4 top-4 z-[100] flex w-[320px] flex-col gap-2"
     >
       {toasts.map((t) => (
         <div key={t.id} className="pointer-events-auto">
