@@ -15,7 +15,6 @@ ErgeHash（中文名：二哈，二哥的文件哈希检验工具）是一个使
 ### 开发模式
 
 ```bash
-cd tauri-app
 pnpm install
 pnpm run tauri dev
 ```
@@ -23,18 +22,17 @@ pnpm run tauri dev
 ### 生产打包
 
 ```bash
-cd tauri-app
 pnpm install
 pnpm run tauri build
 ```
 
 ## 打包输出
 
-打包完成后，所有文件会输出到 `tauri-app/src-tauri/target/release/bundle/` 目录：
+打包完成后，所有文件会输出到 `src-tauri/target/release/bundle/` 目录：
 
 ### Windows 平台
 
-- **独立 exe 文件**：位于 `tauri-app/src-tauri/target/release/erge_hash.exe`
+- **独立 exe 文件**：位于 `src-tauri/target/release/ErgeHash.exe`
 - **NSIS 安装包**：位于 `bundle/nsis/ErgeHash_0.3.0_x64-setup.exe`
 - **其他格式**：如果配置了其他 targets，会生成对应的打包文件
 
@@ -68,7 +66,6 @@ pnpm run tauri build
 ### 1. 安装依赖
 
 ```bash
-cd tauri-app
 npm install
 ```
 
@@ -82,7 +79,7 @@ npm run tauri build
 
 打包完成后，查看：
 
-- **独立 exe**：`src-tauri/target/release/erge_hash.exe`
+- **独立 exe**：`src-tauri/target/release/ErgeHash.exe`
 - **NSIS 安装包**：`src-tauri/target/release/bundle/nsis/ErgeHash_0.3.0_x64-setup.exe`
 
 ## 自定义打包配置
@@ -90,17 +87,17 @@ npm run tauri build
 ### 修改版本号
 
 需要同时修改以下三个文件：
-- `tauri-app/package.json`
-- `tauri-app/src-tauri/Cargo.toml`
-- `tauri-app/src-tauri/tauri.conf.json`
+- `package.json`
+- `src-tauri/Cargo.toml`
+- `src-tauri/tauri.conf.json`
 
 ### 修改应用名称
 
-修改 `tauri-app/src-tauri/tauri.conf.json` 中的 `productName` 字段。
+修改 `src-tauri/tauri.conf.json` 中的 `productName` 字段。
 
 ### 添加更多打包格式
 
-在 `tauri-app/src-tauri/tauri.conf.json` 的 `bundle.targets` 中添加：
+在 `src-tauri/tauri.conf.json` 的 `bundle.targets` 中添加：
 - `"msi"`：MSI 安装包
 - `"updater"`：更新包
 

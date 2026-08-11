@@ -86,7 +86,7 @@ panic = "abort"      # 发生 panic 时直接终止
 
 ### 独立 EXE
 
-独立 exe 位于 `src-tauri/target/release/` 目录，文件名通常是 `erge_hash.exe` 或 `ErgeHash.exe`
+独立 exe 位于 `src-tauri/target/release/` 目录，文件名为 `ErgeHash.exe`（由 `tauri.conf.json` 的 `productName` 决定）
 
 ## 发布前检查清单
 
