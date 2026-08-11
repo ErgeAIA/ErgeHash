@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { getHistory, clearHistory as apiClearHistory } from "@/services/api";
 import { useAppStore } from "@/store/appStore";
 import { useToastStore } from "@/store/toastStore";
-import type { HistoryEntry } from "@/services/types";
+import type { HashAlgorithm, HistoryEntry } from "@/services/types";
 import { History, FileText, Trash2 } from "lucide-react";
 import { ask } from "@tauri-apps/plugin-dialog";
 
@@ -25,7 +25,7 @@ interface HistoryDialogProps {
 export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
   const { t } = useTranslation();
   const setExpectedHash = useAppStore((s) => s.setExpectedHash);
-  const setAlgorithm = useAppStore((s) => s.setAlgorithm);
+  const setSelectedAlgorithms = useAppStore((s) => s.setSelectedAlgorithms);
   const addToast = useToastStore((s) => s.addToast);
 
   const [history, setHistory] = React.useState<HistoryEntry[]>([]);
@@ -60,9 +60,9 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
     if (selectedIndex < 0 || selectedIndex >= history.length) return;
     const entry = history[selectedIndex];
     setExpectedHash(entry.hashValue);
-    setAlgorithm(entry.algorithm);
+    setSelectedAlgorithms([entry.algorithm as HashAlgorithm]);
     onOpenChange(false);
-  }, [selectedIndex, history, setExpectedHash, setAlgorithm, onOpenChange]);
+  }, [selectedIndex, history, setExpectedHash, setSelectedAlgorithms, onOpenChange]);
 
   /** 清空历史记录 */
   const handleClearHistory = React.useCallback(async () => {
@@ -83,10 +83,10 @@ export function HistoryDialog({ open, onOpenChange }: HistoryDialogProps) {
     (index: number) => {
       const entry = history[index];
       setExpectedHash(entry.hashValue);
-      setAlgorithm(entry.algorithm);
+      setSelectedAlgorithms([entry.algorithm as HashAlgorithm]);
       onOpenChange(false);
     },
-    [history, setExpectedHash, setAlgorithm, onOpenChange],
+    [history, setExpectedHash, setSelectedAlgorithms, onOpenChange],
   );
 
   /** 从路径中提取文件名 */

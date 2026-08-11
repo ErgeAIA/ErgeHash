@@ -9,8 +9,8 @@ import i18n from "@/i18n";
 interface AppState {
   /** 文件列表 */
   fileList: FileItem[];
-  /** 当前算法 */
-  algorithm: HashAlgorithm;
+  /** 当前选中的算法列表 */
+  selectedAlgorithms: HashAlgorithm[];
   /** 主题 */
   theme: "light" | "dark";
   /** 语言 */
@@ -47,8 +47,14 @@ interface AppState {
   clearFiles: () => void;
   /** 仅清空计算结果（保留文件列表与预期哈希值） */
   clearResults: () => void;
-  /** 设置算法（持久化） */
-  setAlgorithm: (algo: HashAlgorithm) => void;
+  /** 切换算法选中状态（持久化） */
+  toggleAlgorithm: (algo: HashAlgorithm) => void;
+  /** 全选算法 */
+  selectAllAlgorithms: () => void;
+  /** 全不选算法（至少保留一个默认算法） */
+  deselectAllAlgorithms: () => void;
+  /** 设置选中的算法列表（持久化） */
+  setSelectedAlgorithms: (algos: HashAlgorithm[]) => void;
   /** 设置自动开始校验开关（持久化） */
   setAutoCalculate: (value: boolean) => void;
   /** 开始校验：验证区有输入时先计算全部文件哈希再逐一比对；为空时仅计算哈希 */
@@ -101,7 +107,7 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set, get) => ({
   fileList: [],
-  algorithm: "sha256",
+  selectedAlgorithms: ["sha256"],
   theme: "light",
   language: "zh",
   autoCalculate: false,
@@ -152,9 +158,36 @@ export const useAppStore = create<AppState>((set, get) => ({
       fileList: state.fileList.map((f) => ({ path: f.path })),
     })),
 
-  setAlgorithm: (algo) => {
-    set({ algorithm: algo });
-    void setConfig("algorithm", algo);
+  toggleAlgorithm: (algo) =>
+    set((state) => {
+      const selected = new Set(state.selectedAlgorithms);
+      if (selected.has(algo)) {
+        if (selected.size > 1) selected.delete(algo);
+      } else {
+        selected.add(algo);
+      }
+      const next = Array.from(selected) as HashAlgorithm[];
+      void setConfig("algorithm", next.join(","));
+      return { selectedAlgorithms: next };
+    }),
+
+  selectAllAlgorithms: () =>
+    set(() => {
+      const next: HashAlgorithm[] = ["sha256", "md5", "sha1", "sha512", "crc32"];
+      void setConfig("algorithm", next.join(","));
+      return { selectedAlgorithms: next };
+    }),
+
+  deselectAllAlgorithms: () =>
+    set(() => {
+      const next: HashAlgorithm[] = ["sha256"];
+      void setConfig("algorithm", next.join(","));
+      return { selectedAlgorithms: next };
+    }),
+
+  setSelectedAlgorithms: (algos) => {
+    set({ selectedAlgorithms: algos });
+    void setConfig("algorithm", algos.join(","));
   },
 
   setTheme: (theme) => set({ theme }),
@@ -201,7 +234,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const paths = state.fileList.map((f) => f.path);
       const expected = state.expectedHash?.trim() || "";
-      const batch = await startBatchValidation(paths, state.algorithm);
+      const allResults: HashResult[] = [];
+      const totalAlgos = state.selectedAlgorithms.length;
+      for (let i = 0; i < totalAlgos; i++) {
+        const batch = await startBatchValidation(paths, state.selectedAlgorithms[i]);
+        allResults.push(...batch.results);
+        set({ progress: Math.round(((i + 1) / totalAlgos) * 100) });
+      }
 
       set({ isCalculating: false, progress: 100, statusMessage: "completed" });
 
@@ -211,7 +250,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         .split("\n")
         .map((l) => l.trim())
         .filter((l) => l.length > 0);
-      const computedResults = batch.results.filter((r) => r.hashValue);
+      const computedResults = allResults.filter((r) => r.hashValue);
 
       let compText = `\n${t("comparison_results")}\n\n`;
       let matchCount = 0;

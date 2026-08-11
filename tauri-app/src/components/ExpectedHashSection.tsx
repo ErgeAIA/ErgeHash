@@ -29,7 +29,7 @@ export function ExpectedHashSection({ className }: { className?: string }) {
   const { t } = useTranslation();
   const expectedHash = useAppStore((s) => s.expectedHash);
   const setExpectedHash = useAppStore((s) => s.setExpectedHash);
-  const setAlgorithm = useAppStore((s) => s.setAlgorithm);
+  const setSelectedAlgorithms = useAppStore((s) => s.setSelectedAlgorithms);
 
   /* 输入框聚焦状态 */
   const [hashFocused, setHashFocused] = useState(false);
@@ -52,14 +52,14 @@ export function ExpectedHashSection({ className }: { className?: string }) {
       if (cleaned.length > 0 && /^[0-9a-f]+$/i.test(cleaned)) {
         const algo = HASH_LENGTH_ALGO_MAP[cleaned.length];
         if (algo) {
-          setAlgorithm(algo);
+          setSelectedAlgorithms([algo]);
           setDetectedAlgo(algo);
           return;
         }
       }
       setDetectedAlgo(null);
     },
-    [setExpectedHash, setAlgorithm],
+    [setExpectedHash, setSelectedAlgorithms],
   );
 
   return (

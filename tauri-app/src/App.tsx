@@ -28,12 +28,23 @@ import { ExportDialog } from "./components/dialogs/ExportDialog";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { ToastHost } from "./components/ui/toast";
 import { useToastStore } from "./store/toastStore";
+import type { HashAlgorithm } from "./services/types";
+
+const ALL_ALGORITHMS: HashAlgorithm[] = ["sha256", "md5", "sha1", "sha512", "crc32"];
+
+function parseAlgorithms(raw: string): HashAlgorithm[] {
+  const parsed = raw
+    .split(",")
+    .map((a) => a.trim().toLowerCase())
+    .filter((a): a is HashAlgorithm => ALL_ALGORITHMS.includes(a as HashAlgorithm));
+  return parsed.length > 0 ? parsed : ["sha256"];
+}
 
 function App() {
   const { t, i18n } = useTranslation();
   const theme = useAppStore((s) => s.theme);
   const language = useAppStore((s) => s.language);
-  const setAlgorithm = useAppStore((s) => s.setAlgorithm);
+  const setSelectedAlgorithms = useAppStore((s) => s.setSelectedAlgorithms);
   const setTheme = useAppStore((s) => s.setTheme);
   const setLanguage = useAppStore((s) => s.setLanguage);
   const setProgress = useAppStore((s) => s.setProgress);
@@ -110,7 +121,7 @@ function App() {
         const config = await getConfig();
         setTheme(config.theme);
         setLanguage(config.language);
-        setAlgorithm(config.algorithm);
+        setSelectedAlgorithms(parseAlgorithms(config.algorithm));
         if (typeof config.autoCalculate === "boolean") {
           useAppStore.setState({ autoCalculate: config.autoCalculate });
         }
