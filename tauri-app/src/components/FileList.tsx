@@ -5,8 +5,8 @@ import { useAppStore } from "@/store/appStore";
 import { scanDirectory, openFileDialog } from "@/services/api";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
-import { ask } from "@tauri-apps/plugin-dialog";
 import { cn } from "@/lib/utils";
+import { FileActions } from "./FileActions";
 
 /** 文件拖放列表组件，对应原始 DragDropFileListWidget */
 export function FileList() {
@@ -14,7 +14,6 @@ export function FileList() {
   const fileList = useAppStore((s) => s.fileList);
   const addFiles = useAppStore((s) => s.addFiles);
   const removeFile = useAppStore((s) => s.removeFile);
-  const clearFiles = useAppStore((s) => s.clearFiles);
 
   /* 拖拽高亮状态 */
   const [isDragOver, setIsDragOver] = useState(false);
@@ -148,14 +147,6 @@ export function FileList() {
     [addFiles],
   );
 
-  /** 点击清空列表按钮（带确认） */
-  const handleClearClick = useCallback(async () => {
-    const ok = await ask(t("confirm_clear_files"), { title: t("warning") });
-    if (ok) {
-      clearFiles();
-    }
-  }, [clearFiles, t]);
-
   /** 右键菜单事件 */
   const handleContextMenu = useCallback(
     (e: React.MouseEvent, index: number) => {
@@ -245,20 +236,6 @@ export function FileList() {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* 浮动清除图标（列表非空时显示在右上角） */}
-        {fileList.length > 0 && (
-          <button
-            className="absolute right-2 top-2 z-10 rounded-full bg-muted p-1 text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
-            onClick={(e) => {
-              e.stopPropagation();
-              void handleClearClick();
-            }}
-            title={t("clear_list")}
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        )}
-
         {fileList.length === 0 ? (
           <div className="flex h-[200px] flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
             <FileSearch className="h-10 w-10 opacity-30" />
@@ -316,6 +293,9 @@ export function FileList() {
           </ul>
         )}
       </div>
+
+      {/* 文件操作按钮：开始校验 + 清空列表 */}
+      <FileActions />
 
       {/* 右键菜单 */}
       {contextMenu && (
