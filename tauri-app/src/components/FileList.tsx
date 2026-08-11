@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, type DragEvent } from "react";
+import { useEffect, useLayoutEffect, useState, useCallback, useRef, type DragEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { X, Copy, Hash, FileSearch } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
@@ -27,6 +27,29 @@ export function FileList({ className }: { className?: string }) {
 
   /* 阻止右键菜单关闭的 ref */
   const menuRef = useRef<HTMLDivElement>(null);
+
+  /** 右键菜单边界检测：确保不超出窗口可视区域 */
+  useLayoutEffect(() => {
+    if (!contextMenu || !menuRef.current) return;
+    const menu = menuRef.current;
+    const rect = menu.getBoundingClientRect();
+    const padding = 8;
+    let x = contextMenu.x;
+    let y = contextMenu.y;
+
+    if (x + rect.width + padding > window.innerWidth) {
+      x = window.innerWidth - rect.width - padding;
+    }
+    x = Math.max(padding, x);
+
+    if (y + rect.height + padding > window.innerHeight) {
+      y = window.innerHeight - rect.height - padding;
+    }
+    y = Math.max(padding, y);
+
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+  }, [contextMenu]);
 
   /** 处理拖拽进入 */
   const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -200,10 +223,10 @@ export function FileList({ className }: { className?: string }) {
 
   return (
     <section className={cn("flex min-h-0 flex-col gap-3", className)}>
-      {/* 拖放区域 + 文件列表：内容超出时内部滚动 */}
+      {/* 拖放区域 + 文件列表：内容超出时内部滚动，操作按钮固定在底部 */}
       <div
         className={cn(
-          "relative min-h-0 flex-1 overflow-y-auto rounded-xl border border-border bg-card",
+          "relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card",
           isDragOver
             ? "border-2 border-dashed border-[var(--primary)] bg-primary-alpha"
             : "",
@@ -215,66 +238,70 @@ export function FileList({ className }: { className?: string }) {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {fileList.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-            <FileSearch className="h-10 w-10 opacity-30" />
-            <span>{t("drag_hint")}</span>
-          </div>
-        ) : (
-          <ul className="divide-y divide-border">
-            {fileList.map((file, index) => (
-              <li
-                key={file.path}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted/30 cursor-default"
-                onClick={(e) => e.stopPropagation()}
-                onContextMenu={(e) => handleContextMenu(e, index)}
-                title={file.path}
-              >
-                {/* 文件名 */}
-                <span className="flex-1 truncate" title={file.path}>
-                  {getBasename(file.path)}
-                </span>
-
-                {/* 哈希值（如果有） */}
-                {file.hashValue && (
-                  <span className="max-w-[200px] truncate font-mono text-xs text-muted-foreground" title={file.hashValue}>
-                    {file.hashValue}
-                  </span>
-                )}
-
-                {/* 状态图标 */}
-                {file.status === "computed" && (
-                  <span className="text-xs text-muted-foreground">&#10003;</span>
-                )}
-                {file.status === "success" && (
-                  <span className="text-xs text-primary">&#10003;</span>
-                )}
-                {file.status === "mismatch" && (
-                  <span className="text-xs text-destructive">&#10007;</span>
-                )}
-                {file.status === "error" && (
-                  <span className="text-xs text-warning">!</span>
-                )}
-
-                {/* 删除按钮 */}
-                <button
-                  className="ml-1 shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
-                  onClick={() => removeFile(index)}
-                  title={t("remove_selected")}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {fileList.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+              <FileSearch className="h-10 w-10 opacity-30" />
+              <span>{t("drag_hint")}</span>
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {fileList.map((file, index) => (
+                <li
+                  key={file.path}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted/30 cursor-default"
+                  onClick={(e) => e.stopPropagation()}
+                  onContextMenu={(e) => handleContextMenu(e, index)}
+                  title={file.path}
                 >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+                  {/* 文件名 */}
+                  <span className="flex-1 truncate" title={file.path}>
+                    {getBasename(file.path)}
+                  </span>
 
-        {/* 浮动操作按钮：开始检测 + 清空列表，悬浮在文件列表右下偏左；空态时仍可见（半透明灰显） */}
-        <div className="pointer-events-none absolute bottom-4 right-20 z-10">
-          <div className="pointer-events-auto">
-            <FileActions />
-          </div>
+                  {/* 哈希值（如果有） */}
+                  {file.hashValue && (
+                    <span className="max-w-[200px] truncate font-mono text-xs text-muted-foreground" title={file.hashValue}>
+                      {file.hashValue}
+                    </span>
+                  )}
+
+                  {/* 状态图标 */}
+                  {file.status === "computed" && (
+                    <span className="text-xs text-muted-foreground">&#10003;</span>
+                  )}
+                  {file.status === "success" && (
+                    <span className="text-xs text-primary">&#10003;</span>
+                  )}
+                  {file.status === "mismatch" && (
+                    <span className="text-xs text-destructive">&#10007;</span>
+                  )}
+                  {file.status === "error" && (
+                    <span className="text-xs text-warning">!</span>
+                  )}
+
+                  {/* 删除按钮 */}
+                  <button
+                    className="ml-1 shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeFile(index)}
+                    title={t("remove_selected")}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
+
+        {/* 固定在列表底部的操作按钮：开始检测 + 清空列表 */}
+        {fileList.length > 0 && (
+          <div className="shrink-0 border-t border-border bg-card/50 px-4 py-3">
+            <div className="flex justify-end">
+              <FileActions />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 右键菜单 */}
