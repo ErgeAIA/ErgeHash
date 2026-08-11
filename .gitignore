@@ -62,11 +62,14 @@ src-tauri/*.log
 *.pdb
 
 # User config (keep structure, ignore content)
-.hashvalidatorplus/config.json
-.hashvalidatorplus/history.json
+.ergehash/config.json
+.ergehash/history.json
 
 # Trae
 .trae/
 
 # CodeBuddy agent internal data
 .codebuddy/
+
+# Node tool cache
+_nm_tmp/
