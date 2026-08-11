@@ -3,28 +3,30 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #f5f5f5;
-  --foreground: #333333;
-  --card: #ffffff;
-  --card-foreground: #333333;
-  --primary: #4CAF50;
-  --primary-foreground: #ffffff;
-  --secondary: #2196F3;
-  --secondary-foreground: #ffffff;
-  --destructive: #f44336;
-  --destructive-foreground: #ffffff;
-  --warning: #FF9800;
-  --warning-foreground: #ffffff;
-  --muted: #e0e0e0;
-  --muted-foreground: #666666;
-  --border: #cccccc;
-  --ring: #4CAF50;
-  --sidebar-bg: #f0f0f0;
-  --success-bg: #C8E6C9;
-  --mismatch-bg: #FFCDD2;
-  --error-bg: #FFE0B2;
-  --computed-bg: #E3F2FD;
-  --scrim: rgba(0, 0, 0, 0.5);
+  /* 全套配色对齐 ThemeVault 主题 #005 (opensquilla/light) */
+  --background: #F7F7F8;
+  --foreground: #1D1D1F;
+  --card: #FFFFFF;
+  --card-foreground: #1D1D1F;
+  --primary: #BA4D0F;
+  --primary-foreground: #FFFFFF;
+  --secondary: #4353B8;
+  --secondary-foreground: #FFFFFF;
+  --destructive: #C2382E;
+  --destructive-foreground: #FFFFFF;
+  --warning: #8A6410;
+  --warning-foreground: #FFFFFF;
+  --muted: #F0F0F2;
+  --muted-foreground: #5F6066;
+  --border: #E6E6E9;
+  --ring: #BA4D0F;
+  --sidebar-bg: #F3F3F5;
+  --panel: #FFFFFF;
+  --success-bg: #2E8A5F;
+  --mismatch-bg: #E0564A;
+  --error-bg: #B2820B;
+  --computed-bg: #6478D9;
+  --scrim: rgba(0, 0, 0, 0.4);
   --radius: 4px;
   --close-btn-bg: transparent;
   --close-btn-hover-bg: #e81123;
@@ -33,31 +35,32 @@
 }
 
 .dark {
-  /* 根容器 / 全屏底色 + 顶栏/侧栏：浅黑一体（L 形区） */
-  --background: #1c1c1e;
-  --foreground: #e0e0e0;
-  /* 右侧内容区圆角块：比 L 形区更深，形成对比 */
+  /* 全套配色对齐 ThemeVault 主题 #003 (opensquilla/dark)
+     根容器 / 全屏底色 + 顶栏/侧栏：浅黑一体（L 形区） */
+  --background: #18181A;
+  --foreground: #F5F5F7;
+  /* 右侧内容区圆角块：比 L 形区更深，形成对比（保持既有设计语言，不取 opensquilla --bg） */
   --panel: #0d0d0d;
-  --card: #2d2d2d;
-  --card-foreground: #e0e0e0;
-  --primary: #4CAF50;
-  --primary-foreground: #ffffff;
-  --secondary: #2196F3;
-  --secondary-foreground: #ffffff;
-  --destructive: #f44336;
-  --destructive-foreground: #ffffff;
-  --warning: #FF9800;
-  --warning-foreground: #ffffff;
-  --muted: #3d3d3d;
-  --muted-foreground: #9ca3af;
-  --border: #3a3a3c;
-  --ring: #4CAF50;
+  --card: #202022;
+  --card-foreground: #F5F5F7;
+  --primary: #F26A1B;
+  --primary-foreground: #160B02;
+  --secondary: #56C2E6;
+  --secondary-foreground: #160B02;
+  --destructive: #FF6B6B;
+  --destructive-foreground: #FFFFFF;
+  --warning: #E8B23A;
+  --warning-foreground: #160B02;
+  --muted: #28282B;
+  --muted-foreground: #B0B0B6;
+  --border: #303034;
+  --ring: #F26A1B;
   /* 侧边栏/标题栏底色：与 --background 一致，顶栏+NavRail 一体浅黑 */
-  --sidebar-bg: #1c1c1e;
-  --success-bg: #1B5E20;
-  --mismatch-bg: #B71C1C;
-  --error-bg: #E65100;
-  --computed-bg: #0D47A1;
+  --sidebar-bg: #18181A;
+  --success-bg: #39D7A2;
+  --mismatch-bg: #FF6B6B;
+  --error-bg: #E8B23A;
+  --computed-bg: #56C2E6;
   --scrim: rgba(0, 0, 0, 0.7);
   --radius: 4px;
   --close-btn-bg: transparent;
