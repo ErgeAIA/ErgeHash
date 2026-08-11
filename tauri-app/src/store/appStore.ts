@@ -125,11 +125,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   clearFiles: () =>
     set({
       fileList: [],
-      resultText: "",
-      progress: 0,
       currentFile: null,
-      lastResults: null,
-      expectedHash: "",
+      progress: 0,
       bytesRead: 0,
       totalBytes: 0,
     }),
