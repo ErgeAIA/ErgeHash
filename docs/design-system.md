@@ -52,7 +52,7 @@
 | `--sidebar-bg` | `#18181A` | 与 `--background` 一致，顶栏+NavRail 一体 |
 | `--panel` | `#0d0d0d` | 右侧内容区圆角容器，**比 L 形区更深**（沿用既有设计语言，不取 opensquilla `--bg`） |
 | `--card` | `#202022` | 下拉菜单、弹窗等浮层背景 |
-| `--foreground` | `#F5F5F7` | 主文字 |
+| `--foreground` | `#E5E5E7` | 主文字（柔和浅灰，避免纯白刺眼） |
 | `--muted` | `#28282B` | hover 背景、浅色块 |
 | `--muted-foreground` | `#B0B0B6` | 次要文字、占位提示 |
 | `--border` | `#303034` | 深色边框/分隔线 |
@@ -61,14 +61,14 @@
 | `--secondary` | `#56C2E6` | 次色（亮蓝，对应 opensquilla `--info`） |
 | `--destructive` | `#FF6B6B` | 危险操作（清空、删除，对应 `--danger`） |
 | `--warning` | `#E8B23A` | 警告/失败状态文字（对应 `--warn`） |
-| `--success-bg` / `--mismatch-bg` / `--error-bg` / `--computed-bg` | `#39D7A2` / `#FF6B6B` / `#E8B23A` / `#56C2E6` | 文件状态行底色（对应 opensquilla ok/danger/warn/info） |
+| `--success-bg` / `--mismatch-bg` / `--error-bg` / `--computed-bg` | `#39D7A2` / `#FF6B6B` / `#E8B23A` / `#56C2E6` | ~~文件状态行底色~~（已废弃：列表行不再使用整行背景色，状态改由图标+文字颜色区分） |
 | `--scrim` | `rgba(0,0,0,0.7)` | 对话框遮罩 |
 | `--radius` | `4px` | 全局圆角基准 |
 | `--close-btn-hover-bg` | `#e81123` | 关闭按钮 hover 红底（窗口控制语义，非主题状态色，保持） |
 
 ### 亮色（可选变体，对齐 #005 / opensquilla light）
 
-`--background:#F7F7F8`、`--sidebar-bg:#F3F3F5`、`--panel:#FFFFFF`（内容块级，与背景形成轻微层级）、`--foreground:#1D1D1F`、`--border:#E6E6E9`、`--muted-foreground:#5F6066`。主题主色 `--primary:#BA4D0F`（暖橙，对应 opensquilla `--accent`）、`--primary-foreground:#FFFFFF`、次色 `--secondary:#4353B8`、危险 `--destructive:#C2382E`、警告 `--warning:#8A6410`；状态行底色 `#2E8A5F` / `#E0564A` / `#B2820B` / `#6478D9`。
+`--background:#F7F7F8`、`--sidebar-bg:#F3F3F5`、`--panel:#FFFFFF`（内容块级，与背景形成轻微层级）、`--foreground:#1D1D1F`、`--border:#E6E6E9`、`--muted-foreground:#5F6066`。主题主色 `--primary:#BA4D0F`（暖橙，对应 opensquilla `--accent`）、`--primary-foreground:#FFFFFF`、次色 `--secondary:#4353B8`、危险 `--destructive:#C2382E`、警告 `--warning:#8A6410`；状态行底色 ~~`#2E8A5F` / `#E0564A` / `#B2820B` / `#6478D9`~~（已废弃）。
 
 ### 配色约束
 
@@ -154,10 +154,11 @@
 - **父容器**：`flex flex-1 flex-col gap-6 overflow-hidden bg-sidebar p-2`，与 L 形框架 `--sidebar-bg` 同色，消除 m-2/p-2 间隙在亮色下的"残留直角块"。
 - **内容容器**：`flex flex-1 flex-col gap-4 overflow-hidden rounded-2xl bg-panel px-6 py-6`。暗色 `--panel:#0d0d0d` 比 L 形区 `--sidebar-bg:#18181A` 更深，亮色 `--panel:#FFFFFF` 比框架色 `#F3F3F5` 略亮，均形成"内容浮于框架"层级。
 - **内部结构（纵向，三区块，按视觉重点分配高度）**：
-  1. **一区 · 文件列表区**（`FileList`，`flex-[1.2]`）：拖放/文件表格（`rounded-xl border border-border bg-card`）。高度适当减小，仅承载文件清单。
+  1. **一区 · 文件列表区**（`FileList`，`flex-[1.2]`）：拖放/文件列表（`rounded-xl border border-border bg-card`）。高度适当减小，仅承载文件清单。
   2. **二区 · 预期哈希输入区**（`ExpectedHashSection`，`shrink-0`）：哈希输入框 + 自动识别算法提示。单独成块（从原 FileList 拆出），高度由内容撑开，不参与 flex 拉伸，避免出现空白的未使用区域。
-  3. **三区 · 计算结果区**（`ResultSection`，`flex-[2]`）：过滤器 + 结果表格（`rounded-xl border border-border bg-card`）。**占比最大、视觉重点**，主用于显示结果。
+  3. **三区 · 计算结果区**（`ResultSection`，`flex-[2]`）：过滤器 + 结果列表（`rounded-xl border border-border bg-card`）。**占比最大、视觉重点**，主用于显示结果。
   - 高度分配原则：二区按内容高度；剩余空间按 1.2 : 2 分配给文件列表区和结果区，结果区明显最大。
+- **列表呈现统一**：文件列表区与计算结果区均采用无背景色的 `<ul className="divide-y divide-border">` 列表行，hover 仅用 `bg-muted/30`；状态通过图标 + 文字颜色区分（`text-primary`/`text-destructive`/`text-warning`/`text-muted-foreground`），不再给整行加 `bg-success`/`bg-mismatch`/`bg-error`/`bg-computed` 状态背景色，保持界面清爽统一。
 - **内部卡片统一线框**：三个区块均为 `border-border bg-card` 的圆角卡片风格，避免亮主题下 `border-white/10` 等硬编码透明度边框不可见。
 - 文件列表区与结果区内部滚动，主窗口不滚动；二区按内容高度自然撑开；区块间 `gap-4`。
 
@@ -204,7 +205,7 @@ MainLayout (h-screen w-screen, flex-col, overflow-hidden)
 │       │   └── 预期哈希输入 (居中占位覆盖层) + 自动识别算法提示
 │       └── 三区 ResultSection (flex-[2])
 │           └── 结果卡片 (relative)
-│               ├── 过滤器 + 结果表格
+│               ├── 过滤器 + 结果列表
 │               └── 浮动 FAB：复制/导出/清空 (absolute bottom-4 right-20)
 └── 浮层 (z 高于主内容)
     ├── 对话框 (History / Settings / QuickGuide / Export)
