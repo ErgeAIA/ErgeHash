@@ -99,6 +99,8 @@
   --group-3: var(--warning);
   --group-4: var(--success-bg);
   --group-5: var(--destructive);
+  /* 父级-子级引导线/拐角/圆点专用色：取 --muted-foreground 的 40% 透明（亮色底 #5F6066 → 中灰） */
+  --guide: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
   --scrim: rgba(0, 0, 0, 0.4);
   --radius: 4px;
   --close-btn-bg: transparent;
@@ -141,6 +143,8 @@
   --group-3: var(--warning);
   --group-4: var(--success-bg);
   --group-5: var(--destructive);
+  /* 父级-子级引导线/拐角/圆点专用色：取 --muted-foreground 的 40% 透明（暗色底 #B0B0B6 → 浅灰） */
+  --guide: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
   --scrim: rgba(0, 0, 0, 0.7);
   --radius: 4px;
   --close-btn-bg: transparent;
@@ -268,6 +272,11 @@ body {
 
 .text-group-5 {
   color: var(--group-5);
+}
+
+/* 父级-子级引导线/拐角/圆点：fill 用主题中灰的 40% 透明，适配亮/暗主题 */
+.bg-guide {
+  background-color: var(--guide);
 }
 
 .text-destructive-foreground {

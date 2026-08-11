@@ -382,19 +382,19 @@ export function FileList({ className }: { className?: string }) {
                     <span className="relative flex w-8 shrink-0 justify-center">
                       <span
                         className={cn(
-                          "absolute top-0 w-px bg-muted-foreground/40",
+                          "absolute top-0 w-px bg-guide",
                           ci === children.length - 1 ? "bottom-1/2" : "bottom-0",
                         )}
                         style={{ left: "1rem" }}
                       />
                       {ci === children.length - 1 && (
                         <span
-                          className="absolute h-px w-4 bg-muted-foreground/40"
+                          className="absolute h-px w-4 bg-guide"
                           style={{ left: "1rem", top: "50%" }}
                         />
                       )}
                       <span
-                        className="absolute z-10 h-1.5 w-1.5 rounded-full bg-muted-foreground/40"
+                        className="absolute z-10 h-1.5 w-1.5 rounded-full bg-guide"
                         style={{ left: "1rem", top: "50%", transform: "translate(-50%, -50%)" }}
                       />
                     </span>
