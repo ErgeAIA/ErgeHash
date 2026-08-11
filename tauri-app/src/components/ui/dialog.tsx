@@ -150,7 +150,7 @@ function DialogContent({
       onClick={handleBackdropClick}
     >
       {/* 遮罩层 */}
-      <div className="fixed inset-0 bg-black/50 animate-in fade-in duration-200" />
+      <div className="fixed inset-0 bg-scrim animate-in fade-in duration-200" />
 
       {/* 面板 */}
       <div

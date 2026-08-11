@@ -254,9 +254,9 @@ function IconActionButton({
   theme: "blue" | "emerald" | "destructive";
 }) {
   const themeClasses = {
-    blue: "bg-blue-500 shadow-blue-500/30 hover:bg-blue-400",
-    emerald: "bg-emerald-500 shadow-emerald-500/30 hover:bg-emerald-400",
-    destructive: "bg-destructive shadow-destructive/30 hover:bg-destructive/90",
+    blue: "bg-secondary text-secondary-foreground shadow-secondary/30 hover:bg-secondary/90",
+    emerald: "bg-primary text-primary-foreground shadow-primary/30 hover:bg-primary/90",
+    destructive: "bg-destructive text-destructive-foreground shadow-destructive/30 hover:bg-destructive/90",
   };
 
   return (
@@ -267,7 +267,7 @@ function IconActionButton({
         disabled={disabled}
         aria-label={label}
         className={cn(
-          "flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white shadow-lg transition-all",
+          "flex h-14 w-14 shrink-0 items-center justify-center rounded-full shadow-lg transition-all",
           "hover:scale-105 active:scale-95",
           "disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:hover:scale-100",
           themeClasses[theme],
@@ -277,7 +277,7 @@ function IconActionButton({
       </button>
       <span
         className={cn(
-          "pointer-events-none absolute -top-9 z-10 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 shadow-md",
+          "pointer-events-none absolute -top-9 z-10 whitespace-nowrap rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground opacity-0 shadow-md",
           "transition-all duration-200",
           "group-hover:opacity-100",
         )}

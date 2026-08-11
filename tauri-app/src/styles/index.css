@@ -111,6 +111,10 @@ body {
   color: var(--foreground);
 }
 
+.bg-scrim {
+  background-color: var(--scrim);
+}
+
 .bg-card {
   background-color: var(--card);
 }

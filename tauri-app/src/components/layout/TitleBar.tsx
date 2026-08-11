@@ -182,7 +182,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
             type="button"
             title={t("menu_file")}
             onClick={() => setShowMenu((v) => !v)}
-            className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-black/20"
+            className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
           >
             <Menu size={18} />
           </button>
@@ -224,8 +224,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
           type="button"
           title={collapsed ? t("expand_sidebar") : t("collapse_sidebar")}
           onClick={onToggleCollapsed}
-          className="flex h-full w-10 items-center justify-center transition-colors hover:bg-black/20"
-          style={{ color: "#e5e7eb" }}
+          className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
         >
           {collapsed ? <PanelRightOpen size={16} /> : <PanelLeftClose size={16} />}
         </button>
@@ -240,8 +239,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
           type="button"
           title={t("minimize")}
           onClick={handleMinimize}
-          className="flex h-full w-10 items-center justify-center transition-colors hover:bg-black/20"
-          style={{ color: "#e5e7eb" }}
+          className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
         >
           <Minus size={14} />
         </button>
@@ -249,8 +247,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
           type="button"
           title={maximized ? t("restore") : t("maximize")}
           onClick={handleToggleMaximize}
-          className="flex h-full w-10 items-center justify-center transition-colors hover:bg-black/20"
-          style={{ color: "#e5e7eb" }}
+          className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
         >
           {maximized ? <Maximize2 size={14} /> : <Square size={13} />}
         </button>
