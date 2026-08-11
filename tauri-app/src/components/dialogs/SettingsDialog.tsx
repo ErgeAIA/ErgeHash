@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/appStore";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { cn } from "@/lib/utils";
 import { Settings, Sun, Moon, Hash, Info, ExternalLink } from "lucide-react";
 
 interface SettingsDialogProps {
@@ -16,12 +17,13 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-/** 支持的算法列表 */
+/** 支持的算法列表（含 CRC32，见 docs/architecture-multi-algo.md §7.1） */
 const ALGORITHMS = [
   { name: "SHA-256", desc: { zh: "安全哈希算法 256 位，最常用的哈希算法", en: "Secure Hash Algorithm 256-bit, most commonly used" } },
   { name: "MD5", desc: { zh: "消息摘要算法 5，速度快但已不推荐用于安全场景", en: "Message Digest Algorithm 5, fast but not recommended for security" } },
   { name: "SHA-1", desc: { zh: "安全哈希算法 1，已被发现碰撞漏洞", en: "Secure Hash Algorithm 1, collision vulnerabilities found" } },
   { name: "SHA-512", desc: { zh: "安全哈希算法 512 位，提供更高安全性", en: "Secure Hash Algorithm 512-bit, provides higher security" } },
+  { name: "CRC32", desc: { zh: "循环冗余校验，轻量快速，常用于完整性校验", en: "Cyclic redundancy check, lightweight and fast, common for integrity checks" } },
 ] as const;
 
 /** 设置对话框 */
@@ -29,6 +31,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { t, i18n } = useTranslation();
   const theme = useAppStore((s) => s.theme);
   const toggleTheme = useAppStore((s) => s.toggleTheme);
+  const autoCalculate = useAppStore((s) => s.autoCalculate);
+  const setAutoCalculate = useAppStore((s) => s.setAutoCalculate);
 
   const currentLang = i18n.language as "zh" | "en";
 
@@ -73,6 +77,29 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               <Button variant="outline" size="sm" onClick={toggleTheme}>
                 {t("toggle_theme")}
               </Button>
+            </div>
+            {/* 拖入自动开始 */}
+            <div className="mt-2 flex items-center justify-between rounded-[var(--radius)] border border-border px-4 py-3">
+              <div className="flex items-center gap-2 text-sm">
+                <span>{t("auto_calculate")}</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={autoCalculate}
+                onClick={() => setAutoCalculate(!autoCalculate)}
+                className={cn(
+                  "relative h-5 w-9 shrink-0 rounded-full transition-colors",
+                  autoCalculate ? "bg-primary" : "bg-muted",
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform",
+                    autoCalculate ? "translate-x-4" : "translate-x-0.5",
+                  )}
+                />
+              </button>
             </div>
           </section>
 

@@ -45,6 +45,7 @@
   "dark_mode": "暗黑模式",
   "light_mode": "亮色模式",
   "toggle_theme": "切换主题",
+  "auto_calculate": "拖入文件后自动开始校验",
   "hash_algorithms": "哈希算法",
   "supported_algorithms": "支持的算法",
   "about_title": "关于",
