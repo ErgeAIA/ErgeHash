@@ -392,7 +392,7 @@ function App() {
           <div className="flex flex-1 flex-col gap-4 overflow-hidden rounded-2xl bg-panel px-6 py-6">
             {/* 文件列表区：父级文件名/路径/大小 + 汇总状态，子级按算法展开哈希/耗时。
                 计算结果直接回填到文件树，取代独立结果区。 */}
-            <FileList className="flex-[1.2]" />
+            <FileList className="flex-1" />
             <ExpectedHashSection className="shrink-0" />
             <BottomActionBar className="shrink-0" />
             <StatusReportBar className="shrink-0" />

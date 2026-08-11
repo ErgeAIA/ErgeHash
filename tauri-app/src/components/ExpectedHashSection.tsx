@@ -40,7 +40,7 @@ export function ExpectedHashSection({ className }: { className?: string }) {
           onFocus={() => setHashFocused(true)}
           onBlur={() => setHashFocused(false)}
           placeholder=""
-          className="h-[72px] resize-none pr-8 border-primary transition-colors hover:border-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="h-[144px] resize-none pr-8 border-primary transition-colors hover:border-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
         />
         {/* 空态居中提示：与文件列表/结果区空态提示风格一致 */}
         {!expectedHash.trim() && !hashFocused && (
