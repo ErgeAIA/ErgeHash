@@ -14,23 +14,24 @@
 ┌──────────────────────────────────────────────┐
 │ TitleBar（自绘顶栏，横跨整窗顶部，h-40px）      │
 ├────────────┬─────────────────────────────────┤
-│            │                                 │
-│  NavRail   │   右侧内容区（圆角深色容器）      │
-│  (侧栏)    │   m-2 rounded-2xl bg-panel       │
-│  bg-sidebar│                                 │
-│            │                                 │
+│            │  bg-sidebar（与 L 形框架同色）    │
+│  NavRail   │  ┌───────────────────────────┐  │
+│  (侧栏)    │  │  右侧内容区（圆角容器）      │  │
+│  bg-sidebar│  │  rounded-2xl bg-panel      │  │
+│            │  └───────────────────────────┘  │
 └────────────┴─────────────────────────────────┘
 ```
 
 - 顶栏与左侧导航栏**共用同一底色**（`--sidebar-bg`），形成一体的「L 形浅黑区」，二者之间**无分隔线**。
-- 右侧内容区使用**更深的圆角容器**（`--panel`），与 L 形区形成层级对比（深色块浮于 L 形区之上）。
+- 右侧区域父容器同样使用 `bg-sidebar`，与 L 形框架同色；内部再用 `rounded-2xl bg-panel` 圆角容器承载内容，彻底消除 `m-2`/`p-2` 间隙在亮色下形成的"残留直角块"。
+- 右侧内容区使用 `bg-panel`，暗色 `--panel:#0d0d0d` 比 L 形区 `--sidebar-bg:#18181A` 更深，亮色 `--panel:#FFFFFF` 比框架色 `#F3F3F5` 略亮，均形成"内容浮于框架"层级。
 - 主窗口禁止整体滚动（`body { overflow: hidden }`），所有滚动发生在内部卡片。
 
 ---
 
 ## 二、配色系统（Color Tokens）
 
-全部以 CSS 变量定义，亮/暗通过 `.dark` 类在 `<html>` 上切换。组件**只允许引用变量**，禁止硬编码色值（顶栏文字例外，见 §三.1）。
+全部以 CSS 变量定义，亮/暗通过 `.dark` 类在 `<html>` 上切换。组件**只允许引用变量**，禁止硬编码色值（包括顶栏与 NavRail 文字，统一使用 `text-foreground`/`text-muted-foreground`）。
 
 > **配色来源（重要）**：本设计系统的两套默认主题**完整对齐 ThemeVault 主题系统**：
 > - 暗色主题 = ThemeVault **#003**（opensquilla / dark，`themes/opensquilla/dark/palette.md`）
@@ -142,10 +143,12 @@
 
 ### 3.6 右侧内容区布局
 
-- **容器**：`m-2 rounded-2xl bg-panel px-6 py-6`，`flex flex-1 flex-col gap-6 overflow-hidden`。暗色 `--panel:#0d0d0d` 比 L 形区 `--background:#18181A` 更深，亮色 `--panel:#FFFFFF` 比背景 `#F7F7F8` 略亮，均形成"内容浮于框架"层级。
+- **父容器**：`flex flex-1 flex-col gap-6 overflow-hidden bg-sidebar p-2`，与 L 形框架 `--sidebar-bg` 同色，消除 m-2/p-2 间隙在亮色下的"残留直角块"。
+- **内容容器**：`flex flex-1 flex-col gap-6 overflow-hidden rounded-2xl bg-panel px-6 py-6`。暗色 `--panel:#0d0d0d` 比 L 形区 `--sidebar-bg:#18181A` 更深，亮色 `--panel:#FFFFFF` 比框架色 `#F3F3F5` 略亮，均形成"内容浮于框架"层级。
 - **内部结构（纵向）**：
-  1. **文件列表区**（`FileList`）：拖放/文件表格 + 底部预期哈希输入（输入区合并，因同属"输入"语义）。
-  2. **计算结果区**（`ResultSection`）：过滤器 + 结果表格。
+  1. **文件列表区**（`FileList`）：拖放/文件表格（`rounded-xl border border-border bg-card`）+ 底部预期哈希输入（输入区合并，因同属"输入"语义）。
+  2. **计算结果区**（`ResultSection`）：过滤器 + 结果表格（`rounded-xl border border-border bg-card`）。
+- **内部卡片统一线框**：文件列表区、预期哈希输入框、计算结果区三块均使用 `border-border bg-card` 的圆角卡片风格，避免亮主题下 `border-white/10` 等硬编码透明度边框不可见。
 - 两个区块均为固定高度、内部滚动，主窗口不滚动。
 
 ### 3.7 浮动操作按钮（FAB）
