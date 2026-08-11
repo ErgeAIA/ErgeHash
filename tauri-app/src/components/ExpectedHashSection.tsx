@@ -8,6 +8,7 @@ import type { HashAlgorithm } from "@/services/types";
 
 /** 哈希值长度与算法的映射表 */
 const HASH_LENGTH_ALGO_MAP: Record<number, HashAlgorithm> = {
+  8: "crc32",
   32: "md5",
   40: "sha1",
   64: "sha256",
@@ -20,6 +21,7 @@ const ALGO_DISPLAY_NAME: Record<HashAlgorithm, string> = {
   sha1: "SHA1",
   sha256: "SHA256",
   sha512: "SHA512",
+  crc32: "CRC32",
 };
 
 /** 预期哈希值输入区块（二区）：输入哈希值并按长度自动推断算法 */

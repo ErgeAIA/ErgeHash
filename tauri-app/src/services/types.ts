@@ -1,5 +1,5 @@
 /** 哈希算法类型（与后端 HashAlgorithm serde lowercase 一致） */
-export type HashAlgorithm = "sha256" | "md5" | "sha1" | "sha512";
+export type HashAlgorithm = "sha256" | "md5" | "sha1" | "sha512" | "crc32";
 
 /** 哈希计算结果（与后端 HashResult 契约一致：camelCase 字段） */
 export interface HashResult {
@@ -67,6 +67,8 @@ export interface AppConfig {
   theme: "light" | "dark";
   /** 语言：zh / en */
   language: "zh" | "en";
+  /** 拖入文件后是否自动开始校验（默认 false） */
+  autoCalculate?: boolean;
   /** 窗口位置信息 */
   windowGeometry: string | null;
 }
