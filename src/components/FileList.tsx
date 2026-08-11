@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useState, useCallback, useRef, useMemo, typ
 import { useTranslation } from "react-i18next";
 import { X, Copy, Hash, FileSearch } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
-import type { FileResult, FileItemStatus } from "@/services/types";
+import type { FileResult } from "@/services/types";
 import { scanDirectory, openFileDialog } from "@/services/api";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
@@ -221,17 +221,15 @@ export function FileList({ className }: { className?: string }) {
     return `${value.toFixed(value >= 100 ? 0 : 1)} ${units[i]}`;
   };
 
-  /** 复制单个算法子结果行 */
-  const handleCopyChild = useCallback(
-    async (file: { path: string }, r: FileResult) => {
-      try {
-        await writeText(`${getBasename(file.path)} ${r.algorithm}: ${r.hashValue}`);
-      } catch {
-        // 剪贴板写入失败，忽略
-      }
-    },
-    [],
-  );
+  /** 复制单条算法哈希结果（仅 hash 值，不含文件名/算法名） */
+  const handleCopyHash = useCallback(async (r: FileResult) => {
+    if (!r.hashValue) return;
+    try {
+      await writeText(r.hashValue);
+    } catch {
+      // 剪贴板写入失败，忽略
+    }
+  }, []);
 
   /** 复制该文件所有算法结果 */
   const handleCopyAll = useCallback(
@@ -251,43 +249,6 @@ export function FileList({ className }: { className?: string }) {
     },
     [],
   );
-
-  /** 父级汇总状态徽章 */
-  const StatusBadge = ({ status }: { status?: FileItemStatus }) => {
-    if (!status) {
-      return (
-        <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-muted-foreground">
-          {t("unverified")}
-        </span>
-      );
-    }
-    if (status === "success") {
-      return (
-        <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-primary">
-          {t("match")}
-        </span>
-      );
-    }
-    if (status === "mismatch") {
-      return (
-        <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-destructive">
-          {t("mismatch")}
-        </span>
-      );
-    }
-    if (status === "error") {
-      return (
-        <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-warning">
-          {t("error")}
-        </span>
-      );
-    }
-    return (
-      <span className="shrink-0 rounded px-1.5 py-0.5 text-xs text-muted-foreground">
-        {t("computed")}
-      </span>
-    );
-  };
 
   const fileGroups = useMemo(() => buildFileGroups(fileList), [fileList]);
 
@@ -319,47 +280,41 @@ export function FileList({ className }: { className?: string }) {
               {fileList.flatMap((file, fileIndex) => {
                 const children: FileResult[] = file.results ?? [];
                 const group = fileGroups.map.get(file.path);
+                const hasComputedHash = children.some((r) => !!r.hashValue);
                 const parent = (
                   <li
                     key={`p-${file.path}`}
-                    className="flex items-center gap-2 px-3 py-2 cursor-default hover:bg-muted/30"
+                    className="flex items-center gap-3 px-3 py-2 cursor-default hover:bg-muted/30"
                     onClick={(e) => e.stopPropagation()}
                     onContextMenu={(e) => handleContextMenu(e, fileIndex)}
                   >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-baseline gap-2">
+                    <div className="min-w-0 flex-1 flex items-baseline gap-1.5">
+                      <span
+                        className={cn(
+                          "truncate text-base font-bold",
+                          group ? group.colorClass : "text-foreground",
+                        )}
+                        title={
+                          group
+                            ? `第 ${group.groupId} 组 · ${group.algorithm.toUpperCase()}: ${group.hash}`
+                            : getBasename(file.path)
+                        }
+                      >
+                        {getBasename(file.path)}
+                      </span>
+                      {hasComputedHash && (
                         <span
-                          className={cn(
-                            "truncate text-base font-bold",
-                            group ? group.colorClass : "text-foreground",
-                          )}
-                          title={
-                            group
-                              ? `第 ${group.groupId} 组 · ${group.algorithm.toUpperCase()}: ${group.hash}`
-                              : getBasename(file.path)
-                          }
+                          className="shrink-0 text-base leading-none text-success"
+                          title={t("computed")}
+                          aria-label={t("computed")}
                         >
-                          {getBasename(file.path)}
+                          ✓
                         </span>
-                        <span
-                          className="truncate text-xs text-muted-foreground"
-                          title={file.path}
-                        >
-                          {file.path}
-                        </span>
-                      </div>
+                      )}
                     </div>
                     <span className="shrink-0 text-xs text-muted-foreground">
                       {typeof file.size === "number" ? formatBytes(file.size) : ""}
                     </span>
-                    <StatusBadge status={file.status} />
-                    <button
-                      className="ml-1 shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
-                      onClick={() => handleCopyAll(file)}
-                      title={t("menu_copy")}
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </button>
                     <button
                       className="ml-1 shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
                       onClick={() => removeFile(fileIndex)}
@@ -369,35 +324,12 @@ export function FileList({ className }: { className?: string }) {
                     </button>
                   </li>
                 );
-                const childRows = children.map((r, ci) => (
+                const childRows = children.map((r) => (
                   <li
                     key={`c-${file.path}-${r.algorithm}`}
-                    className={cn(
-                      "group relative flex items-center gap-2 py-1 pr-3 text-xs text-muted-foreground hover:bg-muted/20",
-                      ci === children.length - 1 ? "pb-2" : "",
-                    )}
-                    title={file.path}
+                    className="flex items-center gap-3 pl-10 pr-3 py-1 text-xs text-muted-foreground hover:bg-muted/20"
+                    title={getBasename(file.path)}
                   >
-                    {/* 连续竖线引导 + 拐角：父级与子级视觉成一体 */}
-                    <span className="relative flex w-8 shrink-0 justify-center">
-                      <span
-                        className={cn(
-                          "absolute top-0 w-px bg-guide",
-                          ci === children.length - 1 ? "bottom-1/2" : "bottom-0",
-                        )}
-                        style={{ left: "1rem" }}
-                      />
-                      {ci === children.length - 1 && (
-                        <span
-                          className="absolute h-px w-4 bg-guide"
-                          style={{ left: "1rem", top: "50%" }}
-                        />
-                      )}
-                      <span
-                        className="absolute z-10 h-1.5 w-1.5 rounded-full bg-guide"
-                        style={{ left: "1rem", top: "50%", transform: "translate(-50%, -50%)" }}
-                      />
-                    </span>
                     <span className="w-20 shrink-0 font-medium uppercase text-foreground/70">
                       {r.algorithm}
                     </span>
@@ -412,13 +344,13 @@ export function FileList({ className }: { className?: string }) {
                         ? r.errorMessage ?? t("error")
                         : r.hashValue || "—"}
                     </span>
-                    <span className="w-20 shrink-0 text-right text-muted-foreground/80">
+                    <span className="w-16 shrink-0 text-right text-muted-foreground/80">
                       {r.elapsedTime > 0 ? `${r.elapsedTime.toFixed(2)}s` : "—"}
                     </span>
-                    {r.status !== "error" && (
+                    {r.status !== "error" && r.hashValue && (
                       <button
-                        className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground"
-                        onClick={() => handleCopyChild(file, r)}
+                        className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                        onClick={() => handleCopyHash(r)}
                         title={t("copy")}
                       >
                         <Copy className="h-3 w-3" />
