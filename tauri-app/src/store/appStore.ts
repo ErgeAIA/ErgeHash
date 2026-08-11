@@ -1,9 +1,35 @@
 import { create } from "zustand";
-import type { FileItem, HashAlgorithm, HashResult } from "../services/types";
+import type {
+  FileItem,
+  FileItemStatus,
+  FileResult,
+  HashAlgorithm,
+  HashResult,
+} from "../services/types";
 import { setConfig, startBatchValidation } from "../services/api";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { useToastStore } from "./toastStore";
 import i18n from "@/i18n";
+
+/**
+ * 由子结果数组推导父级汇总状态与主导哈希。
+ * 规则：error 优先 > mismatch > computed；无子结果则视为未计算。
+ */
+function aggregateParent(
+  results: FileResult[],
+): { hashValue?: string; status?: FileItemStatus; errorMessage?: string } {
+  if (results.length === 0) {
+    return { hashValue: undefined, status: undefined, errorMessage: undefined };
+  }
+  const lead = results[0];
+  let status: FileItemStatus;
+  if (results.some((r) => r.status === "error")) status = "error";
+  else if (results.some((r) => r.status === "mismatch")) status = "mismatch";
+  else if (results.some((r) => r.status === "success")) status = "success";
+  else status = "computed";
+  const errorMessage = results.map((r) => r.errorMessage).find(Boolean);
+  return { hashValue: lead.hashValue, status, errorMessage };
+}
 
 /** 应用状态 */
 interface AppState {
@@ -81,20 +107,8 @@ interface AppState {
   setResultText: (text: string | ((prev: string) => string)) => void;
   /** 设置状态栏消息 */
   setStatusMessage: (msg: string) => void;
-  /** 更新文件状态 */
-  updateFileStatus: (
-    index: number,
-    hashValue: string,
-    status: FileItem["status"],
-    errorMessage?: string,
-  ) => void;
-  /** 按路径更新文件状态（哈希计算完成后回填列表） */
-  updateFileByPath: (
-    path: string,
-    hashValue: string,
-    status: FileItem["status"],
-    errorMessage?: string,
-  ) => void;
+  /** 按算法维度 upsert 单个结果到文件子结果集合，并重新计算父级汇总状态 */
+  updateFileResult: (result: Omit<HashResult, "status"> & { status: FileItemStatus }) => void;
   /** 设置预期哈希值 */
   setExpectedHash: (hash: string) => void;
   /** 设置最近一次批量结果 */
@@ -130,7 +144,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const existingPaths = new Set(state.fileList.map((f) => f.path));
       const newItems: FileItem[] = files
         .filter((p) => !existingPaths.has(p))
-        .map((p) => ({ path: p }));
+        .map((p) => ({ path: p, results: [] }));
       return { fileList: [...state.fileList, ...newItems] };
     }),
 
@@ -157,7 +171,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       bytesRead: 0,
       totalBytes: 0,
       statusMessage: "ready",
-      fileList: state.fileList.map((f) => ({ path: f.path })),
+      fileList: state.fileList.map((f) => ({ path: f.path, results: [] })),
     })),
 
   clearAll: () =>
@@ -257,7 +271,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         set({ progress: Math.round(((i + 1) / totalAlgos) * 100) });
       }
 
-      set({ isCalculating: false, progress: 100, statusMessage: "completed" });
+      set({ isCalculating: false, progress: 100, statusMessage: "completed", lastResults: allResults });
 
       if (!expected) return;
 
@@ -280,7 +294,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         for (const r of computedResults) {
           const fileName = r.filePath.split(/[/\\]/).pop() ?? r.filePath;
           const isMatch = r.hashValue.toLowerCase() === expectedClean;
-          get().updateFileByPath(r.filePath, r.hashValue, isMatch ? "success" : "mismatch");
+          get().updateFileResult({ ...r, status: isMatch ? "success" : "mismatch" });
           if (isMatch) {
             compText += `✓ ${fileName} ${t("match")}\n`;
             matchCount++;
@@ -301,11 +315,11 @@ export const useAppStore = create<AppState>((set, get) => ({
           if (!/^[0-9a-f]+$/i.test(expectedClean)) {
             compText += `${i + 1}. ✗ ${t("format_error")}\n`;
             mismatchCount++;
-            get().updateFileByPath(r.filePath, r.hashValue, "mismatch");
+            get().updateFileResult({ ...r, status: "mismatch" });
             continue;
           }
           const isMatch = r.hashValue.toLowerCase() === expectedClean;
-          get().updateFileByPath(r.filePath, r.hashValue, isMatch ? "success" : "mismatch");
+          get().updateFileResult({ ...r, status: isMatch ? "success" : "mismatch" });
           if (isMatch) {
             compText += `${i + 1}. ✓ ${fileName} ${t("match")}\n`;
             matchCount++;
@@ -342,31 +356,25 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setStatusMessage: (msg) => set({ statusMessage: msg }),
 
-  updateFileStatus: (index, hashValue, status, errorMessage) =>
+  updateFileResult: (result: Omit<HashResult, "status"> & { status: FileItemStatus }) =>
     set((state) => {
-      const fileList = [...state.fileList];
-      if (index >= 0 && index < fileList.length) {
-        fileList[index] = {
-          ...fileList[index],
-          hashValue,
-          status,
-          errorMessage,
-        };
-      }
-      return { fileList };
-    }),
-
-  updateFileByPath: (path, hashValue, status, errorMessage) =>
-    set((state) => {
-      const idx = state.fileList.findIndex((f) => f.path === path);
+      const idx = state.fileList.findIndex((f) => f.path === result.filePath);
       if (idx < 0) return state;
       const fileList = [...state.fileList];
-      fileList[idx] = {
-        ...fileList[idx],
-        hashValue,
-        status,
-        errorMessage,
+      const item = fileList[idx];
+      const results: FileResult[] = [...(item.results ?? [])];
+      const rIdx = results.findIndex((r) => r.algorithm === result.algorithm);
+      const normalized: FileResult = {
+        algorithm: result.algorithm,
+        hashValue: result.hashValue,
+        elapsedTime: result.elapsedTime,
+        status: result.status,
+        fromCache: result.fromCache,
+        errorMessage: result.errorMessage,
       };
+      if (rIdx >= 0) results[rIdx] = normalized;
+      else results.push(normalized);
+      fileList[idx] = { ...item, results, ...aggregateParent(results) };
       return { fileList };
     }),
 

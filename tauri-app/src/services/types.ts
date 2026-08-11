@@ -83,17 +83,35 @@ export interface VerificationEntry {
   algorithm: string;
 }
 
-/** 文件列表项状态：computed=已计算但未验证, success=验证匹配, mismatch=验证不匹配, error=计算出错 */
+/** 文件列表项状态：computed=已计算但未验证, success=验证匹配, mismatch=验证不匹配, error=计算出错, undefined=未计算 */
 export type FileItemStatus = "computed" | "success" | "mismatch" | "error" | undefined;
+
+/** 单个算法子结果（文件 × 算法 二维，避免多算法相互覆盖） */
+export interface FileResult {
+  /** 使用的算法 */
+  algorithm: HashAlgorithm;
+  /** 哈希值 */
+  hashValue: string;
+  /** 耗时（秒） */
+  elapsedTime: number;
+  /** 状态 */
+  status: FileItemStatus;
+  /** 是否来自缓存 */
+  fromCache: boolean;
+  /** 错误信息（可选） */
+  errorMessage?: string;
+}
 
 /** 文件列表项（前端 store 内部结构，非后端 DTO） */
 export interface FileItem {
   /** 文件路径 */
   path: string;
-  /** 哈希值 */
+  /** 主导哈希值（取第一个子结果，仅供兼容单值场景） */
   hashValue?: string;
-  /** 状态 */
+  /** 汇总状态（由 results 推导：error > mismatch > computed） */
   status?: FileItemStatus;
   /** 错误信息 */
   errorMessage?: string;
+  /** 每个算法一行子结果，按算法维度累积 */
+  results: FileResult[];
 }

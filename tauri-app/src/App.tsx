@@ -18,7 +18,6 @@ import { NavRail } from "./components/layout/NavRail";
 import { TitleBar } from "./components/layout/TitleBar";
 import { FileList } from "./components/FileList";
 import { ExpectedHashSection } from "./components/ExpectedHashSection";
-import { ResultSection } from "./components/ResultSection";
 import { FloatingProgress } from "./components/FloatingProgress";
 import { HistoryDialog } from "./components/dialogs/HistoryDialog";
 import { SettingsDialog } from "./components/dialogs/SettingsDialog";
@@ -52,9 +51,8 @@ function App() {
   const setCalculating = useAppStore((s) => s.setCalculating);
   const setResultText = useAppStore((s) => s.setResultText);
   const setStatusMessage = useAppStore((s) => s.setStatusMessage);
-  const setLastResults = useAppStore((s) => s.setLastResults);
   const setExpectedHash = useAppStore((s) => s.setExpectedHash);
-  const updateFileByPath = useAppStore((s) => s.updateFileByPath);
+  const updateFileResult = useAppStore((s) => s.updateFileResult);
   const setBytesRead = useAppStore((s) => s.setBytesRead);
   const setTotalBytes = useAppStore((s) => s.setTotalBytes);
   const addFiles = useAppStore((s) => s.addFiles);
@@ -234,14 +232,17 @@ function App() {
           );
           setCurrentFile(payload.filePath);
 
-          // 后端 success 表示「计算成功」而非「验证通过」，映射为 computed
-          const displayStatus = payload.status === "success" ? "computed" : payload.status;
-          updateFileByPath(
-            payload.filePath,
-            payload.hashValue,
-            displayStatus as "computed" | "mismatch" | "error",
-            payload.errorMessage,
-          );
+          // 按算法维度写入子结果：后端 success 仅表示「计算成功」，映射为 computed（未验证）；
+          // 真正「验证匹配」的 success 由 startValidation 在比对后覆盖写入。
+          updateFileResult({
+            filePath: payload.filePath,
+            algorithm: payload.algorithm,
+            hashValue: payload.hashValue,
+            elapsedTime: payload.elapsedTime,
+            status: payload.status === "success" ? "computed" : payload.status,
+            fromCache: payload.fromCache,
+            errorMessage: payload.errorMessage,
+          });
         }),
       );
 
@@ -259,7 +260,6 @@ function App() {
           setCalculating(false);
           setProgress(100);
           setStatusMessage("completed");
-          setLastResults(payload.results);
           setResultText(
             (prev) =>
               prev +
@@ -313,8 +313,7 @@ function App() {
     setStatusMessage,
     setCalculating,
     setResultText,
-    setLastResults,
-    updateFileByPath,
+    updateFileResult,
     setBytesRead,
     setTotalBytes,
     addFiles,
@@ -389,10 +388,10 @@ function App() {
             父容器用 bg-sidebar，与顶栏/侧栏 L 形框架同色，消除 m-2 间隙在亮色下的“残留直角块”视觉。 */}
         <div className="flex flex-1 flex-col gap-6 overflow-hidden bg-sidebar p-2">
           <div className="flex flex-1 flex-col gap-4 overflow-hidden rounded-2xl bg-panel px-6 py-6">
-            {/* 右侧三区块：一区文件列表 / 二区预期哈希输入（按内容高度） / 结果区（视觉重点，最大） */}
+            {/* 文件列表区：父级文件名/路径/大小 + 汇总状态，子级按算法展开哈希/耗时。
+                计算结果直接回填到文件树，取代独立结果区。 */}
             <FileList className="flex-[1.2]" />
             <ExpectedHashSection className="shrink-0" />
-            <ResultSection className="flex-[2]" />
           </div>
         </div>
       </div>
