@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState, useCallback, useRef, type DragEvent } from "react";
+import { useEffect, useLayoutEffect, useState, useCallback, useRef, useMemo, type DragEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { X, Copy, Hash, FileSearch } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
@@ -7,6 +7,7 @@ import { scanDirectory, openFileDialog } from "@/services/api";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { cn } from "@/lib/utils";
+import { buildFileGroups } from "@/lib/fileGroups";
 
 /** 文件拖放列表组件，对应原始 DragDropFileListWidget */
 export function FileList({ className }: { className?: string }) {
@@ -288,6 +289,8 @@ export function FileList({ className }: { className?: string }) {
     );
   };
 
+  const fileGroups = useMemo(() => buildFileGroups(fileList), [fileList]);
+
   return (
     <section className={cn("flex min-h-0 flex-col gap-3", className)}>
       {/* 拖放区域 + 文件列表：内容超出时内部滚动，操作按钮固定在底部 */}
@@ -315,6 +318,7 @@ export function FileList({ className }: { className?: string }) {
             <ul>
               {fileList.flatMap((file, fileIndex) => {
                 const children: FileResult[] = file.results ?? [];
+                const group = fileGroups.map.get(file.path);
                 const parent = (
                   <li
                     key={`p-${file.path}`}
@@ -325,8 +329,15 @@ export function FileList({ className }: { className?: string }) {
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-baseline gap-2">
                         <span
-                          className="truncate text-base font-bold text-foreground"
-                          title={getBasename(file.path)}
+                          className={cn(
+                            "truncate text-base font-bold",
+                            group ? group.colorClass : "text-foreground",
+                          )}
+                          title={
+                            group
+                              ? `第 ${group.groupId} 组 · ${group.algorithm.toUpperCase()}: ${group.hash}`
+                              : getBasename(file.path)
+                          }
                         >
                           {getBasename(file.path)}
                         </span>

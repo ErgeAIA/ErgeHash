@@ -3,34 +3,14 @@ import { useTranslation } from "react-i18next";
 import { useAppStore } from "@/store/appStore";
 import { cn } from "@/lib/utils";
 import { detectHashAlgorithm, ALGO_DISPLAY_NAME } from "@/lib/hash";
-import type { FileItemStatus, FileResult } from "@/services/types";
+import { buildFileGroups } from "@/lib/fileGroups";
+import type { FileItemStatus } from "@/services/types";
 
 interface StatusChip {
   key: Exclude<FileItemStatus, "success"> | "success";
   label: string;
   count: number;
   className: string;
-}
-
-/** 统计不同文件之间是否存在相同哈希值，返回重复组数 */
-function countDuplicateHashGroups(fileList: { path: string; results: FileResult[] }[]): number {
-  const groups = new Map<string, Set<string>>();
-
-  for (const file of fileList) {
-    for (const r of file.results) {
-      if (!r.hashValue || r.status === "error") continue;
-      const key = `${r.algorithm}:${r.hashValue.toLowerCase()}`;
-      const paths = groups.get(key) ?? new Set<string>();
-      paths.add(file.path);
-      groups.set(key, paths);
-    }
-  }
-
-  let duplicates = 0;
-  for (const paths of groups.values()) {
-    if (paths.size > 1) duplicates++;
-  }
-  return duplicates;
 }
 
 export function StatusReportBar({ className }: { className?: string }) {
@@ -43,7 +23,7 @@ export function StatusReportBar({ className }: { className?: string }) {
     [expectedHash],
   );
 
-  const summary = useMemo(() => {
+  const statusChips = useMemo(() => {
     let match = 0;
     let mismatch = 0;
     let error = 0;
@@ -65,13 +45,23 @@ export function StatusReportBar({ className }: { className?: string }) {
     ] as StatusChip[];
   }, [fileList, t]);
 
-  const duplicateGroups = useMemo(
-    () => countDuplicateHashGroups(fileList),
-    [fileList],
-  );
+  const fileGroups = useMemo(() => buildFileGroups(fileList), [fileList]);
+  const { duplicateGroupCount, uniqueCount, verifiedCount } = fileGroups.summary;
 
-  const hasSummary = summary.some((s) => s.count > 0);
-  const hasContent = detectedAlgo || hasSummary || duplicateGroups > 0;
+  const hasStatusChips = statusChips.some((s) => s.count > 0);
+  const hasComparison = verifiedCount > 0;
+  const hasContent = detectedAlgo || hasComparison || hasStatusChips;
+
+  const comparisonTitle = useMemo(() => {
+    const parts: string[] = [];
+    if (duplicateGroupCount > 0) {
+      parts.push(t("duplicate_hash_files", { count: duplicateGroupCount }));
+    }
+    if (uniqueCount > 0) {
+      parts.push(t("unique_files", { count: uniqueCount }));
+    }
+    return parts.join(" · ");
+  }, [duplicateGroupCount, uniqueCount, t]);
 
   return (
     <div
@@ -91,20 +81,19 @@ export function StatusReportBar({ className }: { className?: string }) {
                 </span>
               </span>
             ) : null}
-            {duplicateGroups > 0 ? (
+            {hasComparison && (
               <span
-                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium text-secondary"
-                title={t("duplicate_hash_files", { count: duplicateGroups })}
+                className="inline-flex items-center rounded px-1.5 py-0.5 font-medium text-secondary"
+                title={comparisonTitle}
               >
-                <span className="opacity-80">{t("file_compare")}</span>
-                <span>{duplicateGroups}</span>
+                {comparisonTitle}
               </span>
-            ) : null}
+            )}
           </div>
 
-          {hasSummary && (
+          {hasStatusChips && (
             <div className="flex items-center gap-3">
-              {summary.map((s) =>
+              {statusChips.map((s) =>
                 s.count > 0 ? (
                   <span
                     key={s.key}
