@@ -106,6 +106,8 @@ export interface FileResult {
 export interface FileItem {
   /** 文件路径 */
   path: string;
+  /** 文件大小（字节），由 get_file_metadata 填充 */
+  size?: number;
   /** 主导哈希值（取第一个子结果，仅供兼容单值场景） */
   hashValue?: string;
   /** 汇总状态（由 results 推导：error > mismatch > computed） */

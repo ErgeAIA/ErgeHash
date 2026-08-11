@@ -6,7 +6,7 @@ import type {
   HashAlgorithm,
   HashResult,
 } from "../services/types";
-import { setConfig, startBatchValidation } from "../services/api";
+import { setConfig, startBatchValidation, getFileSizes } from "../services/api";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { useToastStore } from "./toastStore";
 import i18n from "@/i18n";
@@ -138,15 +138,30 @@ export const useAppStore = create<AppState>((set, get) => ({
   bytesRead: 0,
   totalBytes: 0,
 
-  addFiles: (files) =>
-    set((state) => {
-      // 去重：已有路径不再添加
-      const existingPaths = new Set(state.fileList.map((f) => f.path));
-      const newItems: FileItem[] = files
-        .filter((p) => !existingPaths.has(p))
-        .map((p) => ({ path: p, results: [] }));
-      return { fileList: [...state.fileList, ...newItems] };
-    }),
+  addFiles: (files) => {
+    // 去重：已有路径不再添加
+    const state = get();
+    const existingPaths = new Set(state.fileList.map((f) => f.path));
+    const newPaths = files.filter((p) => !existingPaths.has(p));
+    const newItems: FileItem[] = newPaths.map((p) => ({ path: p, results: [] }));
+    set({ fileList: [...state.fileList, ...newItems] });
+    // 异步批量获取文件大小（不阻塞 UI）
+    if (newPaths.length > 0) {
+      getFileSizes(newPaths)
+        .then((sizes) => {
+          set((s) => ({
+            fileList: s.fileList.map((f) =>
+              f.size === undefined && sizes[f.path] !== undefined
+                ? { ...f, size: sizes[f.path] }
+                : f,
+            ),
+          }));
+        })
+        .catch(() => {
+          /* 获取大小失败不影响其余功能 */
+        });
+    }
+  },
 
   removeFile: (index) =>
     set((state) => ({

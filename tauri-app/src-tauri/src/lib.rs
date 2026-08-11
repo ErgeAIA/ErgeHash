@@ -14,7 +14,8 @@ use commands::export::{
     export_csv, export_json, generate_verification_file, import_verification_file,
 };
 use commands::filesystem::{
-    open_file_dialog, open_folder_dialog, open_notepad, save_file_dialog, scan_directory,
+    get_file_metadata, open_file_dialog, open_folder_dialog, open_notepad, save_file_dialog,
+    scan_directory,
 };
 use commands::hash::{
     calculate_hash, cancel_hash_calculation, pause_hash_calculation, quick_calculate_hash,
@@ -100,6 +101,7 @@ pub fn run() {
             generate_verification_file,
             import_verification_file,
             // 文件系统
+            get_file_metadata,
             scan_directory,
             open_file_dialog,
             open_folder_dialog,

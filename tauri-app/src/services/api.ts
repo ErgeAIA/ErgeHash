@@ -8,6 +8,7 @@ import type {
   HistoryEntry,
   AppConfig,
   VerificationEntry,
+  FileItem,
 } from "./types";
 
 /** 计算单个文件哈希值 */
@@ -115,6 +116,42 @@ export async function importVerificationFile(
 /** 扫描目录获取文件列表 */
 export async function scanDirectory(dirPath: string): Promise<string[]> {
   return invoke<string[]>("scan_directory", { dirPath });
+}
+
+/** 获取文件元数据（路径、大小） */
+export async function getFileMetadata(
+  filePath: string,
+): Promise<{ path: string; size: number }> {
+  return invoke<{ path: string; size: number }>("get_file_metadata", { filePath });
+}
+
+/** 批量获取文件大小，返回 path -> size 映射 */
+export async function getFileSizes(
+  paths: string[],
+): Promise<Record<string, number>> {
+  const entries = await Promise.all(
+    paths.map(async (path) => {
+      try {
+        const meta = await getFileMetadata(path);
+        return [path, meta.size] as const;
+      } catch {
+        return [path, 0] as const;
+      }
+    }),
+  );
+  return Object.fromEntries(entries);
+}
+
+/** 在 store 中批量设置文件大小 */
+export function applyFileSizes(
+  items: FileItem[],
+  sizes: Record<string, number>,
+): void {
+  items.forEach((item) => {
+    if (item.size === undefined && sizes[item.path] !== undefined) {
+      item.size = sizes[item.path] as number;
+    }
+  });
 }
 
 /** 打开系统记事本 */
