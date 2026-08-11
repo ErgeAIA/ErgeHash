@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import type { FileItem, HashAlgorithm, HashResult } from "../services/types";
-import { setConfig } from "../services/api";
+import { setConfig, startBatchValidation } from "../services/api";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { useToastStore } from "./toastStore";
+import i18n from "@/i18n";
 
 /** 应用状态 */
 interface AppState {
@@ -13,6 +15,8 @@ interface AppState {
   theme: "light" | "dark";
   /** 语言 */
   language: "zh" | "en";
+  /** 拖入文件后是否自动开始校验 */
+  autoCalculate: boolean;
   /** 是否正在计算 */
   isCalculating: boolean;
   /** 是否暂停 */
@@ -45,6 +49,10 @@ interface AppState {
   clearResults: () => void;
   /** 设置算法（持久化） */
   setAlgorithm: (algo: HashAlgorithm) => void;
+  /** 设置自动开始校验开关（持久化） */
+  setAutoCalculate: (value: boolean) => void;
+  /** 开始校验：验证区有输入时先计算全部文件哈希再逐一比对；为空时仅计算哈希 */
+  startValidation: () => Promise<void>;
   /** 直接设置主题（初始化用，不持久化） */
   setTheme: (theme: "light" | "dark") => void;
   /** 直接设置语言（初始化用，不持久化） */
@@ -96,6 +104,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   algorithm: "sha256",
   theme: "light",
   language: "zh",
+  autoCalculate: false,
   isCalculating: false,
   isPaused: false,
   progress: 0,
@@ -166,7 +175,105 @@ export const useAppStore = create<AppState>((set, get) => ({
       return { language };
     }),
 
+  setAutoCalculate: (value) => {
+    set({ autoCalculate: value });
+    void setConfig("auto_calculate", value);
+  },
+
   setCalculating: (value) => set({ isCalculating: value }),
+
+  startValidation: async () => {
+    const state = get();
+    if (state.isCalculating || state.fileList.length === 0) return;
+
+    const toast = useToastStore.getState().addToast;
+    const t = i18n.t.bind(i18n);
+
+    set({
+      isCalculating: true,
+      isPaused: false,
+      progress: 0,
+      currentFile: null,
+      resultText: "",
+      statusMessage: "calculating",
+    });
+
+    try {
+      const paths = state.fileList.map((f) => f.path);
+      const expected = state.expectedHash?.trim() || "";
+      const batch = await startBatchValidation(paths, state.algorithm);
+
+      set({ isCalculating: false, progress: 100, statusMessage: "completed" });
+
+      if (!expected) return;
+
+      const expectedLines = expected
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
+      const computedResults = batch.results.filter((r) => r.hashValue);
+
+      let compText = `\n${t("comparison_results")}\n\n`;
+      let matchCount = 0;
+      let mismatchCount = 0;
+
+      if (expectedLines.length === 1) {
+        const expectedClean = expectedLines[0].toLowerCase().replace(/\s/g, "");
+        if (!/^[0-9a-f]+$/i.test(expectedClean)) {
+          set((s) => ({ resultText: s.resultText + `\n⚠ ${t("invalid_hash_format")}\n` }));
+          return;
+        }
+        for (const r of computedResults) {
+          const fileName = r.filePath.split(/[/\\]/).pop() ?? r.filePath;
+          const isMatch = r.hashValue.toLowerCase() === expectedClean;
+          get().updateFileByPath(r.filePath, r.hashValue, isMatch ? "success" : "mismatch");
+          if (isMatch) {
+            compText += `✓ ${fileName} ${t("match")}\n`;
+            matchCount++;
+          } else {
+            compText += `✗ ${fileName} ${t("mismatch")}\n`;
+            mismatchCount++;
+          }
+        }
+      } else {
+        if (expectedLines.length !== computedResults.length) {
+          set((s) => ({ resultText: s.resultText + `\n⚠ ${t("lines_mismatch")}\n` }));
+          return;
+        }
+        for (let i = 0; i < expectedLines.length; i++) {
+          const expectedClean = expectedLines[i].toLowerCase().replace(/\s/g, "");
+          const r = computedResults[i];
+          const fileName = r.filePath.split(/[/\\]/).pop() ?? r.filePath;
+          if (!/^[0-9a-f]+$/i.test(expectedClean)) {
+            compText += `${i + 1}. ✗ ${t("format_error")}\n`;
+            mismatchCount++;
+            get().updateFileByPath(r.filePath, r.hashValue, "mismatch");
+            continue;
+          }
+          const isMatch = r.hashValue.toLowerCase() === expectedClean;
+          get().updateFileByPath(r.filePath, r.hashValue, isMatch ? "success" : "mismatch");
+          if (isMatch) {
+            compText += `${i + 1}. ✓ ${fileName} ${t("match")}\n`;
+            matchCount++;
+          } else {
+            compText += `${i + 1}. ✗ ${fileName} ${t("mismatch")}\n`;
+            mismatchCount++;
+          }
+        }
+      }
+
+      compText += `\n---\n${t("total_summary")}: ${computedResults.length} | ${t("match")}: ${matchCount} | ${t("mismatch")}: ${mismatchCount}\n`;
+      set((s) => ({ resultText: s.resultText + compText }));
+
+      if (mismatchCount > 0) {
+        toast("error", t("toast_mismatch"));
+      } else {
+        toast("success", t("toast_all_match"));
+      }
+    } catch (err) {
+      set((s) => ({ resultText: s.resultText + `\n✗ ${String(err)}\n`, isCalculating: false, statusMessage: "ready" }));
+    }
+  },
 
   setPaused: (value) => set({ isPaused: value }),
 

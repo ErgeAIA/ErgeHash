@@ -111,6 +111,9 @@ function App() {
         setTheme(config.theme);
         setLanguage(config.language);
         setAlgorithm(config.algorithm);
+        if (typeof config.autoCalculate === "boolean") {
+          useAppStore.setState({ autoCalculate: config.autoCalculate });
+        }
 
         // 恢复窗口几何
         if (config.windowGeometry) {
@@ -276,7 +279,12 @@ function App() {
       unlisteners.push(
         await getCurrentWebview().listen<string[]>("files-dropped", (e) => {
           const paths = e.payload;
-          if (paths && paths.length > 0) addFiles(paths);
+          if (paths && paths.length > 0) {
+            addFiles(paths);
+            if (useAppStore.getState().autoCalculate) {
+              void useAppStore.getState().startValidation();
+            }
+          }
         }),
       );
     }
