@@ -32,38 +32,45 @@
 
 全部以 CSS 变量定义，亮/暗通过 `.dark` 类在 `<html>` 上切换。组件**只允许引用变量**，禁止硬编码色值（顶栏文字例外，见 §三.1）。
 
-### 暗色（默认）
+> **配色来源（重要）**：本设计系统的两套默认主题**完整对齐 ThemeVault 主题系统**：
+> - 暗色主题 = ThemeVault **#003**（opensquilla / dark，`themes/opensquilla/dark/palette.md`）
+> - 亮色主题 = ThemeVault **#005**（opensquilla / light，`themes/opensquilla/light/palette.md`）
+>
+> 所有中性色、主色（accent）、状态色均取自上述两套主题的 `palette.md` 对应角色（`--accent`→`--primary`、`--bg`/`--text`/状态 fill 等）。`#005`/`#003` 是 ThemeVault 的**主题编号**，非颜色 hex。后续改动须以 ThemeVault 对应 `palette.md` 为准，不得沿用旧值（如旧 `--primary:#4CAF50`）。
+
+### 暗色（默认，对齐 #003 / opensquilla dark）
 
 | Token | 值 | 用途 |
 |-------|-----|------|
-| `--background` | `#1c1c1e` | 整窗底色；顶栏/侧栏底色（L 形区） |
-| `--sidebar-bg` | `#1c1c1e` | 与 `--background` 一致，顶栏+NavRail 一体 |
-| `--panel` | `#0d0d0d` | 右侧内容区圆角容器，**比 L 形区更深** |
-| `--card` | `#2d2d2d` | 下拉菜单、弹窗等浮层背景 |
-| `--foreground` | `#e0e0e0` | 主文字 |
-| `--muted` | `#3d3d3d` | hover 背景、浅色块 |
-| `--muted-foreground` | `#9ca3af` | 次要文字、占位提示 |
-| `--border` | `#3a3a3c` | 深色边框/分隔线 |
-| `--primary` | `#4CAF50` | 品牌主色（绿色）；选中态、主按钮、进度 |
-| `--primary-foreground` | `#ffffff` | 主色之上的文字 |
-| `--secondary` | `#2196F3` | 次色（蓝色） |
-| `--destructive` | `#f44336` | 危险操作（清空、删除） |
-| `--warning` | `#FF9800` | 警告/失败状态文字 |
-| `--success-bg` / `--mismatch-bg` / `--error-bg` / `--computed-bg` | `#1B5E20` / `#B71C1C` / `#E65100` / `#0D47A1` | 文件状态行底色 |
+| `--background` | `#18181A` | 整窗底色；顶栏/侧栏底色（L 形区） |
+| `--sidebar-bg` | `#18181A` | 与 `--background` 一致，顶栏+NavRail 一体 |
+| `--panel` | `#0d0d0d` | 右侧内容区圆角容器，**比 L 形区更深**（沿用既有设计语言，不取 opensquilla `--bg`） |
+| `--card` | `#202022` | 下拉菜单、弹窗等浮层背景 |
+| `--foreground` | `#F5F5F7` | 主文字 |
+| `--muted` | `#28282B` | hover 背景、浅色块 |
+| `--muted-foreground` | `#B0B0B6` | 次要文字、占位提示 |
+| `--border` | `#303034` | 深色边框/分隔线 |
+| `--primary` | `#F26A1B` | 主题主色（橙）；选中态、主按钮、进度、拖放边框 |
+| `--primary-foreground` | `#160B02` | 主色之上的文字（深棕，保证橙底可读） |
+| `--secondary` | `#56C2E6` | 次色（亮蓝，对应 opensquilla `--info`） |
+| `--destructive` | `#FF6B6B` | 危险操作（清空、删除，对应 `--danger`） |
+| `--warning` | `#E8B23A` | 警告/失败状态文字（对应 `--warn`） |
+| `--success-bg` / `--mismatch-bg` / `--error-bg` / `--computed-bg` | `#39D7A2` / `#FF6B6B` / `#E8B23A` / `#56C2E6` | 文件状态行底色（对应 opensquilla ok/danger/warn/info） |
 | `--scrim` | `rgba(0,0,0,0.7)` | 对话框遮罩 |
 | `--radius` | `4px` | 全局圆角基准 |
-| `--close-btn-hover-bg` | `#e81123` | 关闭按钮 hover 红底 |
+| `--close-btn-hover-bg` | `#e81123` | 关闭按钮 hover 红底（窗口控制语义，非主题状态色，保持） |
 
-### 亮色（可选变体）
+### 亮色（可选变体，对齐 #005 / opensquilla light）
 
-`--background:#f5f5f5`、`--sidebar-bg:#f0f0f0`、`--panel` 沿用深色容器语义需单独定义、`--foreground:#333`、`--border:#ccc`、`--muted-foreground:#666`。品牌色与暗色一致（`--primary:#4CAF50` 等）。
+`--background:#F7F7F8`、`--sidebar-bg:#F3F3F5`、`--panel:#FFFFFF`（内容块级，与背景形成轻微层级）、`--foreground:#1D1D1F`、`--border:#E6E6E9`、`--muted-foreground:#5F6066`。主题主色 `--primary:#BA4D0F`（暖橙，对应 opensquilla `--accent`）、`--primary-foreground:#FFFFFF`、次色 `--secondary:#4353B8`、危险 `--destructive:#C2382E`、警告 `--warning:#8A6410`；状态行底色 `#2E8A5F` / `#E0564A` / `#B2820B` / `#6478D9`。
 
 ### 配色约束
 
 1. 顶栏与左侧导航栏必须使用**同一底色**，不可做"浅顶栏 + 深内容区"对比。
-2. 右侧内容区必须比 L 形区**更深**，以建立"内容浮于框架"的层级感。
+2. 右侧内容区必须比 L 形区**更深**，以建立"内容浮于框架"的层级感（暗色 `--panel:#0d0d0d` 深于 `--background:#18181A`）。
 3. 暗色侧栏内文字使用浅色（`text-gray-100/300` 等），**禁止**使用深色文字（如 `text-gray-500`），否则不可见。
-4. 状态语义色固定：成功=绿、失败=红、警告=橙、计算中=蓝。
+4. 状态语义色固定：成功、失败、警告、计算中对应 opensquilla 状态谱（`--ok`/`--danger`/`--warn`/`--info`），取值随主题系统更新而同步，禁止硬编码旧值。
+5. 主色 `--primary` 随主题切换在 `#BA4D0F`（亮）/ `#F26A1B`（暗）间变化；NavRail 激活态、主按钮、进度条、拖放边框、成功/check 图标、radio 选中点均引用该变量。
 
 ---
 
@@ -130,12 +137,12 @@
      - 可折叠分组「工具」（导出、记事本）、「视图」（主题切换、语言切换）。
   3. **底部固定区**：设置 + 退出（`shrink-0`），折叠态竖排图标，展开态横向文字按钮。
 
-- **导航项选中态**：左竖条（`before:` 伪元素，`bg-primary`）+ 品牌色文字 + `bg-primary/10` 底；未选中：灰文字，hover 仅变品牌色文字（不变底色）。
+- **导航项选中态**：左竖条（`before:` 伪元素，`bg-primary`）+ 主题主色文字 + `bg-primary/10` 底；未选中：灰文字，hover 仅变主题主色文字（不变底色）。主题主色随主题切换：亮 `#BA4D0F` / 暗 `#F26A1B`（对齐 ThemeVault #005/#003）。
 - **分组动画**：`max-height` 方案 200ms，与宽度过渡一致。
 
 ### 3.6 右侧内容区布局
 
-- **容器**：`m-2 rounded-2xl bg-panel px-6 py-6`，`flex flex-1 flex-col gap-6 overflow-hidden`。
+- **容器**：`m-2 rounded-2xl bg-panel px-6 py-6`，`flex flex-1 flex-col gap-6 overflow-hidden`。暗色 `--panel:#0d0d0d` 比 L 形区 `--background:#18181A` 更深，亮色 `--panel:#FFFFFF` 比背景 `#F7F7F8` 略亮，均形成"内容浮于框架"层级。
 - **内部结构（纵向）**：
   1. **文件列表区**（`FileList`）：拖放/文件表格 + 底部预期哈希输入（输入区合并，因同属"输入"语义）。
   2. **计算结果区**（`ResultSection`）：过滤器 + 结果表格。
