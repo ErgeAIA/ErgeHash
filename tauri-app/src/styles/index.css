@@ -39,7 +39,7 @@
   /* 全套配色对齐 ThemeVault 主题 #003 (opensquilla/dark)
      根容器 / 全屏底色 + 顶栏/侧栏：浅黑一体（L 形区） */
   --background: #18181A;
-  --foreground: #F5F5F7;
+  --foreground: #E5E5E7;
   /* 右侧内容区圆角块：比 L 形区更深，形成对比（保持既有设计语言，不取 opensquilla --bg） */
   --panel: #0d0d0d;
   --card: #202022;
@@ -163,6 +163,10 @@ body {
 
 .bg-warning {
   background-color: var(--warning);
+}
+
+.text-warning {
+  color: var(--warning);
 }
 
 .text-warning-foreground {

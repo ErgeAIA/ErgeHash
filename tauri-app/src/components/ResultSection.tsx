@@ -133,72 +133,69 @@ export function ResultSection({ className }: { className?: string }) {
               ))}
             </div>
 
-            {/* 结果表格 */}
-            <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-border">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-muted/50">
-                  <tr className="border-b border-border">
-                    <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("path")}</th>
-                    <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("status")}</th>
-                    <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("algorithm")}</th>
-                    <th className="px-3 py-2 text-left font-medium text-muted-foreground">Hash</th>
-                    <th className="w-8 px-3 py-2"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredList.map((file, index) => {
-                    const statusDisplay = getStatusDisplay(file.status);
-                    return (
-                      <tr
-                        key={`${file.path}-${index}`}
-                        className="hover:bg-muted/30"
+            {/* 结果列表：与文件列表区统一风格，无整行背景色 */}
+            <ul className="min-h-0 flex-1 divide-y divide-border overflow-auto rounded-xl border border-border">
+              {filteredList.map((file, index) => {
+                const statusDisplay = getStatusDisplay(file.status);
+                const algorithm = file.hashValue
+                  ? file.hashValue.length === 32
+                    ? "MD5"
+                    : file.hashValue.length === 40
+                      ? "SHA1"
+                      : file.hashValue.length === 64
+                        ? "SHA256"
+                        : file.hashValue.length === 128
+                          ? "SHA512"
+                          : "?"
+                  : "-";
+                return (
+                  <li
+                    key={`${file.path}-${index}`}
+                    className="flex items-center gap-3 px-3 py-1.5 text-sm text-foreground hover:bg-muted/30"
+                    title={file.path}
+                  >
+                    {/* 文件名 */}
+                    <span className="flex-1 truncate" title={file.path}>
+                      {getBasename(file.path)}
+                    </span>
+
+                    {/* 状态 */}
+                    <span className="flex shrink-0 items-center gap-1">
+                      {statusDisplay.icon}
+                      <span className={cn("text-xs", statusDisplay.color)}>
+                        {statusDisplay.label}
+                      </span>
+                    </span>
+
+                    {/* 算法 */}
+                    <span className="w-16 shrink-0 text-xs text-muted-foreground">
+                      {algorithm}
+                    </span>
+
+                    {/* 哈希值 */}
+                    <span
+                      className="w-40 shrink-0 truncate text-xs text-muted-foreground"
+                      title={file.hashValue ?? ""}
+                    >
+                      {file.hashValue
+                        ? `${file.hashValue.slice(0, 12)}...${file.hashValue.slice(-6)}`
+                        : "-"}
+                    </span>
+
+                    {/* 复制按钮 */}
+                    {file.hashValue && (
+                      <button
+                        className="shrink-0 rounded p-1 text-muted-foreground hover:text-primary"
+                        onClick={(e) => handleCopyHash(file.hashValue!, e)}
+                        title={t("menu_copy")}
                       >
-                        {/* 文件名 */}
-                        <td
-                          className="max-w-[200px] truncate px-3 py-1.5"
-                          title={file.path}
-                        >
-                          {getBasename(file.path)}
-                        </td>
-
-                        {/* 状态 */}
-                        <td className="px-3 py-1.5">
-                          <span className="flex items-center gap-1">
-                            {statusDisplay.icon}
-                            <span className={cn("text-xs", statusDisplay.color)}>
-                              {statusDisplay.label}
-                            </span>
-                          </span>
-                        </td>
-
-                        {/* 算法 */}
-                        <td className="px-3 py-1.5 text-xs text-muted-foreground">
-                          {file.status ? file.hashValue ? `${(file.hashValue.length === 32 ? "MD5" : file.hashValue.length === 40 ? "SHA1" : file.hashValue.length === 64 ? "SHA256" : file.hashValue.length === 128 ? "SHA512" : "?")}` : "-" : "-"}
-                        </td>
-
-                        {/* 哈希值 */}
-                        <td className="max-w-[200px] truncate px-3 py-1.5 text-xs text-muted-foreground" title={file.hashValue ?? ""}>
-                          {file.hashValue ? `${file.hashValue.slice(0, 16)}...${file.hashValue.slice(-8)}` : "-"}
-                        </td>
-
-                        {/* 复制按钮 */}
-                        <td className="px-3 py-1.5">
-                          {file.hashValue && (
-                            <button
-                              className="rounded p-1 text-muted-foreground hover:text-primary"
-                              onClick={(e) => handleCopyHash(file.hashValue!, e)}
-                              title={t("menu_copy")}
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
 
           </>
         )}

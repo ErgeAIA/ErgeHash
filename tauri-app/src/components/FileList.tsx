@@ -198,22 +198,6 @@ export function FileList({ className }: { className?: string }) {
     return path.split(/[/\\]/).pop() ?? path;
   };
 
-  /** 根据状态获取行背景色 */
-  const getStatusBg = (status?: string) => {
-    switch (status) {
-      case "success":
-        return "bg-success";
-      case "mismatch":
-        return "bg-mismatch";
-      case "error":
-        return "bg-error";
-      case "computed":
-        return "bg-computed";
-      default:
-        return "";
-    }
-  };
-
   return (
     <section className={cn("flex min-h-0 flex-col gap-3", className)}>
       {/* 拖放区域 + 文件列表：内容超出时内部滚动 */}
@@ -241,10 +225,7 @@ export function FileList({ className }: { className?: string }) {
             {fileList.map((file, index) => (
               <li
                 key={file.path}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 cursor-default",
-                  getStatusBg(file.status),
-                )}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted/30 cursor-default"
                 onClick={(e) => e.stopPropagation()}
                 onContextMenu={(e) => handleContextMenu(e, index)}
                 title={file.path}
