@@ -31,7 +31,12 @@
 
 ## 二、配色系统（Color Tokens）
 
-全部以 CSS 变量定义，亮/暗通过 `.dark` 类在 `<html>` 上切换。组件**只允许引用变量**，禁止硬编码色值（包括顶栏与 NavRail 文字，统一使用 `text-foreground`/`text-muted-foreground`）。
+全部以 CSS 变量定义，亮/暗通过 `.dark` 类在 `<html>` 上切换。组件**只允许引用变量**，禁止硬编码色值，包括但不限于：
+- 文字：`text-foreground` / `text-muted-foreground` / `text-primary-foreground` 等功能前景变量，禁止 `text-white`、`text-gray-*`、`style={{ color: "#e5e7eb" }}` 等。
+- 背景与强调：`bg-primary`、`bg-secondary`、`bg-destructive`、`bg-warning`、`bg-muted`、`bg-card`、`bg-background`、`bg-panel`、`bg-sidebar-bg`、`bg-scrim`。
+- 线框/分隔：`border-border`。
+- 半透明 hover/遮罩：统一使用 `bg-foreground/20`、`bg-scrim`，禁止 `bg-black/50`、`bg-neutral-900`、`bg-black/20` 等。
+- 浮动徽章按钮、状态徽标必须使用主题变量（如 `bg-secondary text-secondary-foreground`），禁止 `bg-blue-500`、`bg-emerald-500`、`text-white` 等硬编码 Tailwind 色。
 
 > **配色来源（重要）**：本设计系统的两套默认主题**完整对齐 ThemeVault 主题系统**：
 > - 暗色主题 = ThemeVault **#003**（opensquilla / dark，`themes/opensquilla/dark/palette.md`）
