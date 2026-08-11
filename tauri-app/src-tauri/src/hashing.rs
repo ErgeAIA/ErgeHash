@@ -6,6 +6,7 @@ use std::time::{Duration, UNIX_EPOCH};
 use md5::Md5;
 use sha1::Sha1;
 use sha2::{Digest, Sha256, Sha512};
+use crc32fast::Hasher as Crc32Hasher;
 
 use crate::models::HashAlgorithm;
 
@@ -53,6 +54,16 @@ impl HashSink for Sha512 {
     }
 }
 
+/// CRC32（IEEE 802.3，与 zip/以太网一致），非 Digest trait，单独实现 HashSink。
+impl HashSink for Crc32Hasher {
+    fn update(&mut self, data: &[u8]) {
+        self.update(data);
+    }
+    fn finalize_hex(self: Box<Self>) -> String {
+        format!("{:08x}", self.finalize())
+    }
+}
+
 /// 创建对应算法的哈希对象（trait object，消除按算法复制的分块循环）
 pub fn make_hasher(algorithm: HashAlgorithm) -> Box<dyn HashSink> {
     match algorithm {
@@ -60,6 +71,7 @@ pub fn make_hasher(algorithm: HashAlgorithm) -> Box<dyn HashSink> {
         HashAlgorithm::MD5 => Box::new(Md5::new()),
         HashAlgorithm::SHA1 => Box::new(Sha1::new()),
         HashAlgorithm::SHA512 => Box::new(Sha512::new()),
+        HashAlgorithm::Crc32 => Box::new(Crc32Hasher::new()),
     }
 }
 
@@ -147,6 +159,16 @@ mod tests {
                 HashAlgorithm::SHA512,
                 "",
                 "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
+            ),
+            (
+                HashAlgorithm::Crc32,
+                "abc",
+                "352441c2",
+            ),
+            (
+                HashAlgorithm::Crc32,
+                "",
+                "00000000",
             ),
         ];
 

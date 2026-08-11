@@ -1517,6 +1517,7 @@ name = "hash-validator-plus"
 version = "0.3.0"
 dependencies = [
  "chrono",
+ "crc32fast",
  "csv",
  "dirs",
  "md-5",

@@ -8,6 +8,7 @@ pub enum HashAlgorithm {
     MD5,
     SHA1,
     SHA512,
+    Crc32,
 }
 
 impl HashAlgorithm {
@@ -18,6 +19,7 @@ impl HashAlgorithm {
             HashAlgorithm::MD5 => "md5",
             HashAlgorithm::SHA1 => "sha1",
             HashAlgorithm::SHA512 => "sha512",
+            HashAlgorithm::Crc32 => "crc32",
         }
     }
 }
@@ -124,6 +126,9 @@ pub struct AppConfig {
     pub theme: String,
     /// 语言
     pub language: String,
+    /// 拖入文件后是否自动开始校验（默认 false）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub auto_calculate: Option<bool>,
     /// 窗口几何信息
     #[serde(skip_serializing_if = "Option::is_none")]
     pub window_geometry: Option<String>,
@@ -135,6 +140,7 @@ impl Default for AppConfig {
             algorithm: "sha256".to_string(),
             theme: "light".to_string(),
             language: "zh".to_string(),
+            auto_calculate: Some(false),
             window_geometry: None,
         }
     }
