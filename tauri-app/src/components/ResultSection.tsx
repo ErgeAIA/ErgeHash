@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Copy, FileDown, Trash2, Check, X, AlertTriangle, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/appStore";
 import { useToastStore } from "@/store/toastStore";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
@@ -113,7 +112,7 @@ export function ResultSection() {
         {t("result_group")}
       </h2>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
         {/* 无结果时的空状态 */}
         {!hasResults ? (
           <div className="flex h-[120px] items-center justify-center text-sm text-muted-foreground">
@@ -208,44 +207,80 @@ export function ResultSection() {
           </>
         )}
 
-        {/* 操作按钮：图标徽章（复制/导出）+ 清除文字按钮 */}
-        <div className="flex items-center justify-center gap-3 pt-2">
-          <button
-            type="button"
+        {/* 操作按钮：与开始校验同风格的大圆形纯图标按钮 */}
+        <div className="flex items-center justify-center gap-4 pt-2">
+          <IconActionButton
+            icon={<Copy className="h-6 w-6" />}
+            label={t("copy_result")}
             onClick={handleCopyResult}
             disabled={!hasResults}
-            title={t("copy_result")}
-            aria-label={t("copy_result")}
-            className={cn(
-              "flex items-center gap-2 rounded-full border border-border bg-muted/40 px-4 py-2 text-sm text-foreground transition-colors",
-              "hover:border-primary hover:bg-primary/10 hover:text-primary",
-              "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border disabled:hover:bg-muted/40 disabled:hover:text-foreground",
-            )}
-          >
-            <Copy className="h-4 w-4" />
-            {t("copy_result")}
-          </button>
-          <button
-            type="button"
+            theme="blue"
+          />
+          <IconActionButton
+            icon={<FileDown className="h-6 w-6" />}
+            label={t("export")}
             onClick={handleExport}
             disabled={!hasResults}
-            title={t("export")}
-            aria-label={t("export")}
-            className={cn(
-              "flex items-center gap-2 rounded-full border border-border bg-muted/40 px-4 py-2 text-sm text-foreground transition-colors",
-              "hover:border-secondary hover:bg-secondary/10 hover:text-secondary",
-              "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border disabled:hover:bg-muted/40 disabled:hover:text-foreground",
-            )}
-          >
-            <FileDown className="h-4 w-4" />
-            {t("export")}
-          </button>
-          <Button variant="destructive" size="sm" onClick={handleClearResults} disabled={!hasResults}>
-            <Trash2 className="mr-1 h-4 w-4" />
-            {t("clear_results")}
-          </Button>
+            theme="emerald"
+          />
+          <IconActionButton
+            icon={<Trash2 className="h-6 w-6" />}
+            label={t("clear_results")}
+            onClick={handleClearResults}
+            disabled={!hasResults}
+            theme="destructive"
+          />
         </div>
       </div>
     </section>
+  );
+}
+
+/** 大圆形图标操作按钮：与「开始校验」按钮保持一致的视觉语言 */
+function IconActionButton({
+  icon,
+  label,
+  onClick,
+  disabled,
+  theme,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  theme: "blue" | "emerald" | "destructive";
+}) {
+  const themeClasses = {
+    blue: "bg-blue-500 shadow-blue-500/30 hover:bg-blue-400",
+    emerald: "bg-emerald-500 shadow-emerald-500/30 hover:bg-emerald-400",
+    destructive: "bg-destructive shadow-destructive/30 hover:bg-destructive/90",
+  };
+
+  return (
+    <div className="group relative flex flex-col items-center">
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        aria-label={label}
+        className={cn(
+          "flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white shadow-lg transition-all",
+          "hover:scale-105 active:scale-95",
+          "disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:hover:scale-100",
+          themeClasses[theme],
+        )}
+      >
+        {icon}
+      </button>
+      <span
+        className={cn(
+          "pointer-events-none absolute -top-9 z-10 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white opacity-0 shadow-md",
+          "transition-all duration-200",
+          "group-hover:opacity-100",
+        )}
+      >
+        {label}
+      </span>
+    </div>
   );
 }
