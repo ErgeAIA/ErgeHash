@@ -68,3 +68,21 @@
 - **影响**：窗口无法拖拽移动；TitleBar 的最小化/最大化/关闭按钮全部失效；App.tsx 恢复窗口几何的 setPosition/setSize 也被权限拦截。
 - **状态**：resolved（补齐 `core:window:allow-start-dragging` / `allow-minimize` / `allow-toggle-maximize` / `allow-is-maximized` / `allow-close` / `allow-set-size` / `allow-set-position` / `allow-show` 权限）
 - **教训**：Tauri 2 的 capabilities 权限模型是白名单制，HTML 属性（`data-tauri-drag-region`）和 JS API（`window.minimize()` 等）都依赖对应权限授权。新增自绘标题栏时必须同步配置窗口操作权限，否则属性/API 被静默忽略且无报错，难以定位。
+
+---
+
+## BUG-006: 输入框「品牌色边框」改为黑色/默认 — Tailwind v4 自定义变量体系下 `border-primary`/`ring-primary` 不自动解析
+
+- **日期**：2026-08-11
+- **现象**：`ExpectedHashSection` 的 `Textarea` 期望用主题品牌色（`--primary`）的 1px 边框替代默认深色边框，但加了 `border-primary focus-visible:ring-primary` 后界面仍是**黑色/默认边框**，品牌色未生效。
+- **根因分析**：
+  - 项目用 Tailwind v4 + **自定义 CSS 变量体系**（只有 `--primary`/`--ring`/`--border` 等语义变量，**没有** `--color-*` 主题映射）。
+  - 在这个体系下，任意 `*-primary` / `*-ring` / `border-*` / `text-*` / `bg-*` / `ring-*` 等 utility **不会自动解析为对应 CSS 变量**。写上 `border-primary`/`ring-primary` 等于没有该规则，元素回退到浏览器默认或组件基类样式（黑边框）。
+  - 此前 NavRail 修复时已踩过同类坑（`text-primary`/`bg-primary/10` 失效），当时补了 `.text-primary`/`.bg-primary-alpha` 等映射，但**漏了 `.border-primary` 和 `.ring-primary`**。本轮新的颜色 utility 直接复用旧错，未先确认 `index.css` 是否已有映射。
+  - `pnpm run build` 不会报错（CSS 里压根没生成对应规则），**构建通过 ≠ 样式生效**，导致问题延迟到用户实测截图才发现。
+- **影响**：输入框边框改色需求未满足，视觉与"品牌色一致"目标偏离。
+- **状态**：resolved（在 `src/styles/index.css` 显式补两条映射：`.border-primary { border-color: var(--primary); }`、`.ring-primary { --tw-ring-color: var(--primary); }`；`ExpectedHashSection.tsx` 的 `Textarea` className 维持 `border-primary focus-visible:ring-1 focus-visible:ring-primary hover:border-primary`，映射补上后即生效）
+- **教训**：
+  1. 在自定义变量体系里引入**任意新的 `*-primary` / `*-ring` / `border-*` / `*-warning` / `*-destructive` 等 utility 前，先确认 `index.css` 是否已有对应显式映射**，没有就先补映射再写 className。已显式定义的映射见 `index.css`：`.bg-primary`、`.bg-primary-alpha`、`.text-primary`、`.text-destructive`、`.text-warning`、`.border-primary`、`.ring-ring`、`.ring-primary`、`.bg-sidebar` 等。
+  2. **视觉改动不能只靠 `pnpm run build` 验证**——构建通过只说明编译无误，不代表 Tailwind 生成了对应规则。必须用户实测截图确认样式真实生效。
+  3. 同理，Tailwind 的 opacity 修饰符（`bg-primary/10`、`border-primary/80`）在自定义变量下也失效，需用 `color-mix` 定义 `--xxx-alpha` + 显式类替代。

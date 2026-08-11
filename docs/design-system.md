@@ -80,6 +80,33 @@
 
 ---
 
+## 二之一、字体与字号（Typography Tokens）
+
+字体与字号体系**对齐 AIVault 设计系统**（`docs/design-system/tokens.md` 字体部分），确保跨项目视觉一致性。
+
+### 字体栈
+
+- **正文 / UI 文本**（`body` 默认）：优先 IBM Plex Sans、Noto Sans SC，回退至系统 UI 字体与中文黑体。
+  ```css
+  font-family: "IBM Plex Sans", "Noto Sans SC", "Segoe UI", Roboto,
+    "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+  ```
+- **等宽文本**（哈希值、算法标识等需对齐展示者）：优先 JetBrains Mono、IBM Plex Mono，回退至系统等宽字体，统一使用 `.font-mono` 工具类。
+  ```css
+  font-family: "JetBrains Mono", "IBM Plex Mono", "Roboto Mono",
+    "SFMono-Regular", Consolas, "Courier New", monospace;
+  ```
+
+> 字体文件自托管于 `src/assets/fonts/`（IBM Plex Sans / Noto Sans SC / JetBrains Mono 各 Regular/Medium/Bold 共 9 个 `.ttf`，与 AIVault 同源），`index.css` 中以 `@font-face` 声明引入（`font-display: swap`）。Noto Sans SC 含中文全字形，单字重约 10MB，本地自托管不依赖系统字体。
+
+### 基准字号与行高
+
+- 根字号 `font-size: 15px`（AIVault 基准），`line-height: 1.6`。
+- 组件内文字在基准上用 Tailwind 文本尺寸微调（`text-xs`/`text-sm` 等），不脱离该基准过大偏移。
+- 哈希展示使用 `.font-mono`（等宽），保证逐字符对齐、易核对。
+
+---
+
 ## 三、UI 元素与排列规则
 
 ### 3.1 自绘顶栏（TitleBar）
@@ -167,6 +194,11 @@
 - **定位**：悬浮在各自内容卡片**右下偏左**（`absolute bottom-4 right-20`，`pointer-events-none` 外层 + `pointer-events-auto` 内层），不挤压表格内容。
 - **文件列表区 FAB**：开始检测（主色大圆按钮）+ 清空列表（危险色大圆按钮），**垂直堆叠**（经用户确认优于横排）。
 - **结果区 FAB**：复制结果 / 导出 / 清空结果，三个圆形图标按钮，垂直堆叠。
+- **清空职责边界（重要）**：三个区块各自负责清理自身内容，互不越权。
+  - 「清空列表」（文件列表区 FAB）：**仅**清空文件列表（`fileList`、`currentFile`、`progress` 等运行态），**保留**预期哈希输入区与结果区内容。
+  - 「清空」/「清空预期哈希」（预期哈希输入区）：仅清空该区输入框（`expectedHash`）。
+  - 「清空结果」（结果区 FAB）：**仅**清空结果区（`resultText`、`lastResults` 等），保留文件列表与预期哈希。
+  - 实现：`clearFiles` 不得重置 `expectedHash` 与结果区状态；预期哈希与结果清理由各自的独立 action 负责。
 - **空态显隐规则**（重要 UX 约束）：
   - 对应内容区为空时，按钮**不隐藏**，改为 `disabled` + `opacity-40` 半透明灰显，提示新用户该位置存在可交互按钮。
   - 有内容时按钮恢复正常显示与交互。
