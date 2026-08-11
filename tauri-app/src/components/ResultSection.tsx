@@ -11,7 +11,7 @@ import type { FileItemStatus } from "@/services/types";
 type FilterType = "all" | "success" | "mismatch" | "error" | "computed";
 
 /** 计算结果区域组件：结构化表格替代纯文本 */
-export function ResultSection() {
+export function ResultSection({ className }: { className?: string }) {
   const { t } = useTranslation();
   const fileList = useAppStore((s) => s.fileList);
   const copyResult = useAppStore((s) => s.copyResult);
@@ -106,12 +106,7 @@ export function ResultSection() {
   const hasResults = fileList.some((f) => f.hashValue || f.status);
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* 二级标题 */}
-      <h2 className="shrink-0 text-lg font-semibold text-foreground">
-        {t("result_group")}
-      </h2>
-
+    <section className={cn("flex min-h-0 flex-col gap-3", className)}>
       <div className="relative flex min-h-0 flex-1 flex-col gap-3 rounded-xl border border-border bg-card p-3">
         {/* 无结果时的空状态 */}
         {!hasResults ? (
