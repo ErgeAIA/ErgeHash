@@ -62,7 +62,6 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
   const copyResult = useAppStore((s) => s.copyResult);
   const addToast = useToastStore((s) => s.addToast);
   const theme = useAppStore((s) => s.theme);
-  const language = useAppStore((s) => s.language);
   const toggleTheme = useAppStore((s) => s.toggleTheme);
   const toggleLanguage = useAppStore((s) => s.toggleLanguage);
 
@@ -255,101 +254,89 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
           {collapsed ? <PanelRightOpen size={16} /> : <PanelLeftClose size={16} />}
         </button>
 
-        {/* 前移的紧凑功能按钮组：历史 / 工具▾ / 主题 / 语言
-         * 不带拖拽属性，与 ☰/折叠按钮同 hover，靠间距分组。 */}
-        <div
-          data-tauri-drag-region="false"
-          className="flex h-full items-center gap-0.5 pl-1"
-        >
-          <button
-            type="button"
-            title={t("history")}
-            onClick={() => window.dispatchEvent(new CustomEvent("show-history"))}
-            className="flex h-7 items-center gap-1.5 rounded-[var(--radius)] px-2 text-[13px] text-foreground transition-colors hover:bg-foreground/20"
-          >
-            <History size={15} />
-            <span className="hidden md:inline">{t("history")}</span>
-          </button>
-
-          {/* 工具下拉：导出 / 记事本 */}
-          <div ref={toolsWrapperRef} className="relative h-full">
-            <button
-              type="button"
-              title={t("nav_tools")}
-              onClick={() => setToolsOpen((v) => !v)}
-              className="flex h-7 items-center gap-1.5 rounded-[var(--radius)] px-2 text-[13px] text-foreground transition-colors hover:bg-foreground/20"
-            >
-              <Wrench size={15} />
-              <span className="hidden md:inline">{t("nav_tools")}</span>
-              <ChevronDown size={12} className="opacity-70" />
-            </button>
-            {toolsOpen && (
-              <div
-                data-tauri-drag-region="false"
-                className="absolute left-0 top-full z-50 mt-1 min-w-[180px] rounded-[var(--radius)] border border-border bg-card p-1 shadow-lg"
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    setToolsOpen(false);
-                    window.dispatchEvent(new CustomEvent("export-results"));
-                  }}
-                  className="flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
-                >
-                  <FileDown size={14} />
-                  <span className="flex-1">{t("export")}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setToolsOpen(false);
-                    void openNotepad();
-                  }}
-                  className="flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
-                >
-                  <NotepadText size={14} />
-                  <span className="flex-1">{t("notepad")}</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* 主题切换 */}
-          <button
-            type="button"
-            title={theme === "light" ? t("dark_mode") : t("light_mode")}
-            onClick={toggleTheme}
-            className="flex h-7 items-center gap-1.5 rounded-[var(--radius)] px-2 text-[13px] text-foreground transition-colors hover:bg-foreground/20"
-          >
-            {theme === "light" ? <Moon size={15} /> : <Sun size={15} />}
-            <span className="hidden md:inline">
-              {theme === "light" ? t("dark_mode") : t("light_mode")}
-            </span>
-          </button>
-
-          {/* 语言切换 */}
-          <button
-            type="button"
-            title={t("language")}
-            onClick={toggleLanguage}
-            className="flex h-7 items-center gap-1.5 rounded-[var(--radius)] px-2 text-[13px] text-foreground transition-colors hover:bg-foreground/20"
-          >
-            <Globe size={15} />
-            <span className="hidden md:inline">
-              {language === "zh" ? "English" : "中文"}
-            </span>
-          </button>
-        </div>
       </div>
 
       {/* 中间：窗口拖拽区 */}
       <div className="h-full flex-1" data-tauri-drag-region />
 
-      {/* 右侧：窗口控制（与功能按钮组之间留间距） */}
+      {/* 右侧：历史 / 工具▾ / 主题 / 语言（仅图标） + 窗口控制 */}
       <div
-        className="ml-2 flex h-full items-center"
+        className="flex h-full items-center"
         data-tauri-drag-region="false"
       >
+        <button
+          type="button"
+          title={t("history")}
+          onClick={() => window.dispatchEvent(new CustomEvent("show-history"))}
+          className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
+        >
+          <History size={16} />
+        </button>
+
+        {/* 工具下拉：导出 / 记事本 */}
+        <div ref={toolsWrapperRef} className="relative h-full">
+          <button
+            type="button"
+            title={t("nav_tools")}
+            onClick={() => setToolsOpen((v) => !v)}
+            className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
+          >
+            <Wrench size={16} />
+            <ChevronDown size={12} className="ml-[-2px] opacity-70" />
+          </button>
+          {toolsOpen && (
+            <div
+              data-tauri-drag-region="false"
+              className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-[var(--radius)] border border-border bg-card p-1 shadow-lg"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setToolsOpen(false);
+                  window.dispatchEvent(new CustomEvent("export-results"));
+                }}
+                className="flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+              >
+                <FileDown size={14} />
+                <span className="flex-1">{t("export")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setToolsOpen(false);
+                  void openNotepad();
+                }}
+                className="flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+              >
+                <NotepadText size={14} />
+                <span className="flex-1">{t("notepad")}</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 主题切换 */}
+        <button
+          type="button"
+          title={theme === "light" ? t("dark_mode") : t("light_mode")}
+          onClick={toggleTheme}
+          className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
+        >
+          {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+        </button>
+
+        {/* 语言切换 */}
+        <button
+          type="button"
+          title={t("language")}
+          onClick={toggleLanguage}
+          className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
+        >
+          <Globe size={16} />
+        </button>
+
+        {/* 窗口控制 */}
+        <div className="ml-1 flex h-full items-center">
         <button
           type="button"
           title={t("minimize")}
@@ -376,6 +363,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
         >
           <X size={16} />
         </button>
+        </div>
       </div>
     </div>
   );
