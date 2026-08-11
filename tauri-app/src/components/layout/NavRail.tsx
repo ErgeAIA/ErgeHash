@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Hash } from "lucide-react";
+import { Hash, CheckCheck, ListX } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
 import { cn } from "@/lib/utils";
 import type { HashAlgorithm } from "@/services/types";
@@ -25,8 +25,10 @@ interface NavRailProps {
  *  其中历史/工具/主题/语言另在顶栏紧凑按钮组提供快捷访问。 */
 export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
   const { t } = useTranslation();
-  const algorithm = useAppStore((s) => s.algorithm);
-  const setAlgorithm = useAppStore((s) => s.setAlgorithm);
+  const selectedAlgorithms = useAppStore((s) => s.selectedAlgorithms);
+  const toggleAlgorithm = useAppStore((s) => s.toggleAlgorithm);
+  const selectAllAlgorithms = useAppStore((s) => s.selectAllAlgorithms);
+  const deselectAllAlgorithms = useAppStore((s) => s.deselectAllAlgorithms);
 
   /* 导航项 / 算法项通用样式
    * 选中态：左竖条（border-l 等价实现）+ 品牌色文字 + 品牌 tint 底
@@ -39,6 +41,9 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
         ? "relative text-primary bg-primary-alpha before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary before:content-['']"
         : "text-muted-foreground hover:text-primary",
     );
+
+  const allSelected = selectedAlgorithms.length === ALGORITHMS.length;
+  const onlyOneSelected = selectedAlgorithms.length === 1;
 
   return (
     <aside
@@ -68,15 +73,47 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
             </button>
           ) : (
             <>
-              <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
-                {t("algorithms")}
+              <div className="flex items-center justify-between px-2 py-1">
+                <span className="text-xs font-medium text-muted-foreground">
+                  {t("algorithms")}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    title={t("select_all")}
+                    onClick={selectAllAlgorithms}
+                    disabled={allSelected}
+                    className={cn(
+                      "inline-flex h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-medium transition-colors",
+                      allSelected
+                        ? "bg-muted text-muted-foreground"
+                        : "bg-primary/15 text-primary hover:bg-primary/25",
+                    )}
+                  >
+                    <CheckCheck size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    title={t("deselect_all")}
+                    onClick={deselectAllAlgorithms}
+                    disabled={onlyOneSelected}
+                    className={cn(
+                      "inline-flex h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-medium transition-colors",
+                      onlyOneSelected
+                        ? "bg-muted text-muted-foreground"
+                        : "bg-primary/15 text-primary hover:bg-primary/25",
+                    )}
+                  >
+                    <ListX size={12} />
+                  </button>
+                </div>
               </div>
               <div className="flex flex-col gap-0.5">
                 {ALGORITHMS.map((algo) => (
                   <button
                     key={algo.value}
-                    onClick={() => setAlgorithm(algo.value)}
-                    className={navItemClass(algorithm === algo.value)}
+                    onClick={() => toggleAlgorithm(algo.value)}
+                    className={navItemClass(selectedAlgorithms.includes(algo.value))}
                   >
                     <Hash className="h-[18px] w-[18px] shrink-0 opacity-70" />
                     <span>{algo.label}</span>
