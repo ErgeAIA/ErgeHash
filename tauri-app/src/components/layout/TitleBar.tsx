@@ -57,6 +57,8 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const menuWrapperRef = useRef<HTMLDivElement>(null);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
+  const toolsPanelRef = useRef<HTMLDivElement>(null);
 
   const addFiles = useAppStore((s) => s.addFiles);
   const copyResult = useAppStore((s) => s.copyResult);
@@ -99,6 +101,8 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
     };
     document.addEventListener("mousedown", handleDocClick);
     window.addEventListener("keydown", handleEsc);
+    // 菜单打开后聚焦面板，使 Tab/失去焦点时能够自动关闭
+    requestAnimationFrame(() => menuPanelRef.current?.focus());
     return () => {
       document.removeEventListener("mousedown", handleDocClick);
       window.removeEventListener("keydown", handleEsc);
@@ -122,6 +126,8 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
       }
     };
     document.addEventListener("mousedown", onDown);
+    // 工具下拉打开后聚焦面板，使失去焦点时能够自动关闭
+    requestAnimationFrame(() => toolsPanelRef.current?.focus());
     return () => document.removeEventListener("mousedown", onDown);
   }, [toolsOpen]);
 
@@ -213,8 +219,15 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
           </button>
           {showMenu && (
             <div
+              ref={menuPanelRef}
+              tabIndex={-1}
               data-tauri-drag-region="false"
-              className="menu-panel absolute left-2 top-full z-50 mt-1 min-w-[220px] rounded-[var(--radius)] border border-border bg-card p-1 shadow-lg"
+              className="menu-panel absolute left-2 top-full z-50 mt-1 min-w-[220px] rounded-[var(--radius)] border border-border bg-card p-1 shadow-lg outline-none"
+              onBlur={(e) => {
+                if (!menuWrapperRef.current?.contains(e.relatedTarget as Node)) {
+                  setShowMenu(false);
+                }
+              }}
             >
               {menuGroups.map((group, gi) => (
                 <div key={gi}>
@@ -286,8 +299,15 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
           </button>
           {toolsOpen && (
             <div
+              ref={toolsPanelRef}
+              tabIndex={-1}
               data-tauri-drag-region="false"
-              className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-[var(--radius)] border border-border bg-card p-1 shadow-lg"
+              className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-[var(--radius)] border border-border bg-card p-1 shadow-lg outline-none"
+              onBlur={(e) => {
+                if (!toolsWrapperRef.current?.contains(e.relatedTarget as Node)) {
+                  setToolsOpen(false);
+                }
+              }}
             >
               <button
                 type="button"
