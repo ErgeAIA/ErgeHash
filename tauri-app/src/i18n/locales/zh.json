@@ -24,6 +24,8 @@
   "stop": "取消",
   "copy_result": "复制结果",
   "algorithms": "算法",
+  "select_all": "全选",
+  "deselect_all": "全不选",
   "quick_tip": "快速提示:\n直接拖放文件到计算器区域",
   "menu_file": "文件(&F)",
   "menu_open": "打开文件(&O)",

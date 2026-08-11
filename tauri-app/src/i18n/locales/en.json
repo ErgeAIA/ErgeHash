@@ -24,6 +24,8 @@
   "stop": "Stop",
   "copy_result": "Copy Result",
   "algorithms": "Algorithms",
+  "select_all": "All",
+  "deselect_all": "None",
   "quick_tip": "Quick Tip:\nDrag and drop files directly into the calculator area",
   "menu_file": "File(&F)",
   "menu_open": "Open File(&O)",
