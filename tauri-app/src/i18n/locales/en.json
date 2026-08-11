@@ -52,7 +52,7 @@
   "hash_algorithms": "Hash Algorithms",
   "supported_algorithms": "Supported Algorithms",
   "about_title": "About",
-  "about_text": "HashValidatorPlus v0.1.0\n\nSupported Algorithms:\nSHA-256, MD5, SHA-1, SHA-512",
+  "about_text": "ErgeHash v0.1.0\nErge's file hash validator\n\nSupported Algorithms:\nSHA-256, MD5, SHA-1, SHA-512",
   "success": "Success",
   "warning": "Warning",
   "error": "Error",

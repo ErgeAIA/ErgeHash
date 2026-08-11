@@ -54,7 +54,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
         <Hash className="h-5 w-5 shrink-0 text-primary" />
         {!collapsed && (
           <span className="truncate text-[15px] font-semibold text-foreground">
-            HashValidatorPlus
+            ErgeHash
           </span>
         )}
       </div>

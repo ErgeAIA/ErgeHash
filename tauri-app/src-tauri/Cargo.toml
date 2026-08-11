@@ -1,8 +1,8 @@
 [package]
-name = "hash-validator-plus"
+name = "erge-hash"
 version = "0.3.0"
-description = "文件哈希校验工具"
-authors = ["HashValidatorPlus"]
+description = "二哥的文件哈希检验工具"
+authors = ["B站🔥宝藏二哥AIA"]
 edition = "2021"
 
 [package.metadata.tauri]
@@ -15,7 +15,7 @@ strip = true
 panic = "abort"
 
 [lib]
-name = "hash_validator_plus_lib"
+name = "erge_hash_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

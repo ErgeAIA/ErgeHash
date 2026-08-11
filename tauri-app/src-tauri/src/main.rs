@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    hash_validator_plus_lib::run()
+    erge_hash_lib::run()
 }

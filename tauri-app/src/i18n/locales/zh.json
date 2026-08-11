@@ -52,7 +52,7 @@
   "hash_algorithms": "哈希算法",
   "supported_algorithms": "支持的算法",
   "about_title": "关于",
-  "about_text": "HashValidatorPlus v0.1.0\n\n支持的算法:\nSHA-256, MD5, SHA-1, SHA-512",
+  "about_text": "二哈 (ErgeHash) v0.1.0\n二哥的文件哈希检验工具\n\n支持的算法:\nSHA-256, MD5, SHA-1, SHA-512",
   "success": "成功",
   "warning": "警告",
   "error": "错误",

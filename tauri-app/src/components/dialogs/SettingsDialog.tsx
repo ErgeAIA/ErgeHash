@@ -133,7 +133,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               {t("about_title")}
             </h3>
             <div className="rounded-[var(--radius)] border border-border px-4 py-3 space-y-2">
-              <p className="text-sm font-medium">HashValidatorPlus v0.3.0</p>
+              <p className="text-sm font-medium">ErgeHash v0.3.0</p>
               <div className="flex items-center gap-4">
                 <button
                   className="flex items-center gap-1 text-xs text-primary hover:underline"
