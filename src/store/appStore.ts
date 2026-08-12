@@ -7,6 +7,7 @@ import type {
   HashResult,
 } from "../services/types";
 import { setConfig, startBatchValidation, getFileSizes } from "../services/api";
+import { normalizeExpectedHash } from "@/lib/hash";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { useToastStore } from "./toastStore";
 import i18n from "@/i18n";
@@ -300,59 +301,36 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       if (!expected) return;
 
-      const expectedLines = expected
+      // 集合匹配：把预期哈希看作一组可信指纹（规范化后去空格、小写），
+      // 每个文件只要任一计算结果命中集合即判为 match，不再强求行序对应。
+      const expectedLines = normalizeExpectedHash(expected)
         .split("\n")
-        .map((l) => l.trim())
+        .map((l) => l.toLowerCase().replace(/\s/g, ""))
         .filter((l) => l.length > 0);
+      const expectedSet = new Set(expectedLines);
+      const hasInvalid = expectedLines.some((l) => !/^[0-9a-f]+$/i.test(l));
+
       const computedResults = allResults.filter((r) => r.hashValue);
 
       let compText = `\n${t("comparison_results")}\n\n`;
       let matchCount = 0;
       let mismatchCount = 0;
 
-      if (expectedLines.length === 1) {
-        const expectedClean = expectedLines[0].toLowerCase().replace(/\s/g, "");
-        if (!/^[0-9a-f]+$/i.test(expectedClean)) {
-          set((s) => ({ resultText: s.resultText + `\n⚠ ${t("invalid_hash_format")}\n` }));
-          return;
+      for (const r of computedResults) {
+        const fileName = r.filePath.split(/[/\\]/).pop() ?? r.filePath;
+        const isMatch = expectedSet.has(r.hashValue.toLowerCase());
+        get().updateFileResult({ ...r, status: isMatch ? "success" : "mismatch" });
+        if (isMatch) {
+          compText += `✓ ${fileName} ${t("match")}\n`;
+          matchCount++;
+        } else {
+          compText += `✗ ${fileName} ${t("mismatch")}\n`;
+          mismatchCount++;
         }
-        for (const r of computedResults) {
-          const fileName = r.filePath.split(/[/\\]/).pop() ?? r.filePath;
-          const isMatch = r.hashValue.toLowerCase() === expectedClean;
-          get().updateFileResult({ ...r, status: isMatch ? "success" : "mismatch" });
-          if (isMatch) {
-            compText += `✓ ${fileName} ${t("match")}\n`;
-            matchCount++;
-          } else {
-            compText += `✗ ${fileName} ${t("mismatch")}\n`;
-            mismatchCount++;
-          }
-        }
-      } else {
-        if (expectedLines.length !== computedResults.length) {
-          set((s) => ({ resultText: s.resultText + `\n⚠ ${t("lines_mismatch")}\n` }));
-          return;
-        }
-        for (let i = 0; i < expectedLines.length; i++) {
-          const expectedClean = expectedLines[i].toLowerCase().replace(/\s/g, "");
-          const r = computedResults[i];
-          const fileName = r.filePath.split(/[/\\]/).pop() ?? r.filePath;
-          if (!/^[0-9a-f]+$/i.test(expectedClean)) {
-            compText += `${i + 1}. ✗ ${t("format_error")}\n`;
-            mismatchCount++;
-            get().updateFileResult({ ...r, status: "mismatch" });
-            continue;
-          }
-          const isMatch = r.hashValue.toLowerCase() === expectedClean;
-          get().updateFileResult({ ...r, status: isMatch ? "success" : "mismatch" });
-          if (isMatch) {
-            compText += `${i + 1}. ✓ ${fileName} ${t("match")}\n`;
-            matchCount++;
-          } else {
-            compText += `${i + 1}. ✗ ${fileName} ${t("mismatch")}\n`;
-            mismatchCount++;
-          }
-        }
+      }
+
+      if (hasInvalid) {
+        compText += `\n⚠ ${t("invalid_hash_format")}\n`;
       }
 
       compText += `\n---\n${t("total_summary")}: ${computedResults.length} | ${t("match")}: ${matchCount} | ${t("mismatch")}: ${mismatchCount}\n`;

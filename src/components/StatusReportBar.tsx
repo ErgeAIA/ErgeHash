@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "@/store/appStore";
 import { cn } from "@/lib/utils";
-import { detectHashAlgorithm, ALGO_DISPLAY_NAME } from "@/lib/hash";
+import { detectHashAlgorithms, ALGO_DISPLAY_NAME } from "@/lib/hash";
 import { buildFileGroups } from "@/lib/fileGroups";
 import type { FileItemStatus } from "@/services/types";
 
@@ -18,8 +18,8 @@ export function StatusReportBar({ className }: { className?: string }) {
   const fileList = useAppStore((s) => s.fileList);
   const expectedHash = useAppStore((s) => s.expectedHash);
 
-  const detectedAlgo = useMemo(
-    () => detectHashAlgorithm(expectedHash),
+  const detectedAlgos = useMemo(
+    () => detectHashAlgorithms(expectedHash),
     [expectedHash],
   );
 
@@ -50,7 +50,7 @@ export function StatusReportBar({ className }: { className?: string }) {
 
   const hasStatusChips = statusChips.some((s) => s.count > 0);
   const hasComparison = verifiedCount > 0;
-  const hasContent = detectedAlgo || hasComparison || hasStatusChips;
+  const hasContent = detectedAlgos.length > 0 || hasComparison || hasStatusChips;
 
   const comparisonTitle = useMemo(() => {
     const parts: string[] = [];
@@ -73,11 +73,11 @@ export function StatusReportBar({ className }: { className?: string }) {
       {hasContent && (
         <>
           <div className="flex items-center gap-2">
-            {detectedAlgo ? (
+            {detectedAlgos.length > 0 ? (
               <span className="text-muted-foreground">
                 {t("auto_detected")}: {" "}
                 <span className="font-medium text-primary">
-                  {ALGO_DISPLAY_NAME[detectedAlgo]}
+                  {detectedAlgos.map((a) => ALGO_DISPLAY_NAME[a]).join(", ")}
                 </span>
               </span>
             ) : null}

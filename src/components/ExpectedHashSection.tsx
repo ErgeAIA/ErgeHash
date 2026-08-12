@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { detectHashAlgorithm } from "@/lib/hash";
+import { normalizeExpectedHash, detectHashAlgorithms } from "@/lib/hash";
 
 /** 预期哈希值输入区块（二区）：输入哈希值并按长度自动推断算法 */
 export function ExpectedHashSection({ className }: { className?: string }) {
@@ -16,19 +16,27 @@ export function ExpectedHashSection({ className }: { className?: string }) {
   /* 输入框聚焦状态 */
   const [hashFocused, setHashFocused] = useState(false);
 
-  /** 预期哈希值变更：同步到 store 并按长度推断算法 */
+  /** 预期哈希值变更：仅同步原始值到 store，不在输入过程中改算法选择 */
   const handleExpectedHashChange = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => {
-      const value = e.target.value;
-      setExpectedHash(value);
-
-      const algo = detectHashAlgorithm(value);
-      if (algo) {
-        setSelectedAlgorithms([algo]);
-      }
+      setExpectedHash(e.target.value);
     },
-    [setExpectedHash, setSelectedAlgorithms],
+    [setExpectedHash],
   );
+
+  /** 失焦：规范化（分隔符分行、去空白行）并据内容自动选择算法 */
+  const handleExpectedHashBlur = useCallback(() => {
+    setHashFocused(false);
+    const normalized = normalizeExpectedHash(expectedHash);
+    if (normalized !== expectedHash) {
+      setExpectedHash(normalized);
+    }
+    const algos = detectHashAlgorithms(normalized);
+    // 仅当识别到新算法集合时同步算法选择；空输入保留用户上次选择
+    if (algos.length > 0) {
+      setSelectedAlgorithms(algos);
+    }
+  }, [expectedHash, setExpectedHash, setSelectedAlgorithms]);
 
   return (
     <section className={cn("flex min-h-0 flex-col gap-2", className)}>
@@ -38,7 +46,7 @@ export function ExpectedHashSection({ className }: { className?: string }) {
           value={expectedHash}
           onChange={handleExpectedHashChange}
           onFocus={() => setHashFocused(true)}
-          onBlur={() => setHashFocused(false)}
+          onBlur={handleExpectedHashBlur}
           placeholder=""
           className="h-[144px] resize-none pr-8 border-primary transition-colors hover:border-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
         />
