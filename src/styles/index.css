@@ -395,3 +395,149 @@ body {
 .nav-group-children--expanded {
   max-height: 500px;
 }
+
+/* ============ 动效体系（2026-08-12，框架原生 CSS，无第三方动画库）============
+   依赖 WebView2 Chromium 111+：@property 驱动 conic-gradient 角度插值。 */
+
+/* 跑马灯边框的动画角度（可插值自定义属性） */
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* 主卡 hover：上浮 + 阴影 + 边框提亮 + 品牌色跑马灯边框（仅 FileList/ResultSection 主卡） */
+.main-card {
+  transition:
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+.main-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px -10px color-mix(in srgb, var(--primary) 30%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+}
+.main-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--angle),
+    transparent 0deg,
+    var(--primary) 90deg,
+    transparent 180deg,
+    var(--primary) 270deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.main-card:hover::before {
+  opacity: 1;
+  animation: borderSpin 2.6s linear infinite;
+}
+@keyframes borderSpin {
+  to {
+    --angle: 360deg;
+  }
+}
+/* 拖拽态（虚线高亮）下禁用上浮与跑马灯，避免视觉叠加混乱 */
+.main-card--dragging:hover {
+  transform: none;
+  box-shadow: none;
+}
+.main-card--dragging:hover::before {
+  opacity: 0;
+}
+
+/* 主 CTA 呼吸（开始校验圆钮） */
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--primary) 0%, transparent);
+  }
+}
+.animate-breathe {
+  animation: breathe 2.6s ease-in-out infinite;
+}
+
+/* 列表错落入场（仅首次：React ref 控制在首次挂载时添加一次 class） */
+@keyframes itemFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.list-item-enter {
+  animation: itemFadeIn 0.3s ease both;
+}
+
+/* NavRail 选中指示条滑入 */
+@keyframes navBarIn {
+  from {
+    transform: translateY(-50%) scaleY(0);
+  }
+  to {
+    transform: translateY(-50%) scaleY(1);
+  }
+}
+.nav-active-indicator::before {
+  animation: navBarIn 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 圆图标按钮 hover 时图标微转 */
+.btn-icon-rotate svg {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.btn-icon-rotate:not(:disabled):hover svg {
+  transform: rotate(-8deg);
+}
+
+/* 全局按压反馈：按钮按下微缩（switch 开关与顶栏窗口控制除外） */
+button:not(:disabled):not([role="switch"]):active {
+  scale: 0.97;
+}
+.titlebar-no-press button:active {
+  scale: 1;
+}
+
+/* 全局键盘焦点环 */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+/* 动画总开关：设置页一键关闭所有动画 */
+.animations-off *,
+.animations-off *::before,
+.animations-off *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* 系统减弱动态偏好兜底 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
