@@ -6,15 +6,7 @@ import {
   Square,
   Maximize2,
   X,
-  FilePlus,
-  FolderOpen,
-  FileDown,
-  FileCheck2,
-  Copy,
   History,
-  Trash2,
-  BookOpen,
-  LogOut,
   PanelLeftClose,
   PanelRightOpen,
   Sun,
@@ -135,7 +127,6 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
     items: {
       id: string;
       label: string;
-      icon: React.ReactNode;
       shortcut?: string;
       onClick: () => unknown;
     }[];
@@ -143,30 +134,30 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
     {
       title: t("menu_file"),
       items: [
-        { id: "open_file", label: t("menu_open"), icon: <FilePlus size={14} />, shortcut: "Ctrl+O", onClick: openFile },
-        { id: "batch_process", label: t("menu_batch"), icon: <FolderOpen size={14} />, shortcut: "Ctrl+B", onClick: openFolder },
-        { id: "import_verify", label: t("menu_import_verify"), icon: <FileCheck2 size={14} />, onClick: () => window.dispatchEvent(new CustomEvent("import-verification")) },
+        { id: "open_file", label: t("menu_open"), shortcut: "Ctrl+O", onClick: openFile },
+        { id: "batch_process", label: t("menu_batch"), shortcut: "Ctrl+B", onClick: openFolder },
+        { id: "import_verify", label: t("menu_import_verify"), onClick: () => window.dispatchEvent(new CustomEvent("import-verification")) },
       ],
     },
     {
       title: t("menu_edit"),
       items: [
-        { id: "copy_hash", label: t("menu_copy"), icon: <Copy size={14} />, onClick: copyHash },
-        { id: "export_results", label: t("menu_export"), icon: <FileDown size={14} />, onClick: () => window.dispatchEvent(new CustomEvent("export-results")) },
-        { id: "clear_history", label: t("menu_clear_history"), icon: <Trash2 size={14} />, onClick: () => window.dispatchEvent(new CustomEvent("clear-history")) },
+        { id: "copy_hash", label: t("menu_copy"), onClick: copyHash },
+        { id: "export_results", label: t("menu_export"), onClick: () => window.dispatchEvent(new CustomEvent("export-results")) },
+        { id: "clear_history", label: t("menu_clear_history"), onClick: () => window.dispatchEvent(new CustomEvent("clear-history")) },
       ],
     },
     {
       title: t("menu_appearance"),
       items: [
-        { id: "toggle_theme", label: theme === "light" ? t("dark_mode") : t("light_mode"), icon: theme === "light" ? <Moon size={14} /> : <Sun size={14} />, onClick: toggleTheme },
-        { id: "toggle_language", label: t("language"), icon: <Globe size={14} />, onClick: toggleLanguage },
+        { id: "toggle_theme", label: theme === "light" ? t("dark_mode") : t("light_mode"), onClick: toggleTheme },
+        { id: "toggle_language", label: t("language"), onClick: toggleLanguage },
       ],
     },
     {
       items: [
-        { id: "guide", label: t("menu_guide"), icon: <BookOpen size={14} />, onClick: () => window.dispatchEvent(new CustomEvent("show-quick-guide")) },
-        { id: "quit", label: t("menu_exit"), icon: <LogOut size={14} />, shortcut: "Ctrl+Q", onClick: () => getCurrentWindow().close() },
+        { id: "guide", label: t("menu_guide"), onClick: () => window.dispatchEvent(new CustomEvent("show-quick-guide")) },
+        { id: "quit", label: t("menu_exit"), shortcut: "Ctrl+Q", onClick: () => getCurrentWindow().close() },
       ],
     },
   ];
@@ -211,10 +202,9 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
                       key={item.id}
                       type="button"
                       onClick={() => void runAction(item.onClick)}
-                      className="flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:text-primary"
+                      className="flex w-full items-center justify-between rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:text-primary"
                     >
-                      {item.icon}
-                      <span className="flex-1">{item.label}</span>
+                      <span>{item.label}</span>
                       {item.shortcut && (
                         <span className="ml-6 text-xs text-muted-foreground/70">
                           {item.shortcut}
