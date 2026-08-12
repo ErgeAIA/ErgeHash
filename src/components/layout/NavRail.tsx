@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { Hash, CheckCheck, ListX, FileDown, NotepadText } from "lucide-react";
+import { Hash, CheckCheck, ListX, FileDown, NotepadText, Settings, LogOut } from "lucide-react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useAppStore } from "@/store/appStore";
 import { cn } from "@/lib/utils";
 import { openNotepad } from "@/services/api";
@@ -21,9 +22,8 @@ interface NavRailProps {
   onToggleCollapsed: () => void;
 }
 
-/** 左侧导航栏：仅保留 LOGO + 算法选择模块。
- *  历史/工具/主题/语言/设置/退出等入口统一收纳到 ☰ 菜单，
- *  其中历史/工具/主题/语言另在顶栏紧凑按钮组提供快捷访问。 */
+/** 左侧导航栏：LOGO + 算法选择 + 工具组 + 底部设置/退出。
+ *  历史/主题/语言在顶栏提供快捷访问，导出保留在工具组。 */
 export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
   const { t } = useTranslation();
   const theme = useAppStore((s) => s.theme);
@@ -190,6 +190,49 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
           )}
         </div>
       </nav>
+
+      {/* 底部：设置 / 退出（展开/折叠均显示图标） */}
+      <div className="shrink-0 px-2 pb-2 pt-1">
+        {collapsed ? (
+          <div className="flex flex-col items-center gap-0.5">
+            <button
+              type="button"
+              title={t("settings_title")}
+              onClick={() => window.dispatchEvent(new CustomEvent("show-settings"))}
+              className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-primary"
+            >
+              <Settings className="h-[18px] w-[18px]" />
+            </button>
+            <button
+              type="button"
+              title={t("menu_exit")}
+              onClick={() => getCurrentWindow().close()}
+              className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-destructive"
+            >
+              <LogOut className="h-[18px] w-[18px]" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-0.5">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent("show-settings"))}
+              className="relative flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-[15px] font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              <Settings className="h-[18px] w-[18px] shrink-0 opacity-70" />
+              <span>{t("settings_title")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => getCurrentWindow().close()}
+              className="relative flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-[15px] font-medium text-muted-foreground transition-colors hover:text-destructive"
+            >
+              <LogOut className="h-[18px] w-[18px] shrink-0 opacity-70" />
+              <span>{t("menu_exit")}</span>
+            </button>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }
