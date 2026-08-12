@@ -86,3 +86,46 @@
   1. 在自定义变量体系里引入**任意新的 `*-primary` / `*-ring` / `border-*` / `*-warning` / `*-destructive` 等 utility 前，先确认 `index.css` 是否已有对应显式映射**，没有就先补映射再写 className。已显式定义的映射见 `index.css`：`.bg-primary`、`.bg-primary-alpha`、`.text-primary`、`.text-destructive`、`.text-warning`、`.border-primary`、`.ring-ring`、`.ring-primary`、`.bg-sidebar` 等。
   2. **视觉改动不能只靠 `pnpm run build` 验证**——构建通过只说明编译无误，不代表 Tailwind 生成了对应规则。必须用户实测截图确认样式真实生效。
   3. 同理，Tailwind 的 opacity 修饰符（`bg-primary/10`、`border-primary/80`）在自定义变量下也失效，需用 `color-mix` 定义 `--xxx-alpha` + 显式类替代。
+
+---
+
+## 经验提炼（跨项目可复用，已蒸馏进 docs/design-system.md）
+
+> 从以上 bug 与设计决策中沉淀的**实现约束**。详细规范见 `docs/design-system.md` 的「二之一 / 二之二 / 三.10」与交互约束条款。
+
+### E1. Tailwind v4 + 自定义 CSS 变量体系：颜色/边框/ring 工具类不会自动解析
+- 项目只有 `--primary`/`--ring`/`--border` 等语义变量，**没有 `--color-*` 映射**。直接写 `border-primary`/`ring-primary`/`text-primary` 等于无此规则，元素回退默认样式（如黑边框），**构建不报错但视觉不生效**。
+- 规则：新增任意 `*-primary`/`*-ring`/`border-*`/`ring-*`/opacity 修饰符（`/N`）前，先查 `index.css` 是否已有显式映射；没有先补再写。opacity 修饰符需改用 `color-mix` 定义 `--xxx-alpha` + 显式类。
+- 来源：BUG-006 + 此前 NavRail `text-primary`/`bg-primary/10` 失效。
+- 规范落点：`design-system.md` §二之一。
+
+### E2. 构建通过 ≠ 样式生效
+- `pnpm run build` 仅验证编译；Tailwind 未生成对应规则时静默通过。所有视觉改动必须**用户实测截图确认**。
+- 来源：BUG-006 教训 2。
+- 规范落点：`design-system.md` §二之一（告警行）。
+
+### E3. Tauri 2 capabilities 是白名单制，权限缺失会静默失效
+- `data-tauri-drag-region` 与 `window.minimize()/close()/setSize()`、`onDragDropEvent` 等均需 `capabilities/default.json` 显式授权；缺失时**不报错但无效**，难定位。
+- 自绘标题栏（`decorations:false`）必须配置 `core:window:allow-start-dragging` / `allow-minimize` / `allow-toggle-maximize` / `allow-is-maximized` / `allow-close` / `allow-set-size` / `allow-set-position` / `allow-show`；`core:default` 已含 drag-drop 权限。
+- 来源：BUG-005b。
+- 规范落点：`design-system.md` §二之二。
+
+### E4. Tauri 2 拖放：Rust 层接管，全局 preventDefault 会与拖放竞态
+- 拖放数据唯一来源是 `getCurrentWebview().onDragDropEvent(payload.paths)`；前端注册后 Rust 侧 `WindowEvent::DragDrop` 不再派发（单消费者）。
+- 不要在 `window` 上对 `drop`/`dragover` 全局 `preventDefault`（仅阻止非文件拖放被浏览器打开即可），否则干扰 HTML5 拖拽高亮并制造竞态。
+- 来源：BUG-005。
+- 规范落点：`design-system.md` 交互约束条款 8（已存在）。
+
+### E5. 可视化组件不要内联手写，统一用 components/ui 抽象
+- 开关（Switch）、按钮（Button）、对话框（Dialog）等有状态/主题联动的组件，必须抽成 `src/components/ui/*` 复用，禁止在业务组件里重复手写（如手写 switch 易出现圆点位置错位、深色主题圆点缺对比等问题）。
+- Switch 范式：开启背景 `bg-primary`、关闭 `bg-muted`；圆点浅色 `bg-white`/深色 `dark:bg-black`，开启居右用 `translate-x-[calc(100%+3px)]`（不用固定 `translate-x-4`）。
+- 来源：2026-08-12 设置页开关样式修复。
+- 规范落点：`design-system.md` §三.10。
+
+### E6. 设计细节方向可由实现方主张，不改写既有约定
+- 布局/按钮方向等细节在合理范围内可直接主张（如 FAB 竖排优于横排、NavRail 底部徽章展开横排/折叠竖排），不必逐条请示；仅关键歧义或高风险（删文件、改密钥、改 DB schema、push force 等）才先反问确认。
+- 来源：工作协议 + 多轮菜单/NavRail 决策。
+
+### E7. 重大视觉重构先看 git 历史与原组件，不要无脑覆盖
+- 顶栏"不见了"曾误判为新增 TitleBar 问题，实际指向历史 `Header.tsx`；视觉问题优先 `git log` + `git show <commit>:path` 反推，而非在当前错误基础上改。
+- 来源：已知坑（写入 MEMORY.md）。

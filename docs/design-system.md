@@ -44,6 +44,24 @@
 >
 > 所有中性色、主色（accent）、状态色均取自上述两套主题的 `palette.md` 对应角色（`--accent`→`--primary`、`--bg`/`--text`/状态 fill 等）。`#005`/`#003` 是 ThemeVault 的**主题编号**，非颜色 hex。后续改动须以 ThemeVault 对应 `palette.md` 为准，不得沿用旧值（如旧 `--primary:#4CAF50`）。
 
+## 二之一、Tailwind v4 自定义变量体系约束（易错，必读）
+
+项目用 Tailwind v4，但**只有语义 CSS 变量（如 `--primary`/`--ring`/`--border`/`--muted-foreground`），没有 `--color-*` 主题映射**。在此体系下，任意颜色/边框/ring 工具类**不会自动解析为对应变量**。
+
+- ❌ 失效写法（写上去等于没这条规则，无报错但样式不生效）：`border-primary`、`ring-primary`、`text-primary`、`bg-primary/10`、`border-primary/80`、`bg-muted/30`、`text-foreground/70`。
+- ✅ 正确写法：颜色工具类**必须引用 `index.css` 中已显式定义的映射类**（见文件末尾工具类区）：
+  - 已定义的映射：`.bg-primary`、`.bg-primary-alpha`、`.text-primary`、`.text-destructive`、`.text-warning`、`.bg-secondary`、`.border-primary`、`.ring-ring`、`.ring-primary`、`.bg-sidebar`/`.bg-panel`/`.bg-card`/`.bg-muted`/`.text-muted-foreground`/`.border-border`/`.bg-scrim`/`.text-success`/`.bg-success` 等。
+  - **新增任意 `*-primary` / `*-ring` / `*-warning` / `*-destructive` / `*-group-N` / `border-*` / `ring-*` 工具类前，先确认 `index.css` 是否已有对应显式映射，没有就先补映射再写 className。**
+- ❌ opacity 修饰符（`/N`）在自定义变量上整体失效：需用 `color-mix` 定义 `--xxx-alpha` 并配套显式工具类（如 `--primary-alpha` + `.bg-primary-alpha`、`.bg-muted/30` 这类需改为 `color-mix` 变量或已定义的 `.bg-guide` 之类）。
+- ⚠️ **构建通过 ≠ 样式生效**：`pnpm run build` 只验证编译，Tailwind 没有生成对应规则时不会报错，问题会延迟到用户实测截图才暴露。所有视觉改动必须用户实测截图确认。
+
+## 二之二、Tauri 2 capabilities 权限白名单约束
+
+Tauri 2 的权限模型是**白名单制**：HTML 属性（`data-tauri-drag-region`）和 JS API（`window.minimize()`/`close()`/`setSize()`、`webview.startDragging()`、`onDragDropEvent` 等）都依赖 `capabilities/default.json` 显式授权。**缺失权限时调用被静默忽略、不报错**，极难定位。
+
+- 自绘标题栏（`decorations:false`）必须配置：`core:window:allow-start-dragging`、`allow-minimize`、`allow-toggle-maximize`、`allow-is-maximized`、`allow-close`、`allow-set-size`、`allow-set-position`、`allow-show`；`core:default` 已含 `core:webview:allow-on-drag-drop-event`。
+- 新增窗口操作 / IPC 命令前，同步核对 capabilities，避免属性或 API「看起来没事但实际不生效」。
+
 ### 暗色（默认，对齐 #003 / opensquilla dark）
 
 | Token | 值 | 用途 |
@@ -272,6 +290,15 @@ MainLayout (h-screen w-screen, flex-col, overflow-hidden)
    - **焦点环**：全局 `:focus-visible` 用 `var(--ring)` outline 2px。
 10. **无障碍/可见性**：暗色侧栏文字必须用浅色工具类；图标按钮必须带 `title`/`aria-label`；动效遵守 `prefers-reduced-motion`。
 
+### 3.10 可视化组件范式（可复用）
+
+- **胶囊开关（Switch）**：统一用 `src/components/ui/switch.tsx`，**禁止在业务组件内联手写 switch**。要点：
+  - 胶囊背景：开启 `bg-primary`（随亮/暗主题切换品牌色），关闭 `bg-muted`。
+  - 圆点：浅色主题白点 `bg-white`、深色主题黑点 `dark:bg-black`；开启时圆点居右，用 `translate-x-[calc(100%+3px)]`（基于圆点自身宽度定位，**不要**用固定 `translate-x-4`，否则容器宽度变化时圆点错位）。
+  - 背景色与圆点均带 `200ms ease-in-out` 过渡。
+- **通用按钮 / 图标徽章**：统一用 `src/components/ui/button.tsx`；图标徽章用 `h-9 w-9` 方形 + `hover:bg-muted/40` 微底色；文案走 i18n，纯图标必须带 `title`/`aria-label`。
+- **对话框**：统一用 `components/ui/dialog.tsx` 的 `Dialog`/`DialogContent` 等。
+
 ---
 
 ## 六、复现清单（新项目速查）
@@ -279,9 +306,10 @@ MainLayout (h-screen w-screen, flex-col, overflow-hidden)
 1. 配置 `tauri.conf.json`：`decorations:false`、`visible:false`、`dragDropEnabled:true`。
 2. 建立 CSS 变量（亮/暗两套），组件只引用变量。
 3. 搭建 `MainLayout`（纵向）→ `TitleBar` + 下方横向 `NavRail | 内容区`。
-4. 顶栏：`☰` + 折叠 + 拖拽区 + `− □ ✕`；按钮内联浅色文字。
-5. 侧栏：LOGO / 算法 / 一级项 / 可折叠分组 / 底部设置退出；与顶栏同色无分隔。
+4. 顶栏：`☰` + 折叠 + 拖拽区 + 历史/主题/语言 + `− □ ✕`；按钮内联浅色文字。
+5. 侧栏：LOGO（主题感知 SVG）/ 算法组 / 工具组（记事本+导出）/ 底部设置+退出版权图标徽章；与顶栏同色无分隔。
 6. 内容区：`m-2 rounded-2xl bg-panel`，比 L 形区更深。
 7. FAB：`absolute bottom-4 right-20` 浮动、竖排、空态半透明灰显。
-8. 主题/语言/折叠/几何均持久化；文案全 i18n。
+8. 主题/语言/折叠/几何/动画开关均持久化；文案全 i18n。
 9. 动效只用语义化 CSS 过渡，不引重型动画库。
+10. 开关/按钮/对话框统一用 `components/ui/` 下组件，不在业务组件内联手写。
