@@ -18,6 +18,7 @@ import { useAppStore } from "@/store/appStore";
 import { useToastStore } from "@/store/toastStore";
 import { openFileDialog, openFolderDialog, scanDirectory } from "@/services/api";
 import { cn } from "@/lib/utils";
+import { SHORTCUT_BINDINGS, formatShortcut, type CommandId } from "@/lib/shortcuts";
 
 /** 自绘顶栏：横跨整个窗口顶部，与左侧 NavRail 同色一体
  *
@@ -121,21 +122,20 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
     else addToast("error", t("clipboard_error"));
   };
 
-  /* 菜单分组定义 */
+  /* 菜单分组定义（快捷键显示由 SHORTCUT_BINDINGS 统一派生，避免显示与绑定不一致） */
   const menuGroups: {
     title?: string;
     items: {
-      id: string;
+      id: CommandId;
       label: string;
-      shortcut?: string;
       onClick: () => unknown;
     }[];
   }[] = [
     {
       title: t("menu_file"),
       items: [
-        { id: "open_file", label: t("menu_open"), shortcut: "Ctrl+O", onClick: openFile },
-        { id: "batch_process", label: t("menu_batch"), shortcut: "Ctrl+B", onClick: openFolder },
+        { id: "open_file", label: t("menu_open"), onClick: openFile },
+        { id: "batch_process", label: t("menu_batch"), onClick: openFolder },
         { id: "import_verify", label: t("menu_import_verify"), onClick: () => window.dispatchEvent(new CustomEvent("import-verification")) },
       ],
     },
@@ -157,7 +157,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
     {
       items: [
         { id: "guide", label: t("menu_guide"), onClick: () => window.dispatchEvent(new CustomEvent("show-quick-guide")) },
-        { id: "quit", label: t("menu_exit"), shortcut: "Ctrl+Q", onClick: () => getCurrentWindow().close() },
+        { id: "quit", label: t("menu_exit"), onClick: () => getCurrentWindow().close() },
       ],
     },
   ];
@@ -203,21 +203,26 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
                       {group.title}
                     </div>
                   )}
-                  {group.items.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => void runAction(item.onClick)}
-                      className="flex w-full items-center justify-between rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:text-primary"
-                    >
-                      <span>{item.label}</span>
-                      {item.shortcut && (
-                        <span className="ml-6 text-xs text-muted-foreground/70">
-                          {item.shortcut}
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                  {group.items.map((item) => {
+                    const shortcut = SHORTCUT_BINDINGS[item.id]
+                      ? formatShortcut(SHORTCUT_BINDINGS[item.id])
+                      : null;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => void runAction(item.onClick)}
+                        className="flex w-full items-center justify-between rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:text-primary"
+                      >
+                        <span>{item.label}</span>
+                        {shortcut && (
+                          <span className="ml-6 text-xs text-muted-foreground/70">
+                            {shortcut}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               ))}
             </div>

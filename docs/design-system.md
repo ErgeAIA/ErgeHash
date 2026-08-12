@@ -154,15 +154,23 @@ Tauri 2 的权限模型是**白名单制**：HTML 属性（`data-tauri-drag-regi
 
 **视觉约束（2026-08-12 确认）**：
 
-- **菜单项保持极简**：左侧**不出现图标徽章**；i18n 文案中**不出现 `(&F)` / `(&O)` 等助记符前缀**；仅右侧保留 `Ctrl+O` / `Ctrl+B` / `Ctrl+Q` 等快捷键提示。
+- **菜单项保持极简**：左侧**不出现图标徽章**；i18n 文案中**不出现 `(&F)` / `(&O)` 等助记符前缀**；仅右侧保留快捷键提示。
 - **分组间短分隔线**：相邻分组之间用 `mx-3 my-1 h-px` 的短分隔线（背景 `var(--border)`），**不贯穿整行**；分组标题本身无 `border-t`。
 - 分组标题使用 `text-muted-foreground` 小字，项标签 `text-muted-foreground`，hover 仅 `text-primary`。
+
+**快捷键体系（2026-08-13 引入，单一数据源）**：
+
+- **数据源**：`src/lib/shortcuts.ts` 的 `SHORTCUT_BINDINGS`（`CommandId → ShortcutCombo`）是「显示文案」与「实际绑定」的唯一来源；`formatShortcut` 生成文案，`matchShortcut` 做键位匹配。**禁止在菜单里硬编码 `shortcut` 字符串**（此前 `batch_process` 显示 `Ctrl+B` 而实际绑定折叠侧栏，即为该反例）。
+- **覆盖命令**：打开文件 `Ctrl+O`、添加文件夹 `Ctrl+Shift+O`、导入验证 `Ctrl+I`、复制结果 `Ctrl+Alt+C`、导出 `Ctrl+E`、历史 `Ctrl+H`、清空历史 `Ctrl+Alt+H`、主题 `Ctrl+Alt+T`、语言 `Ctrl+Alt+L`、快速指南 `Ctrl+/`、折叠侧栏 `Ctrl+B`、设置 `Ctrl+,`、开始校验 `Ctrl+Enter`、清空列表 `Ctrl+Shift+Backspace`、退出 `Ctrl+Q`。
+- **冲突规避**：禁用 `Ctrl+R/L/T/N/W/P/S` 与 `F5/F11/F12`（系统/浏览器高危键）；`Ctrl+H` 历史与 `Ctrl+Alt+H` 清空历史通过 `preventDefault` 兜底；复制用 `Ctrl+Alt+C` 避开 `Ctrl+C` 系统复制；清空历史避开 `Ctrl+Shift+Delete`（清除数据对话框）。
+- **输入豁免**：`useKeyboardShortcuts` 在 `INPUT`/`TEXTAREA`/可编辑元素聚焦时不拦截，避免干扰预期哈希框输入。
+- **扩展结构**：新增功能只需在 `SHORTCUT_BINDINGS` 注册一项，并在 `useKeyboardShortcuts` 的 `actionMap` 登记执行函数；菜单项 `id` 与 `CommandId` 对齐即自动显示快捷键。
 
 **交互逻辑**：
 
 - 点击 `☰` 切换显隐；面板外点击或 `Esc` 关闭。
 - 菜单项 hover：仅 `text-primary`（对齐 T11 组件规范，不变底色）。
-- 支持快捷键提示（`shortcut` 右对齐显示，如 `Ctrl+O`）。
+- 支持快捷键提示（`shortcut` 右对齐显示，由 `SHORTCUT_BINDINGS` 派生）。
 - 入场动画：`menuIn` 150ms 淡入下移（不依赖 framer-motion）。
 - 菜单动作通过 `window.dispatchEvent(new CustomEvent(...))` 解耦，由 `App.tsx` 统一监听打开对应对话框/执行动作。
 
