@@ -207,9 +207,10 @@ Tauri 2 的权限模型是**白名单制**：HTML 属性（`data-tauri-drag-regi
 - **内部结构（纵向，三区块，按视觉重点分配高度）**：
   1. **一区 · 文件列表区**（`FileList`，`flex-[1.2]`）：拖放/文件列表（`rounded-xl border border-border bg-card`）。高度适当减小，仅承载文件清单。
   2. **二区 · 预期哈希输入区**（`ExpectedHashSection`，`shrink-0`）：哈希输入框 + 自动识别算法提示。单独成块（从原 FileList 拆出），高度由内容撑开，不参与 flex 拉伸，避免出现空白的未使用区域。
-     - **输入规范化（2026-08-13 确认）**：`onChange` 只同步原始值、**不**实时改算法选择；`onBlur`（点击框外）才执行：`normalizeExpectedHash` 把 `, | ， 。 ； ;` 及空白统一替换为换行并去空行，再据内容 `detectHashAlgorithms` 自动勾选算法集合；空输入保留用户上次选择。
+     - **输入规范化（2026-08-13 确认）**：`onChange` 只同步原始值、**不**实时改算法选择；`onBlur`（点击框外）才执行：`normalizeExpectedHash` 据内容 `detectHashAlgorithms` 自动勾选算法集合；空输入保留用户上次选择。
+     - **分隔符与空格规则**：语义分隔符仅 `, ， ; ；` 四类（转为换行）；**空格直接清除、不制造新行**（`\s+` 行内清除）；换行仅作自然分隔，连续换行经 `filter` 自然消解不膨胀行数；`|`。`` 不作为分隔符。
      - **比对语义（集合匹配）**：预期哈希视为一组可信指纹；每个文件只要任一计算结果命中集合即判 `match`，不再强求"第 N 行对应第 N 个结果"；含非法 hex 行时结果区附 `⚠ 格式错误` 提示，但不阻断其余比对。
-     - **防静默欺骗**：规范化只切分/去空白行，**不**去除哈希字符内部空格；内部空格由比对阶段按原规则 `toLowerCase().replace(/\s/g,"")` 处理，避免把带空格的串误判为合法 hash。
+     - **防静默欺骗**：规范化只切分/去行内空白，**不**去除哈希字符本身；`detectHashAlgorithm` 仍按"去空白后十六进制 + 长度"判定，带杂质的串若整体不合法则识别失败而非误判。
   3. **三区 · 计算结果区**（`ResultSection`，`flex-[2]`）：过滤器 + 结果列表（`rounded-xl border border-border bg-card`）。**占比最大、视觉重点**，主用于显示结果。
   - 高度分配原则：二区按内容高度；剩余空间按 1.2 : 2 分配给文件列表区和结果区，结果区明显最大。
 - **列表呈现统一**：文件列表区与计算结果区均采用无背景色的 `<ul className="divide-y divide-border">` 列表行，hover 仅用 `bg-muted/30`；状态通过图标 + 文字颜色区分（`text-primary`/`text-destructive`/`text-warning`/`text-muted-foreground`），不再给整行加 `bg-success`/`bg-mismatch`/`bg-error`/`bg-computed` 状态背景色，保持界面清爽统一。

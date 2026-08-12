@@ -31,22 +31,23 @@ export function detectHashAlgorithm(value: string): HashAlgorithm | null {
 }
 
 /**
- * 预期哈希分隔符：逗号/竖线/句号/分号（中英文）及任意空白。
- * 用于把"一段可能混排了多种分隔符的文本"统一拆行。
+ * 预期哈希语义分隔符：仅中英文逗号与分号。
+ * 这四类是用户显式分段意图；空格与换行不作为"新增行"的分隔符，
+ * 空格直接清除、换行仅作自然分隔（多余换行经过滤自然消解）。
  */
-const EXPECTED_HASH_SEPARATORS = /[,，|。；;\s]+/g;
+const EXPECTED_HASH_SEPARATORS = /[,，;；]+/g;
 
 /**
  * 规范化用户输入的预期哈希值：
- * - 所有分隔符/空白统一替换为换行
- * - 逐行 trim 并过滤空行
- * 不修改哈希字符本身（去除内部空格由比对逻辑负责，避免静默欺骗）。
+ * - 语义分隔符（, ， ; ；）统一替换为换行
+ * - 行内所有空白（含空格/回车）直接清除，不制造新行
+ * - 逐行 trim 并过滤空行（连续换行不会留下空行，不膨胀行数）
  */
 export function normalizeExpectedHash(value: string): string {
   return value
     .replace(EXPECTED_HASH_SEPARATORS, "\n")
     .split("\n")
-    .map((l) => l.trim())
+    .map((l) => l.replace(/\s+/g, "").trim())
     .filter((l) => l.length > 0)
     .join("\n");
 }
