@@ -174,7 +174,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
             type="button"
             title={t("menu_file")}
             onClick={() => setShowMenu((v) => !v)}
-            className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
+            className="flex h-full w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
           >
             <Menu size={18} />
           </button>
@@ -228,8 +228,8 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
           type="button"
           title={collapsed ? t("expand_sidebar") : t("collapse_sidebar")}
           onClick={onToggleCollapsed}
-          className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
-        >
+          className="flex h-full w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
+          >
           {collapsed ? <PanelRightOpen size={16} /> : <PanelLeftClose size={16} />}
         </button>
 
@@ -247,8 +247,8 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
           type="button"
           title={t("history")}
           onClick={() => window.dispatchEvent(new CustomEvent("show-history"))}
-          className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
-        >
+          className="flex h-full w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
+          >
           <History size={16} />
         </button>
 
@@ -257,8 +257,8 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
           type="button"
           title={theme === "light" ? t("dark_mode") : t("light_mode")}
           onClick={toggleTheme}
-          className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
-        >
+          className="flex h-full w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
+          >
           {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
         </button>
 
@@ -267,8 +267,8 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
           type="button"
           title={t("language")}
           onClick={toggleLanguage}
-          className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
-        >
+          className="flex h-full w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
+          >
           <Globe size={16} />
         </button>
 
