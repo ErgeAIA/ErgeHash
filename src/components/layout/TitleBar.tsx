@@ -12,7 +12,6 @@ import {
   FileCheck2,
   Copy,
   History,
-  NotepadText,
   Trash2,
   BookOpen,
   LogOut,
@@ -21,18 +20,11 @@ import {
   Sun,
   Moon,
   Globe,
-  Wrench,
-  ChevronDown,
 } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useAppStore } from "@/store/appStore";
 import { useToastStore } from "@/store/toastStore";
-import {
-  openFileDialog,
-  openFolderDialog,
-  scanDirectory,
-  openNotepad,
-} from "@/services/api";
+import { openFileDialog, openFolderDialog, scanDirectory } from "@/services/api";
 import { cn } from "@/lib/utils";
 
 /** 自绘顶栏：横跨整个窗口顶部，与左侧 NavRail 同色一体
@@ -54,10 +46,8 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
   const { t } = useTranslation();
   const [maximized, setMaximized] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [toolsOpen, setToolsOpen] = useState(false);
   const menuWrapperRef = useRef<HTMLDivElement>(null);
   const menuPanelRef = useRef<HTMLDivElement>(null);
-  const toolsPanelRef = useRef<HTMLDivElement>(null);
 
   const addFiles = useAppStore((s) => s.addFiles);
   const copyResult = useAppStore((s) => s.copyResult);
@@ -111,24 +101,6 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
   const handleMinimize = () => getCurrentWindow().minimize();
   const handleToggleMaximize = () => getCurrentWindow().toggleMaximize();
   const handleClose = () => getCurrentWindow().close();
-
-  /* 工具下拉外部点击关闭 */
-  const toolsWrapperRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!toolsOpen) return;
-    const onDown = (e: MouseEvent) => {
-      if (
-        toolsWrapperRef.current &&
-        !toolsWrapperRef.current.contains(e.target as Node)
-      ) {
-        setToolsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    // 工具下拉打开后聚焦面板，使失去焦点时能够自动关闭
-    requestAnimationFrame(() => toolsPanelRef.current?.focus());
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [toolsOpen]);
 
   /** 执行菜单项动作并关闭菜单 */
   const runAction = async (action: () => unknown) => {
@@ -270,7 +242,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
       {/* 中间：窗口拖拽区 */}
       <div className="h-full flex-1" data-tauri-drag-region />
 
-      {/* 右侧：历史 / 工具▾ / 主题 / 语言（仅图标） + 窗口控制 */}
+      {/* 右侧：历史 / 主题 / 语言（仅图标） + 窗口控制 */}
       <div
         className="flex h-full items-center"
         data-tauri-drag-region="false"
@@ -283,44 +255,6 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
         >
           <History size={16} />
         </button>
-
-        {/* 工具下拉：仅记事本（导出入口已移至 ☰ 菜单编辑项 + 左侧 NavRail 工具组） */}
-        <div ref={toolsWrapperRef} className="relative h-full">
-          <button
-            type="button"
-            title={t("nav_tools")}
-            onClick={() => setToolsOpen((v) => !v)}
-            className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
-          >
-            <Wrench size={16} />
-            <ChevronDown size={12} className="ml-[-2px] opacity-70" />
-          </button>
-          {toolsOpen && (
-            <div
-              ref={toolsPanelRef}
-              tabIndex={-1}
-              data-tauri-drag-region="false"
-              className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-[var(--radius)] border border-border bg-card p-1 shadow-lg outline-none"
-              onBlur={(e) => {
-                if (!toolsWrapperRef.current?.contains(e.relatedTarget as Node)) {
-                  setToolsOpen(false);
-                }
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setToolsOpen(false);
-                  void openNotepad();
-                }}
-                className="flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:text-primary"
-              >
-                <NotepadText size={14} />
-                <span className="flex-1">{t("notepad")}</span>
-              </button>
-            </div>
-          )}
-        </div>
 
         {/* 主题切换 */}
         <button
