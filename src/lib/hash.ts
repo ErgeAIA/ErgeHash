@@ -31,11 +31,11 @@ export function detectHashAlgorithm(value: string): HashAlgorithm | null {
 }
 
 /**
- * 预期哈希语义分隔符：仅中英文逗号与分号。
- * 这四类是用户显式分段意图；空格与换行不作为"新增行"的分隔符，
- * 空格直接清除、换行仅作自然分隔（多余换行经过滤自然消解）。
+ * 预期哈希语义分隔符：中英文逗号、分号、句号。
+ * 这六类是用户显式分段意图（含中文句号"。"，常见于多 hash 连写）；
+ * 空格与换行不作为"新增行"的分隔符，空格直接清除、换行仅作自然分隔。
  */
-const EXPECTED_HASH_SEPARATORS = /[,，;；]+/g;
+const EXPECTED_HASH_SEPARATORS = /[,，;；。]+/g;
 
 /**
  * 规范化用户输入的预期哈希值：
