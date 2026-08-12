@@ -203,6 +203,7 @@ Tauri 2 的权限模型是**白名单制**：HTML 属性（`data-tauri-drag-regi
   3. **三区 · 计算结果区**（`ResultSection`，`flex-[2]`）：过滤器 + 结果列表（`rounded-xl border border-border bg-card`）。**占比最大、视觉重点**，主用于显示结果。
   - 高度分配原则：二区按内容高度；剩余空间按 1.2 : 2 分配给文件列表区和结果区，结果区明显最大。
 - **列表呈现统一**：文件列表区与计算结果区均采用无背景色的 `<ul className="divide-y divide-border">` 列表行，hover 仅用 `bg-muted/30`；状态通过图标 + 文字颜色区分（`text-primary`/`text-destructive`/`text-warning`/`text-muted-foreground`），不再给整行加 `bg-success`/`bg-mismatch`/`bg-error`/`bg-computed` 状态背景色，保持界面清爽统一。
+- **相同文件分组着色**：多文件哈希相同时按 §3.11 做分组颜色标记（父行文件名循环 5 色 `--group-*`），唯一文件不着色；由 `buildFileGroups` 统一计算，列表区与状态栏共用结论。
 - **内部卡片统一线框**：三个区块均为 `border-border bg-card` 的圆角卡片风格，避免亮主题下 `border-white/10` 等硬编码透明度边框不可见。
 - 文件列表区与结果区内部滚动，主窗口不滚动；二区按内容高度自然撑开；区块间 `gap-4`。
 
@@ -290,6 +291,20 @@ MainLayout (h-screen w-screen, flex-col, overflow-hidden)
    - **焦点环**：全局 `:focus-visible` 用 `var(--ring)` outline 2px。
 10. **无障碍/可见性**：暗色侧栏文字必须用浅色工具类；图标按钮必须带 `title`/`aria-label`；动效遵守 `prefers-reduced-motion`。
 
+### 3.11 相同文件分组着色范式（重复哈希可视化）
+
+当多个文件计算结果**哈希值相同**时，对它们做**分组着色**以便一眼区分哪些是同一份副本、哪些是唯一的。规则：
+
+- **分组口径**：以文件**首个子结果**（`results[0]`）的 `algorithm:hash` 作为主导哈希键；只有在 `status != null`（已计算）的文件才参与；同一键下 ≥2 个文件归为一个重复组，不足 2 个的为唯一文件（不着色）。
+  - 实现：`src/lib/fileGroups.ts` 的 `buildFileGroups`，返回 `groups`（组元数据）、`map`（path→组）、`summary`（重复组数、重复文件数、唯一数、已计算数、未计算数）。
+- **颜色分配**：每组按组号 `groupId` 循环取 5 色调色板，多对重复也能彼此区分：
+  - 调色板类 `text-group-1..5` 与 `src/styles/index.css` 的 `--group-*` 一一对应，取主题语义色（`--primary`/`--secondary`/`--warning`/`--success-bg`/`--destructive`），随亮/暗主题自动切换。
+  - 颜色索引 `colorIndex = (groupId - 1) % 5`，经 `GROUP_COLOR_CLASSES` 常量集中管理，**禁止业务内联硬编色**。
+- **着色位置**：仅对**文件列表区的父行文件名**上色（`group ? group.colorClass : "text-foreground"`）；子结果行（算法/哈希/时间）保持中性 `text-foreground/80`、`text-muted-foreground`，不参与分组着色，避免视觉过载。
+- **唯一文件**：`map` 中未命中的文件使用 `--foreground`（默认前景色），与普通文件一致，不做任何强调。
+- **可访问性 + 信息**：着色文件名 `title` 提示「第 N 组 · 算法: 哈希共钥」，鼠标悬停可读出归属组与共同哈希；状态栏（`StatusReportBar`）用 `duplicate_hash_files` / `unique_files` 文案汇总"N 组文件哈希值相同 · M 个唯一文件"。
+- **一致性约束**：该范式同时服务于文件列表区与状态栏的结论陈述；`text-group-*` 工具类必须在 `index.css` 显式映射（自定义 CSS 变量体系下 `/N` 修饰符与默认 Tailwind 不会自动解析，见 §二之一）。
+
 ### 3.10 可视化组件范式（可复用）
 
 - **胶囊开关（Switch）**：统一用 `src/components/ui/switch.tsx`，**禁止在业务组件内联手写 switch**。要点：
@@ -313,3 +328,4 @@ MainLayout (h-screen w-screen, flex-col, overflow-hidden)
 8. 主题/语言/折叠/几何/动画开关均持久化；文案全 i18n。
 9. 动效只用语义化 CSS 过渡，不引重型动画库。
 10. 开关/按钮/对话框统一用 `components/ui/` 下组件，不在业务组件内联手写。
+11. 相同文件分组着色遵循 §3.11：`buildFileGroups` 计算组，父行文件名循环 `--group-1..5`，唯一文件不着色；`text-group-*` 在 `index.css` 显式映射（见 §二之一）。
