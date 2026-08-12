@@ -7,9 +7,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useAppStore } from "@/store/appStore";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { cn } from "@/lib/utils";
 import { Settings, Sun, Moon, Hash, Info, ExternalLink } from "lucide-react";
 
 interface SettingsDialogProps {
@@ -85,46 +85,20 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               <div className="flex items-center gap-2 text-sm">
                 <span>{t("auto_calculate")}</span>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={autoCalculate}
-                onClick={() => setAutoCalculate(!autoCalculate)}
-                className={cn(
-                  "relative h-5 w-9 shrink-0 rounded-full transition-colors",
-                  autoCalculate ? "bg-primary" : "bg-muted",
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform",
-                    autoCalculate ? "translate-x-4" : "translate-x-0.5",
-                  )}
-                />
-              </button>
+              <Switch
+                checked={autoCalculate}
+                onCheckedChange={setAutoCalculate}
+              />
             </div>
             {/* 界面动画开关 */}
             <div className="mt-2 flex items-center justify-between rounded-[var(--radius)] border border-border px-4 py-3">
               <div className="flex items-center gap-2 text-sm">
                 <span>{t("enable_animations")}</span>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={animations}
-                onClick={() => setAnimations(!animations)}
-                className={cn(
-                  "relative h-5 w-9 shrink-0 rounded-full transition-colors",
-                  animations ? "bg-primary" : "bg-muted",
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform",
-                    animations ? "translate-x-4" : "translate-x-0.5",
-                  )}
-                />
-              </button>
+              <Switch
+                checked={animations}
+                onCheckedChange={setAnimations}
+              />
             </div>
           </section>
 
