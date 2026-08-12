@@ -263,8 +263,15 @@ MainLayout (h-screen w-screen, flex-col, overflow-hidden)
 6. **紧凑布局**：移除冗余标题，说明文字内联或作为占位提示；减少中间区域空白。
 7. **专业判断权**：布局/按钮方向等细节在合理范围内可由实现方主张（如 FAB 竖排优于横排），不必逐条请示；仅关键歧义或高风险才反问。
 8. **拖放机制**：Tauri 2 文件拖放由 Rust 层接管，前端**不要**对 `drop`/`dragover` 全局 `preventDefault`（仅阻止非文件拖放被浏览器打开），避免与 Tauri 拖放竞态。
-9. **动效**：统一轻量过渡（200ms cubic-bezier 用于宽度/分组；150ms 用于菜单淡入），不引入重型动画库。
-10. **无障碍/可见性**：暗色侧栏文字必须用浅色工具类；图标按钮必须带 `title`/`aria-label`。
+9. **动效体系（2026-08-12）**：框架原生 CSS（transition/@keyframes），不引入动画库。全部动效可通过设置页「启用界面动画」一键关闭（根元素挂 `.animations-off`），并遵守 `prefers-reduced-motion`。
+   - **主卡 hover**（仅 FileList/ResultSection 主卡）：上浮 `translateY(-2px)` + 品牌色微光阴影 + 边框提亮（`color-mix(primary 45%, border)`）+ 跑马灯边框（`@property --angle` 驱动 conic-gradient 旋转，2.6s linear infinite，mask 保留 1.5px 环）。拖拽态（`.main-card--dragging`）禁用上浮与跑马灯。
+   - **主 CTA 呼吸**：开始校验圆钮 `.animate-breathe`（box-shadow 光环 2.6s ease-in-out infinite），仅在 `hasFiles && !isCalculating` 时启用。
+   - **列表错落入场**（仅首次）：`.list-item-enter`，300ms fade+up，按行号 stagger（父级 40ms/子级 25ms，上限 240/400ms），由组件 `hasEntered` state + 800ms timer 控制在应用生命周期内只播放一次。
+   - **选中指示条滑入**：NavRail 选中态左竖条 `.nav-active-indicator::before` 从 scaleY(0) 展开（250ms）。
+   - **图标微转**：圆图标操作按钮 `.btn-icon-rotate:hover svg` 旋转 -8deg（250ms）。
+   - **全局按压**：`button:not(:disabled):not([role="switch"]):active` 缩放 0.97；顶栏（`.titlebar-no-press`）与 switch 排除。
+   - **焦点环**：全局 `:focus-visible` 用 `var(--ring)` outline 2px。
+10. **无障碍/可见性**：暗色侧栏文字必须用浅色工具类；图标按钮必须带 `title`/`aria-label`；动效遵守 `prefers-reduced-motion`。
 
 ---
 
