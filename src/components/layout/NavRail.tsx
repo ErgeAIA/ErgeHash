@@ -191,47 +191,31 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
         </div>
       </nav>
 
-      {/* 底部：设置 / 退出（展开/折叠均显示图标） */}
-      <div className="shrink-0 px-2 pb-2 pt-1">
-        {collapsed ? (
-          <div className="flex flex-col items-center gap-0.5">
-            <button
-              type="button"
-              title={t("settings_title")}
-              onClick={() => window.dispatchEvent(new CustomEvent("show-settings"))}
-              className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-primary"
-            >
-              <Settings className="h-[18px] w-[18px]" />
-            </button>
-            <button
-              type="button"
-              title={t("menu_exit")}
-              onClick={() => getCurrentWindow().close()}
-              className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-destructive"
-            >
-              <LogOut className="h-[18px] w-[18px]" />
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-0.5">
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent("show-settings"))}
-              className="relative flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-[15px] font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
-              <Settings className="h-[18px] w-[18px] shrink-0 opacity-70" />
-              <span>{t("settings_title")}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => getCurrentWindow().close()}
-              className="relative flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-[15px] font-medium text-muted-foreground transition-colors hover:text-destructive"
-            >
-              <LogOut className="h-[18px] w-[18px] shrink-0 opacity-70" />
-              <span>{t("menu_exit")}</span>
-            </button>
-          </div>
+      {/* 底部：设置 / 退出 纯图标徽章（展开横向·设置居左；折叠纵向·设置居上） */}
+      <div
+        className={cn(
+          "shrink-0 px-2 pb-2 pt-1",
+          collapsed ? "flex flex-col items-center gap-2" : "flex flex-row gap-2",
         )}
+      >
+        <button
+          type="button"
+          title={t("settings_title")}
+          aria-label={t("settings_title")}
+          onClick={() => window.dispatchEvent(new CustomEvent("show-settings"))}
+          className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-primary hover:bg-muted/40"
+        >
+          <Settings className="h-[18px] w-[18px]" />
+        </button>
+        <button
+          type="button"
+          title={t("menu_exit")}
+          aria-label={t("menu_exit")}
+          onClick={() => getCurrentWindow().close()}
+          className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-destructive hover:bg-muted/40"
+        >
+          <LogOut className="h-[18px] w-[18px]" />
+        </button>
       </div>
     </aside>
   );
