@@ -192,8 +192,14 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
             >
               {menuGroups.map((group, gi) => (
                 <div key={gi}>
+                  {gi > 0 && (
+                    <div
+                      className="mx-3 my-1 h-px"
+                      style={{ background: "var(--border)" }}
+                    />
+                  )}
                   {group.title && (
-                    <div className="mt-1 border-t border-border px-3 pb-0.5 pt-1.5 text-[12px] text-muted-foreground first:mt-0 first:border-0 first:pt-0.5">
+                    <div className="px-3 pb-0.5 pt-0.5 text-[12px] text-muted-foreground">
                       {group.title}
                     </div>
                   )}

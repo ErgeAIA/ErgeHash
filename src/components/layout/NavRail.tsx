@@ -80,7 +80,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
       {/* 滚动区：仅算法选择 */}
       <nav className="scrollbar-none flex-1 overflow-y-auto px-2 pb-2">
         {/* 算法选择组 */}
-        <div className="mb-2">
+        <div className="mb-2 mt-2">
           {collapsed ? (
             <button
               onClick={onToggleCollapsed}
@@ -102,13 +102,13 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
                     onClick={selectAllAlgorithms}
                     disabled={allSelected}
                     className={cn(
-                      "inline-flex h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-medium transition-colors",
+                      "inline-flex h-[14px] w-[14px] items-center justify-center rounded-full transition-colors",
                       allSelected
                         ? "bg-muted text-muted-foreground"
                         : "bg-primary/15 text-primary hover:bg-primary/25",
                     )}
                   >
-                    <CheckCheck size={12} />
+                    <CheckCheck size={8} />
                   </button>
                   <button
                     type="button"
@@ -116,13 +116,13 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
                     onClick={deselectAllAlgorithms}
                     disabled={onlyOneSelected}
                     className={cn(
-                      "inline-flex h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-medium transition-colors",
+                      "inline-flex h-[14px] w-[14px] items-center justify-center rounded-full transition-colors",
                       onlyOneSelected
                         ? "bg-muted text-muted-foreground"
                         : "bg-primary/15 text-primary hover:bg-primary/25",
                     )}
                   >
-                    <ListX size={12} />
+                    <ListX size={8} />
                   </button>
                 </div>
               </div>
