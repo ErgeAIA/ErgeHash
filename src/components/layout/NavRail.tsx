@@ -25,6 +25,7 @@ interface NavRailProps {
  *  其中历史/工具/主题/语言另在顶栏紧凑按钮组提供快捷访问。 */
 export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
   const { t } = useTranslation();
+  const theme = useAppStore((s) => s.theme);
   const selectedAlgorithms = useAppStore((s) => s.selectedAlgorithms);
   const toggleAlgorithm = useAppStore((s) => s.toggleAlgorithm);
   const selectAllAlgorithms = useAppStore((s) => s.selectAllAlgorithms);
@@ -49,15 +50,31 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
     <aside
       className="flex w-full flex-1 flex-col overflow-hidden transition-[width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]"
     >
-      {/* 顶部 LOGO（折叠功能移到顶栏，此处仅展示） */}
-      <div className="flex h-12 shrink-0 items-center gap-2 px-3">
-        <Hash className="h-5 w-5 shrink-0 text-primary" />
-        {!collapsed && (
-          <span className="truncate text-[15px] font-semibold text-foreground">
-            ErgeHash
-          </span>
+      {/* 顶部 LOGO：点击切换侧栏折叠/展开 */}
+      <button
+        type="button"
+        onClick={onToggleCollapsed}
+        title={collapsed ? t("expand_sidebar") : t("collapse_sidebar")}
+        className="flex h-12 w-full shrink-0 items-center justify-center px-3 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        {collapsed ? (
+          <img
+            src="/app.svg"
+            alt="ErgeHash"
+            className="h-7 w-7 shrink-0"
+          />
+        ) : (
+          <img
+            src={
+              theme === "dark"
+                ? "/ergehash-logo-horizontal.svg"
+                : "/ergehash-logo-horizontal-light.svg"
+            }
+            alt="ErgeHash"
+            className="h-7 w-auto max-w-full shrink-0"
+          />
         )}
-      </div>
+      </button>
 
       {/* 滚动区：仅算法选择 */}
       <nav className="scrollbar-none flex-1 overflow-y-auto px-2 pb-2">
