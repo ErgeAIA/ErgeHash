@@ -9,7 +9,7 @@
   "clear_list_pending": "Clear pending file list",
   "verify_hint": "Paste the expected hash and click \"Start Verification\" to compute file hashes and verify integrity.",
   "select_algorithm": "Select Algorithm:",
-  "expected_hash_placeholder": "Paste expected hash (optional). Separate multiple values with , ; . or newline; an \"Algo:\" prefix (e.g. SHA-256:) is allowed. Algorithm is auto-detected and compared.",
+  "expected_hash_placeholder": "Paste expected hash (optional). Separate multiple values with ,  ;  . or newline; an \"Algo:\" prefix (e.g. SHA-256:) is allowed. Algorithm is auto-detected and compared.",
   "expected_hash": "Expected Hash",
   "compare_hash": "Compare Hash",
   "quick_compare": "Quick Compare",

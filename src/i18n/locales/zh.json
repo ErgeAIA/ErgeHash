@@ -9,7 +9,7 @@
   "clear_list_pending": "清空待检验文件列表",
   "verify_hint": "粘贴预期哈希值后点击「开始校验」，系统将自动计算文件哈希并比对完整性。",
   "select_algorithm": "选择算法:",
-  "expected_hash_placeholder": "粘贴预期哈希值（可选）。多个值可用 , ; 。 或换行分隔；可带「算法名:」前缀（如 SHA-256:），系统自动识别算法并比对",
+  "expected_hash_placeholder": "粘贴预期哈希值（可选）。多个值可用 ,  ;  。 或换行分隔；可带「算法名:」前缀（如 SHA-256:），系统自动识别算法并比对",
   "expected_hash": "预期哈希值",
   "compare_hash": "比较哈希值",
   "quick_compare": "快速比较",
