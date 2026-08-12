@@ -102,13 +102,13 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
                     onClick={selectAllAlgorithms}
                     disabled={allSelected}
                     className={cn(
-                      "inline-flex h-[14px] w-[14px] items-center justify-center rounded-full transition-colors",
+                      "inline-flex h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-medium transition-colors",
                       allSelected
                         ? "bg-muted text-muted-foreground"
                         : "bg-primary/15 text-primary hover:bg-primary/25",
                     )}
                   >
-                    <CheckCheck size={8} />
+                    <CheckCheck size={14} />
                   </button>
                   <button
                     type="button"
@@ -116,13 +116,13 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
                     onClick={deselectAllAlgorithms}
                     disabled={onlyOneSelected}
                     className={cn(
-                      "inline-flex h-[14px] w-[14px] items-center justify-center rounded-full transition-colors",
+                      "inline-flex h-5 items-center justify-center rounded-full px-1.5 text-[10px] font-medium transition-colors",
                       onlyOneSelected
                         ? "bg-muted text-muted-foreground"
                         : "bg-primary/15 text-primary hover:bg-primary/25",
                     )}
                   >
-                    <ListX size={8} />
+                    <ListX size={14} />
                   </button>
                 </div>
               </div>
