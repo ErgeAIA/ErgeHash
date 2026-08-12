@@ -43,6 +43,8 @@ interface AppState {
   language: "zh" | "en";
   /** 拖入文件后是否自动开始校验 */
   autoCalculate: boolean;
+  /** 是否启用界面动画 */
+  animations: boolean;
   /** 是否正在计算 */
   isCalculating: boolean;
   /** 是否暂停 */
@@ -85,6 +87,8 @@ interface AppState {
   setSelectedAlgorithms: (algos: HashAlgorithm[]) => void;
   /** 设置自动开始校验开关（持久化） */
   setAutoCalculate: (value: boolean) => void;
+  /** 设置界面动画开关（持久化） */
+  setAnimations: (value: boolean) => void;
   /** 开始校验：验证区有输入时先计算全部文件哈希再逐一比对；为空时仅计算哈希 */
   startValidation: () => Promise<void>;
   /** 直接设置主题（初始化用，不持久化） */
@@ -127,6 +131,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   theme: "light",
   language: "zh",
   autoCalculate: false,
+  animations: true,
   isCalculating: false,
   isPaused: false,
   progress: 0,
@@ -255,6 +260,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   setAutoCalculate: (value) => {
     set({ autoCalculate: value });
     void setConfig("auto_calculate", value);
+  },
+
+  setAnimations: (value) => {
+    set({ animations: value });
+    void setConfig("animations", value);
   },
 
   setCalculating: (value) => set({ isCalculating: value }),

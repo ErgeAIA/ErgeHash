@@ -33,6 +33,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const toggleTheme = useAppStore((s) => s.toggleTheme);
   const autoCalculate = useAppStore((s) => s.autoCalculate);
   const setAutoCalculate = useAppStore((s) => s.setAutoCalculate);
+  const animations = useAppStore((s) => s.animations);
+  const setAnimations = useAppStore((s) => s.setAnimations);
 
   const currentLang = i18n.language as "zh" | "en";
 
@@ -97,6 +99,29 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   className={cn(
                     "absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform",
                     autoCalculate ? "translate-x-4" : "translate-x-0.5",
+                  )}
+                />
+              </button>
+            </div>
+            {/* 界面动画开关 */}
+            <div className="mt-2 flex items-center justify-between rounded-[var(--radius)] border border-border px-4 py-3">
+              <div className="flex items-center gap-2 text-sm">
+                <span>{t("enable_animations")}</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={animations}
+                onClick={() => setAnimations(!animations)}
+                className={cn(
+                  "relative h-5 w-9 shrink-0 rounded-full transition-colors",
+                  animations ? "bg-primary" : "bg-muted",
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform",
+                    animations ? "translate-x-4" : "translate-x-0.5",
                   )}
                 />
               </button>

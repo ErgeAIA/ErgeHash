@@ -45,6 +45,7 @@ function App() {
   const { t, i18n } = useTranslation();
   const theme = useAppStore((s) => s.theme);
   const language = useAppStore((s) => s.language);
+  const animations = useAppStore((s) => s.animations);
   const setSelectedAlgorithms = useAppStore((s) => s.setSelectedAlgorithms);
   const setTheme = useAppStore((s) => s.setTheme);
   const setLanguage = useAppStore((s) => s.setLanguage);
@@ -126,6 +127,9 @@ function App() {
         if (typeof config.autoCalculate === "boolean") {
           useAppStore.setState({ autoCalculate: config.autoCalculate });
         }
+        if (typeof config.animations === "boolean") {
+          useAppStore.setState({ animations: config.animations });
+        }
 
         // 恢复窗口几何
         if (config.windowGeometry) {
@@ -165,6 +169,11 @@ function App() {
       root.classList.remove("dark");
     }
   }, [theme]);
+
+  // 动画开关：关闭时在根元素挂禁用动画 class（一键关闭所有动画）
+  useEffect(() => {
+    document.documentElement.classList.toggle("animations-off", !animations);
+  }, [animations]);
 
   // 窗口关闭时保存几何信息
   useEffect(() => {

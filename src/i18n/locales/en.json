@@ -51,6 +51,7 @@
   "light_mode": "Light Mode",
   "toggle_theme": "Toggle Theme",
   "auto_calculate": "Auto-start verification on file drop",
+  "enable_animations": "Enable UI animations",
   "hash_algorithms": "Hash Algorithms",
   "supported_algorithms": "Supported Algorithms",
   "about_title": "About",

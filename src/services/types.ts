@@ -69,6 +69,8 @@ export interface AppConfig {
   language: "zh" | "en";
   /** 拖入文件后是否自动开始校验（默认 false） */
   autoCalculate?: boolean;
+  /** 是否启用界面动画（默认 true） */
+  animations?: boolean;
   /** 窗口位置信息 */
   windowGeometry: string | null;
 }

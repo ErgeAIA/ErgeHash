@@ -129,6 +129,9 @@ pub struct AppConfig {
     /// 拖入文件后是否自动开始校验（默认 false）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub auto_calculate: Option<bool>,
+    /// 是否启用界面动画（默认 true）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub animations: Option<bool>,
     /// 窗口几何信息
     #[serde(skip_serializing_if = "Option::is_none")]
     pub window_geometry: Option<String>,
@@ -141,6 +144,7 @@ impl Default for AppConfig {
             theme: "light".to_string(),
             language: "zh".to_string(),
             auto_calculate: Some(false),
+            animations: Some(true),
             window_geometry: None,
         }
     }
