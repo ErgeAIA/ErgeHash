@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
-import { Hash, CheckCheck, ListX } from "lucide-react";
+import { Hash, CheckCheck, ListX, FileDown, NotepadText } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
 import { cn } from "@/lib/utils";
+import { openNotepad } from "@/services/api";
 import type { HashAlgorithm } from "@/services/types";
 
 /* 算法选项列表（含 CRC32，见 docs/architecture-multi-algo.md §7.1） */
@@ -136,6 +137,54 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
                     <span>{algo.label}</span>
                   </button>
                 ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 工具组：记事本 + 导出（折叠时仅图标） */}
+        <div className="mb-2 mt-3">
+          {collapsed ? (
+            <div className="flex flex-col items-center gap-0.5">
+              <button
+                type="button"
+                title={t("notepad")}
+                onClick={() => void openNotepad()}
+                className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-primary"
+              >
+                <NotepadText className="h-[18px] w-[18px]" />
+              </button>
+              <button
+                type="button"
+                title={t("export")}
+                onClick={() => window.dispatchEvent(new CustomEvent("export-results"))}
+                className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-primary"
+              >
+                <FileDown className="h-[18px] w-[18px]" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                {t("tools")}
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => void openNotepad()}
+                  className="relative flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-[15px] font-medium text-muted-foreground transition-colors hover:text-primary"
+                >
+                  <NotepadText className="h-[18px] w-[18px] shrink-0 opacity-70" />
+                  <span>{t("notepad")}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("export-results"))}
+                  className="relative flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-[15px] font-medium text-muted-foreground transition-colors hover:text-primary"
+                >
+                  <FileDown className="h-[18px] w-[18px] shrink-0 opacity-70" />
+                  <span>{t("export")}</span>
+                </button>
               </div>
             </>
           )}

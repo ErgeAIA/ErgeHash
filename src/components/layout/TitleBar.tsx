@@ -14,7 +14,6 @@ import {
   History,
   NotepadText,
   Trash2,
-  Settings,
   BookOpen,
   LogOut,
   PanelLeftClose,
@@ -175,22 +174,21 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
         { id: "open_file", label: t("menu_open"), icon: <FilePlus size={14} />, shortcut: "Ctrl+O", onClick: openFile },
         { id: "batch_process", label: t("menu_batch"), icon: <FolderOpen size={14} />, shortcut: "Ctrl+B", onClick: openFolder },
         { id: "import_verify", label: t("menu_import_verify"), icon: <FileCheck2 size={14} />, onClick: () => window.dispatchEvent(new CustomEvent("import-verification")) },
-        { id: "export_results", label: t("menu_export"), icon: <FileDown size={14} />, onClick: () => window.dispatchEvent(new CustomEvent("export-results")) },
       ],
     },
     {
       title: t("menu_edit"),
       items: [
         { id: "copy_hash", label: t("menu_copy"), icon: <Copy size={14} />, onClick: copyHash },
-        { id: "view_history", label: t("menu_history"), icon: <History size={14} />, onClick: () => window.dispatchEvent(new CustomEvent("show-history")) },
+        { id: "export_results", label: t("menu_export"), icon: <FileDown size={14} />, onClick: () => window.dispatchEvent(new CustomEvent("export-results")) },
+        { id: "clear_history", label: t("menu_clear_history"), icon: <Trash2 size={14} />, onClick: () => window.dispatchEvent(new CustomEvent("clear-history")) },
       ],
     },
     {
-      title: t("menu_tools"),
+      title: t("menu_appearance"),
       items: [
-        { id: "notepad", label: t("notepad"), icon: <NotepadText size={14} />, onClick: () => openNotepad() },
-        { id: "clear_history", label: t("menu_clear_history"), icon: <Trash2 size={14} />, onClick: () => window.dispatchEvent(new CustomEvent("clear-history")) },
-        { id: "settings", label: t("settings"), icon: <Settings size={14} />, onClick: () => window.dispatchEvent(new CustomEvent("show-settings")) },
+        { id: "toggle_theme", label: theme === "light" ? t("dark_mode") : t("light_mode"), icon: theme === "light" ? <Moon size={14} /> : <Sun size={14} />, onClick: toggleTheme },
+        { id: "toggle_language", label: t("language"), icon: <Globe size={14} />, onClick: toggleLanguage },
       ],
     },
     {
@@ -241,7 +239,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
                       key={item.id}
                       type="button"
                       onClick={() => void runAction(item.onClick)}
-                      className="flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+                      className="flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:text-primary"
                     >
                       {item.icon}
                       <span className="flex-1">{item.label}</span>
@@ -286,7 +284,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
           <History size={16} />
         </button>
 
-        {/* 工具下拉：导出 / 记事本 */}
+        {/* 工具下拉：仅记事本（导出入口已移至 ☰ 菜单编辑项 + 左侧 NavRail 工具组） */}
         <div ref={toolsWrapperRef} className="relative h-full">
           <button
             type="button"
@@ -313,20 +311,9 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
                 type="button"
                 onClick={() => {
                   setToolsOpen(false);
-                  window.dispatchEvent(new CustomEvent("export-results"));
-                }}
-                className="flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
-              >
-                <FileDown size={14} />
-                <span className="flex-1">{t("export")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setToolsOpen(false);
                   void openNotepad();
                 }}
-                className="flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+                className="flex w-full items-center gap-2 rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:text-primary"
               >
                 <NotepadText size={14} />
                 <span className="flex-1">{t("notepad")}</span>
