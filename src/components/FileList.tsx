@@ -252,14 +252,23 @@ export function FileList({ className }: { className?: string }) {
 
   const fileGroups = useMemo(() => buildFileGroups(fileList), [fileList]);
 
+  /* 错落入场仅首次：应用生命周期内第一次显示文件列表时播放一次 */
+  const [hasEntered, setHasEntered] = useState(false);
+  useEffect(() => {
+    if (fileList.length === 0 || hasEntered) return;
+    const timer = setTimeout(() => setHasEntered(true), 800);
+    return () => clearTimeout(timer);
+  }, [fileList.length, hasEntered]);
+  const animateEnter = fileList.length > 0 && !hasEntered;
+
   return (
     <section className={cn("flex min-h-0 flex-col gap-3", className)}>
       {/* 拖放区域 + 文件列表：内容超出时内部滚动，操作按钮固定在底部 */}
       <div
         className={cn(
-          "relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card",
+          "main-card relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card",
           isDragOver
-            ? "border-2 border-dashed border-[var(--primary)] bg-primary-alpha"
+            ? "main-card--dragging border-2 border-dashed border-[var(--primary)] bg-primary-alpha"
             : "",
           fileList.length === 0 ? "cursor-pointer" : "",
         )}
@@ -284,7 +293,15 @@ export function FileList({ className }: { className?: string }) {
                 const parent = (
                   <li
                     key={`p-${file.path}`}
-                    className="flex items-center gap-3 px-3 py-2 cursor-default hover:bg-muted/30"
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 cursor-default hover:bg-muted/30",
+                      animateEnter && "list-item-enter",
+                    )}
+                    style={
+                      animateEnter
+                        ? { animationDelay: `${Math.min(fileIndex * 40, 240)}ms` }
+                        : undefined
+                    }
                     onClick={(e) => e.stopPropagation()}
                     onContextMenu={(e) => handleContextMenu(e, fileIndex)}
                   >
@@ -324,10 +341,20 @@ export function FileList({ className }: { className?: string }) {
                     </button>
                   </li>
                 );
-                const childRows = children.map((r) => (
+                const childRows = children.map((r, ri) => (
                   <li
                     key={`c-${file.path}-${r.algorithm}`}
-                    className="flex items-center gap-3 pl-10 pr-3 py-1 text-xs text-muted-foreground hover:bg-muted/20"
+                    className={cn(
+                      "flex items-center gap-3 pl-10 pr-3 py-1 text-xs text-muted-foreground hover:bg-muted/20",
+                      animateEnter && "list-item-enter",
+                    )}
+                    style={
+                      animateEnter
+                        ? {
+                            animationDelay: `${Math.min(fileIndex * 40 + ri * 25, 400)}ms`,
+                          }
+                        : undefined
+                    }
                     title={getBasename(file.path)}
                   >
                     <span className="w-20 shrink-0 font-medium uppercase text-foreground/70">

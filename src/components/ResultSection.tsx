@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Copy, FileDown, Trash2, Check, X, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
@@ -105,9 +105,18 @@ export function ResultSection({ className }: { className?: string }) {
   /** 是否有可显示的结果 */
   const hasResults = fileList.some((f) => f.hashValue || f.status);
 
+  /* 错落入场仅首次：结果区第一次出现结果时播放一次 */
+  const [hasEntered, setHasEntered] = useState(false);
+  useEffect(() => {
+    if (!hasResults || hasEntered) return;
+    const timer = setTimeout(() => setHasEntered(true), 800);
+    return () => clearTimeout(timer);
+  }, [hasResults, hasEntered]);
+  const animateEnter = hasResults && !hasEntered;
+
   return (
     <section className={cn("flex min-h-0 flex-col gap-3", className)}>
-      <div className="relative flex min-h-0 flex-1 flex-col gap-3 rounded-xl border border-border bg-card p-3">
+      <div className="main-card relative flex min-h-0 flex-1 flex-col gap-3 rounded-xl border border-border bg-card p-3">
         {/* 无结果时的空状态 */}
         {!hasResults ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -151,7 +160,15 @@ export function ResultSection({ className }: { className?: string }) {
                 return (
                   <li
                     key={`${file.path}-${index}`}
-                    className="flex items-center gap-3 px-3 py-1.5 text-sm text-foreground hover:bg-muted/30"
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-1.5 text-sm text-foreground hover:bg-muted/30",
+                      animateEnter && "list-item-enter",
+                    )}
+                    style={
+                      animateEnter
+                        ? { animationDelay: `${Math.min(index * 40, 240)}ms` }
+                        : undefined
+                    }
                     title={file.path}
                   >
                     {/* 文件名 */}
@@ -259,7 +276,7 @@ function IconActionButton({
         disabled={disabled}
         aria-label={label}
         className={cn(
-          "flex h-14 w-14 shrink-0 items-center justify-center rounded-full shadow-lg transition-all",
+          "btn-icon-rotate flex h-14 w-14 shrink-0 items-center justify-center rounded-full shadow-lg transition-all",
           "hover:scale-105 active:scale-95",
           "disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:hover:scale-100",
           themeClasses[theme],

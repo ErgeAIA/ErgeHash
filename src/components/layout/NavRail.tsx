@@ -40,7 +40,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
       "relative flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-[15px] font-medium transition-colors duration-100",
       collapsed && "justify-center px-0",
       active
-        ? "relative text-primary bg-primary-alpha before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary before:content-['']"
+        ? "nav-active-indicator relative text-primary bg-primary-alpha before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary before:content-['']"
         : "text-muted-foreground hover:text-primary",
     );
 

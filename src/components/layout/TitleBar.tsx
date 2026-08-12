@@ -202,7 +202,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
   return (
     <div
       data-testid="title-bar"
-      className="flex h-[40px] w-full shrink-0 select-none items-center bg-sidebar text-foreground"
+      className="titlebar-no-press flex h-[40px] w-full shrink-0 select-none items-center bg-sidebar text-foreground"
     >
       {/* 左侧：菜单按钮 + 折叠按钮 */}
       <div className="flex h-full items-center" data-tauri-drag-region="false">

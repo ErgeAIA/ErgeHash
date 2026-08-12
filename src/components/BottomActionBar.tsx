@@ -33,7 +33,10 @@ export function BottomActionBar({ className }: BottomActionBarProps) {
         onClick={() => startValidation()}
         disabled={!hasFiles || isCalculating}
         title={t("start_verify")}
-        className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+        className={cn(
+          "btn-icon-rotate inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50",
+          hasFiles && !isCalculating && "animate-breathe",
+        )}
       >
         <Fingerprint className="h-6 w-6" />
       </button>
@@ -44,7 +47,7 @@ export function BottomActionBar({ className }: BottomActionBarProps) {
         onClick={clearFiles}
         disabled={!hasFiles}
         title={t("clear_list_pending")}
-        className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-destructive text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="btn-icon-rotate inline-flex h-12 w-12 items-center justify-center rounded-full bg-destructive text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Trash2 className="h-6 w-6" />
       </button>
@@ -55,7 +58,7 @@ export function BottomActionBar({ className }: BottomActionBarProps) {
         onClick={handleExport}
         disabled={!hasFiles}
         title={t("export")}
-        className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="btn-icon-rotate inline-flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-secondary/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <FileDown className="h-6 w-6" />
       </button>
