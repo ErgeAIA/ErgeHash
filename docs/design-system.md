@@ -152,6 +152,11 @@ Tauri 2 的权限模型是**白名单制**：HTML 属性（`data-tauri-drag-regi
 3. **外观（menu_appearance）**：主题切换、语言切换。
 4. **无标题组**：快速指南、退出。
 
+**视觉约束（2026-08-12 确认）**：
+
+- **菜单项保持极简**：左侧**不出现图标徽章**；i18n 文案中**不出现 `(&F)` / `(&O)` 等助记符前缀**；仅右侧保留 `Ctrl+O` / `Ctrl+B` / `Ctrl+Q` 等快捷键提示。
+- 分组标题使用 `text-muted-foreground` 小字，项标签 `text-muted-foreground`，hover 仅 `text-primary`。
+
 **交互逻辑**：
 
 - 点击 `☰` 切换显隐；面板外点击或 `Esc` 关闭。
