@@ -5,6 +5,8 @@ import type {
   FileResult,
   HashAlgorithm,
   HashResult,
+  VerificationEntry,
+  VerificationParseReport,
 } from "../services/types";
 import { setConfig, startBatchValidation, getFileSizes } from "../services/api";
 import { normalizeExpectedHash } from "@/lib/hash";
@@ -30,6 +32,11 @@ function aggregateParent(
   else status = "computed";
   const errorMessage = results.map((r) => r.errorMessage).find(Boolean);
   return { hashValue: lead.hashValue, status, errorMessage };
+}
+
+/** 取路径中的文件名（兼容 / 与 \\），仅用于校验文件逐文件绑定比较 */
+function basename(p: string): string {
+  return p.split(/[/\\]/).pop() ?? p;
 }
 
 /** 应用状态 */
@@ -60,6 +67,16 @@ interface AppState {
   statusMessage: string;
   /** 预期哈希值 */
   expectedHash: string;
+  /**
+   * 校验模式：
+   * - none: 无预期（仅计算）
+   * - single: 预期哈希框（全局集合匹配）
+   * - file: 导入的校验文件（逐文件名绑定匹配）
+   * 与 importedEntries 互斥共存：导入文件时清空 expectedHash，输入单哈希时清空 importedEntries。
+   */
+  verificationMode: "none" | "single" | "file";
+  /** 导入校验文件解析出的结构化条目（文件名→算法→哈希） */
+  importedEntries: VerificationEntry[];
   /** 最近一次批量结果（供导出/复制使用） */
   lastResults: HashResult[] | null;
   /** 当前文件已读取字节数 */
@@ -116,6 +133,8 @@ interface AppState {
   updateFileResult: (result: Omit<HashResult, "status"> & { status: FileItemStatus }) => void;
   /** 设置预期哈希值 */
   setExpectedHash: (hash: string) => void;
+  /** 写入导入的校验文件条目（原子切到 file 模式，清空单哈希预期，二者互斥） */
+  setImportedEntries: (report: VerificationParseReport) => void;
   /** 设置最近一次批量结果 */
   setLastResults: (results: HashResult[] | null) => void;
   /** 设置已读取字节数 */
@@ -140,6 +159,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   resultText: "",
   statusMessage: "ready",
   expectedHash: "",
+  verificationMode: "none",
+  importedEntries: [],
   lastResults: null,
   bytesRead: 0,
   totalBytes: 0,
@@ -175,13 +196,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
 
   clearFiles: () =>
-    set({
+    set((state) => ({
       fileList: [],
       currentFile: null,
       progress: 0,
       bytesRead: 0,
       totalBytes: 0,
-    }),
+      importedEntries: [],
+      verificationMode: state.expectedHash.trim() ? "single" : "none",
+    })),
 
   clearResults: () =>
     set((state) => ({
@@ -199,6 +222,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       fileList: [],
       expectedHash: "",
+      verificationMode: "none",
+      importedEntries: [],
       resultText: "",
       progress: 0,
       currentFile: null,
@@ -299,6 +324,78 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       set({ isCalculating: false, progress: 100, statusMessage: "completed", lastResults: allResults });
 
+      // 逐文件绑定模式（导入校验文件）：按 文件名→算法 精确匹配，杜绝跨文件误命中
+      if (state.verificationMode === "file" && state.importedEntries.length > 0) {
+        const verifyMap = new Map<string, Map<string, string>>();
+        for (const e of state.importedEntries) {
+          const key = basename(e.filename).toLowerCase();
+          let inner = verifyMap.get(key);
+          if (!inner) {
+            inner = new Map();
+            verifyMap.set(key, inner);
+          }
+          inner.set(e.algorithm.toLowerCase(), e.hashValue.toLowerCase());
+        }
+        const provided = new Set(allResults.map((r) => basename(r.filePath).toLowerCase()));
+        const missingFiles = new Set<string>();
+        for (const e of state.importedEntries) {
+          const k = basename(e.filename).toLowerCase();
+          if (!provided.has(k)) missingFiles.add(basename(e.filename));
+        }
+
+        let compText = `\n${t("comparison_results")}\n\n`;
+        let matchCount = 0;
+        let mismatchCount = 0;
+        let noExpectedCount = 0;
+
+        for (const r of allResults) {
+          if (!r.hashValue) continue;
+          const fileName = basename(r.filePath);
+          const expectedInner = verifyMap.get(fileName.toLowerCase());
+          if (!expectedInner) {
+            // 校验文件未记录该文件：仅计算，不误判 mismatch
+            get().updateFileResult({ ...r, status: "computed" });
+            compText += `· ${fileName} ${t("not_in_verify")}\n`;
+            noExpectedCount++;
+            continue;
+          }
+          const expectedHash = expectedInner.get(r.algorithm);
+          if (expectedHash == null) {
+            // 该文件在校验文件中有记录，但未含此算法：仅计算，不判 mismatch
+            get().updateFileResult({ ...r, status: "computed" });
+            compText += `· ${fileName} (${r.algorithm}) ${t("not_in_verify")}\n`;
+            noExpectedCount++;
+            continue;
+          }
+          const isMatch = expectedHash === r.hashValue.toLowerCase();
+          get().updateFileResult({ ...r, status: isMatch ? "success" : "mismatch" });
+          if (isMatch) {
+            compText += `✓ ${fileName} ${t("match")}\n`;
+            matchCount++;
+          } else {
+            compText += `✗ ${fileName} ${t("mismatch")}\n`;
+            mismatchCount++;
+          }
+        }
+
+        if (missingFiles.size > 0) {
+          compText += `\n${t("missing_files_title")}\n`;
+          for (const m of missingFiles) compText += `✗ ${m} ${t("missing_file")}\n`;
+        }
+
+        compText += `\n---\n${t("total_summary")}: ${allResults.filter((r) => r.hashValue).length} | ${t("match")}: ${matchCount} | ${t("mismatch")}: ${mismatchCount} | ${t("not_in_verify")}: ${noExpectedCount}\n`;
+        set((s) => ({ resultText: s.resultText + compText }));
+
+        if (mismatchCount > 0) {
+          toast("error", t("toast_mismatch"));
+        } else if (missingFiles.size > 0) {
+          toast("warning", t("toast_missing_files", { n: missingFiles.size }));
+        } else {
+          toast("success", t("toast_all_match"));
+        }
+        return;
+      }
+
       if (!expected) return;
 
       // 集合匹配：把预期哈希看作一组可信指纹（规范化后去空格、小写），
@@ -381,7 +478,25 @@ export const useAppStore = create<AppState>((set, get) => ({
       return { fileList };
     }),
 
-  setExpectedHash: (hash) => set({ expectedHash: hash }),
+  setExpectedHash: (hash) =>
+    set((state) => {
+      const trimmed = hash.trim();
+      if (trimmed) {
+        // 输入单哈希预期时，清空已导入的校验文件（二者互斥）
+        return { expectedHash: hash, verificationMode: "single", importedEntries: [] };
+      }
+      return {
+        expectedHash: hash,
+        verificationMode: state.importedEntries.length > 0 ? "file" : "none",
+      };
+    }),
+
+  setImportedEntries: (report) =>
+    set(() => ({
+      importedEntries: report.entries,
+      expectedHash: "",
+      verificationMode: report.entries.length > 0 ? "file" : "none",
+    })),
 
   setLastResults: (results) => set({ lastResults: results }),
 

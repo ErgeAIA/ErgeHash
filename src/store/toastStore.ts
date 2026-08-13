@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 /** Toast 类型 */
-export type ToastType = "success" | "error" | "info";
+export type ToastType = "success" | "error" | "info" | "warning";
 
 /** Toast 消息 */
 export interface Toast {

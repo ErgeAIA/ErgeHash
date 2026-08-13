@@ -7,7 +7,7 @@ import type {
   BatchResult,
   HistoryEntry,
   AppConfig,
-  VerificationEntry,
+  VerificationParseReport,
   FileItem,
 } from "./types";
 
@@ -106,11 +106,11 @@ export async function generateVerificationFile(
   });
 }
 
-/** 导入验证文件 */
+/** 导入验证文件（返回结构化解析报告，含告警与未识别行） */
 export async function importVerificationFile(
   filePath: string,
-): Promise<VerificationEntry[]> {
-  return invoke<VerificationEntry[]>("import_verification_file", { filePath });
+): Promise<VerificationParseReport> {
+  return invoke<VerificationParseReport>("import_verification_file", { filePath });
 }
 
 /** 扫描目录获取文件列表 */

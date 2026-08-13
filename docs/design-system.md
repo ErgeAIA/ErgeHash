@@ -222,6 +222,22 @@ Tauri 2 的权限模型是**白名单制**：HTML 属性（`data-tauri-drag-regi
      - **防静默欺骗**：规范化只切分/去行内空白，**不**去除哈希字符本身；`detectHashAlgorithm` 仍按"去空白后十六进制 + 长度"判定，带杂质的串若整体不合法则识别失败而非误判。
   3. **三区 · 计算结果区**（`ResultSection`，`flex-[2]`）：过滤器 + 结果列表（`rounded-xl border border-border bg-card`）。**占比最大、视觉重点**，主用于显示结果。
   - 高度分配原则：二区按内容高度；剩余空间按 1.2 : 2 分配给文件列表区和结果区，结果区明显最大。
+
+### 3.7 导入校验文件（多格式嗅探 + 自愈 + 逐文件绑定）
+
+"导入校验文件"用于把 `.md5` / `.sha256` / `.sfv` 等外部校验清单载入，按文件名逐条验证（**非**把全部哈希塞进预期哈希框）。
+
+- **解析器（Rust `commands::verification_parser`）**：逐行嗅探，优先级 BSD `--tag`（`MD5 (f) = h`）→ 自有格式（`ALGO: h  f`）→ GNU（`h  f` 文本 / `h *f` 二进制）→ SFV/尾随哈希（`f h`）→ 裸哈希单行（文件名由源文件 stem 派生）。纯标准库字符串解析，**不引入 `regex` 依赖**，天然规避 ReDoS。
+- **算法推断**：BSD/自有格式用显式算法名；GNU/SFV/裸哈希按哈希长度映射（8→crc32、32→md5、40→sha1、64→sha256、128→sha512）；无法定长算法则标 `unknown`。
+- **自愈能力（对抗式审查结论，2026-08-13 落地）**：
+  - 逐行隔离：单行解析失败计入 `unrecognized` 并跳过，不中止整次导入。
+  - 资源上限：单文件读取 `SIZE_CAP=50MB`（超限只取前 N 字节 + `fileTooLarge` 告警）、单行 `LINE_CAP=64KB`（超限跳过 + `lineTooLong`）、条目 `ENTRY_CAP=100k`（超截断 + `entryCapHit`）；杜绝 OOM / 内存尖峰。
+  - 编码兜底：非法 UTF-8 用 `from_utf8_lossy` 尽力解析 + `encodingFallback` 告警；自动剥离 BOM。
+  - 冲突检测：同名不同哈希记 `duplicateName` 告警。
+- **逐文件绑定校验（杜绝静默误判）**：解析结果写入 `importedEntries`，`verificationMode` 原子切到 `file` 并清空单哈希预期（`expectedHash`），二者互斥。校验时按 `basename(文件名) → 算法 → 哈希` 精确匹配；文件列表中存在但校验文件未记录的文件只标 `computed`（不误判 mismatch）；校验文件有记录但列表缺失的文件在结果区列出"缺失"。**永不按校验文件中的路径打开磁盘文件**（basename 匹配根除错误文件攻击）。
+- **透明告警**：导入返回 `ParseReport`（entries + unrecognized + warnings + truncated），前端按 `truncated`/`warnings` 弹 `warning` 级 toast；0 条目且存在 unrecognized 时提示"N 行无法识别"。
+- **配套 UI**：新增 `warning` 型 Toast（颜色 `var(--warning)`、图标 `AlertTriangle`），用于部分导入/缺失文件等降级场景提示。
+
 - **列表呈现统一**：文件列表区与计算结果区均采用无背景色的 `<ul className="divide-y divide-border">` 列表行，hover 仅用 `bg-muted/30`；状态通过图标 + 文字颜色区分（`text-primary`/`text-destructive`/`text-warning`/`text-muted-foreground`），不再给整行加 `bg-success`/`bg-mismatch`/`bg-error`/`bg-computed` 状态背景色，保持界面清爽统一。
 - **相同文件分组着色**：多文件哈希相同时按 §3.11 做分组颜色标记（父行文件名循环 5 色 `--group-*`），唯一文件不着色；由 `buildFileGroups` 统一计算，列表区与状态栏共用结论。
 - **内部卡片统一线框**：三个区块均为 `border-border bg-card` 的圆角卡片风格，避免亮主题下 `border-white/10` 等硬编码透明度边框不可见。

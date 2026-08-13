@@ -1,4 +1,4 @@
-import { CheckCircle2, Info, X, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 import { useToastStore, type Toast } from "@/store/toastStore";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +9,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
     success: "var(--primary)",
     error: "var(--destructive)",
     info: "var(--secondary)",
+    warning: "var(--warning)",
   }[toast.type];
 
   return (
@@ -25,6 +26,9 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
       )}
       {toast.type === "info" && (
         <Info className="h-4 w-4 shrink-0" style={{ color }} />
+      )}
+      {toast.type === "warning" && (
+        <AlertTriangle className="h-4 w-4 shrink-0" style={{ color }} />
       )}
       <span className="flex-1 text-foreground">{toast.message}</span>
       <button

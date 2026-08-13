@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 
-use crate::models::{HashResult, VerificationEntry};
+use crate::models::HashResult;
 
 /// 导出为 CSV 格式（UTF-8 BOM）
 #[tauri::command]
@@ -81,63 +81,8 @@ pub fn generate_verification_file(
     Ok(())
 }
 
-/// 导入验证文件并解析
-#[tauri::command]
-pub fn import_verification_file(file_path: String) -> Result<Vec<VerificationEntry>, String> {
-    let path = Path::new(&file_path);
-
-    if !path.exists() {
-        return Err(format!("文件不存在: {}", file_path));
-    }
-
-    let content = fs::read_to_string(path)
-        .map_err(|e| format!("读取验证文件失败: {}", e))?;
-
-    let mut entries = Vec::new();
-
-    for line in content.lines() {
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
-
-        let parts: Vec<&str> = line.split_whitespace().collect();
-
-        if parts.len() >= 2 {
-            // 格式1: SHA256: abc123def456  filename.txt
-            // 格式2: abc123def456  filename.txt
-            if parts[0].contains(':') {
-                let algorithm = parts[0].replace(':', "").to_lowercase();
-                let hash_value = parts[1].to_string();
-                let filename = if parts.len() > 2 {
-                    parts[2..].join(" ")
-                } else {
-                    "unknown".to_string()
-                };
-                entries.push(VerificationEntry {
-                    algorithm,
-                    hash_value,
-                    filename,
-                });
-            } else {
-                // 无算法前缀格式
-                let hash_value = parts[0].to_string();
-                let filename = if parts.len() > 1 {
-                    parts[1..].join(" ")
-                } else {
-                    "unknown".to_string()
-                };
-                entries.push(VerificationEntry {
-                    algorithm: "unknown".to_string(),
-                    hash_value,
-                    filename,
-                });
-            }
-        }
-    }
-
-    Ok(entries)
-}
+// 导入验证文件的解析逻辑已迁移至 `commands::verification_parser`，
+// 此处仅保留导出相关命令。
 
 /// CSV 字段转义：如果包含逗号、引号或换行，用双引号包裹
 fn csv_escape(s: &str) -> String {

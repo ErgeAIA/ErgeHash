@@ -54,7 +54,7 @@ function App() {
   const setCalculating = useAppStore((s) => s.setCalculating);
   const setResultText = useAppStore((s) => s.setResultText);
   const setStatusMessage = useAppStore((s) => s.setStatusMessage);
-  const setExpectedHash = useAppStore((s) => s.setExpectedHash);
+  const setImportedEntries = useAppStore((s) => s.setImportedEntries);
   const updateFileResult = useAppStore((s) => s.updateFileResult);
   const setBytesRead = useAppStore((s) => s.setBytesRead);
   const setTotalBytes = useAppStore((s) => s.setTotalBytes);
@@ -351,15 +351,30 @@ function App() {
       const paths = await openFileDialog();
       if (!paths || paths.length === 0) return;
       try {
-        const entries = await importVerificationFile(paths[0]);
-        if (entries.length === 0) {
-          setStatusMessage(t("import_error"));
-          addToast("error", t("import_error"));
+        const report = await importVerificationFile(paths[0]);
+        if (report.entries.length === 0) {
+          const msg =
+            report.unrecognized.length > 0
+              ? t("import_unrecognized", { count: report.unrecognized.length })
+              : t("import_error");
+          setStatusMessage(msg);
+          addToast("error", msg);
           return;
         }
-        setExpectedHash(entries.map((e) => e.hashValue).join("\n"));
-        setStatusMessage(t("import_success", { count: entries.length }));
-        addToast("success", t("import_success", { count: entries.length }));
+        setImportedEntries(report);
+        if (report.truncated || report.warnings.length > 0) {
+          const msg = t("import_partial", {
+            count: report.entries.length,
+            warns: report.warnings.length,
+            unrecognized: report.unrecognized.length,
+          });
+          setStatusMessage(msg);
+          addToast("warning", msg);
+        } else {
+          const msg = t("import_success", { count: report.entries.length });
+          setStatusMessage(msg);
+          addToast("success", msg);
+        }
       } catch {
         setStatusMessage(t("import_error"));
         addToast("error", t("import_error"));
@@ -381,7 +396,7 @@ function App() {
       window.removeEventListener("clear-history", onClearHistory);
       window.removeEventListener("import-verification", onImportVerification);
     };
-  }, [t, setStatusMessage, setExpectedHash, addToast]);
+  }, [t, setStatusMessage, setImportedEntries, addToast]);
 
   return (
     <MainLayout>

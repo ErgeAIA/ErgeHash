@@ -85,6 +85,27 @@ export interface VerificationEntry {
   algorithm: string;
 }
 
+/** 无法解析的孤立行（透明告警用） */
+export interface UnrecognizedLine {
+  lineNo: number;
+  content: string;
+}
+
+/** 解析告警信号 */
+export interface ParseWarning {
+  kind: "fileTooLarge" | "lineTooLong" | "entryCapHit" | "duplicateName" | "encodingFallback";
+  detail?: string;
+}
+
+/** 导入校验文件的解析报告：失败不中止，结构化返回 */
+export interface VerificationParseReport {
+  entries: VerificationEntry[];
+  unrecognized: UnrecognizedLine[];
+  warnings: ParseWarning[];
+  /** 报告不完整（超尺寸 / 超条目上限） */
+  truncated: boolean;
+}
+
 /** 文件列表项状态：computed=已计算但未验证, success=验证匹配, mismatch=验证不匹配, error=计算出错, undefined=未计算 */
 export type FileItemStatus = "computed" | "success" | "mismatch" | "error" | undefined;
 
