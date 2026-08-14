@@ -132,9 +132,6 @@ pub struct AppConfig {
     /// 是否启用界面动画（默认 true）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub animations: Option<bool>,
-    /// 窗口几何信息
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub window_geometry: Option<String>,
 }
 
 impl Default for AppConfig {
@@ -145,7 +142,6 @@ impl Default for AppConfig {
             language: "zh".to_string(),
             auto_calculate: Some(false),
             animations: Some(true),
-            window_geometry: None,
         }
     }
 }

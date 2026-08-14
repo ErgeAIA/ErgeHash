@@ -22,7 +22,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "=2.11.0", features = [] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-clipboard-manager = "2"
@@ -38,3 +38,10 @@ dirs = "6"
 csv = "1"
 tokio = { version = "1", features = ["sync", "parking_lot"] }
 thiserror = "2"
+
+# [ERGE-DEBUG] 曾本地 vendor wry 用于 OLE 拖放调试（见 docs/.AI/debug-log.md BUG-005 系列）。
+# 2026-08-14 晚：AIVault（同栈 registry wry 0.55.1 原版）实测拖拽正常，确认 vendor 改动
+# 破坏了原版"枚举 WebView2 子窗口注册 IDropTarget"机制，故移除 patch 回归上游原版。
+# vendor/ 目录保留但不再参与构建；如回退可恢复下方 patch。
+# [patch.crates-io]
+# wry = { path = "vendor/wry" }
