@@ -1,0 +1,3 @@
+ErgeHash fixture notes
+- verify checksums
+- test import dialog
