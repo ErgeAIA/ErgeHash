@@ -229,11 +229,11 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
                         key={item.id}
                         type="button"
                         onClick={() => void runAction(item.onClick)}
-                        className="flex w-full items-center justify-between rounded-[var(--radius)] px-3 py-1.5 text-left text-[14px] text-muted-foreground transition-colors hover:text-primary"
+                        className="menu-item justify-between"
                       >
                         <span>{item.label}</span>
                         {shortcut && (
-                          <span className="ml-6 text-xs text-muted-foreground/70">
+                          <span className="ml-6 shrink-0 text-xs text-inherit opacity-70">
                             {shortcut}
                           </span>
                         )}

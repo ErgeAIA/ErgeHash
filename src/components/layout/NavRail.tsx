@@ -95,7 +95,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
               <button
                 onClick={onToggleCollapsed}
                 aria-label={t("algorithms")}
-                className="flex h-9 w-full items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-primary"
+                className="nav-icon-btn h-9 w-full"
               >
                 <Hash className="h-[18px] w-[18px]" />
               </button>
@@ -166,7 +166,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
                   type="button"
                   aria-label={t("notepad")}
                   onClick={() => void openNotepad()}
-                  className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-primary"
+                  className="nav-icon-btn h-9 w-9"
                 >
                   <NotepadText className="h-[18px] w-[18px]" />
                 </button>
@@ -176,7 +176,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
                   type="button"
                   aria-label={t("menu_open")}
                   onClick={() => void openFile()}
-                  className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-primary"
+                  className="nav-icon-btn h-9 w-9"
                 >
                   <FolderOpen className="h-[18px] w-[18px]" />
                 </button>
@@ -186,7 +186,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
                   type="button"
                   aria-label={t("menu_import_verify")}
                   onClick={() => window.dispatchEvent(new CustomEvent("import-verification"))}
-                  className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-primary"
+                  className="nav-icon-btn h-9 w-9"
                 >
                   <FileInput className="h-[18px] w-[18px]" />
                 </button>
@@ -201,7 +201,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
                 <button
                   type="button"
                   onClick={() => void openNotepad()}
-                  className="relative flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-[15px] font-medium text-muted-foreground transition-colors hover:text-primary"
+                  className="menu-item text-[15px] font-medium"
                 >
                   <NotepadText className="h-[18px] w-[18px] shrink-0 opacity-70" />
                   <span>{t("notepad")}</span>
@@ -209,7 +209,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
                 <button
                   type="button"
                   onClick={() => void openFile()}
-                  className="relative flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-[15px] font-medium text-muted-foreground transition-colors hover:text-primary"
+                  className="menu-item text-[15px] font-medium"
                 >
                   <FolderOpen className="h-[18px] w-[18px] shrink-0 opacity-70" />
                   <span>{t("menu_open")}</span>
@@ -217,7 +217,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
                 <button
                   type="button"
                   onClick={() => window.dispatchEvent(new CustomEvent("import-verification"))}
-                  className="relative flex items-center gap-2 rounded-[var(--radius)] px-3 py-2 text-[15px] font-medium text-muted-foreground transition-colors hover:text-primary"
+                  className="menu-item text-[15px] font-medium"
                 >
                   <FileInput className="h-[18px] w-[18px] shrink-0 opacity-70" />
                   <span>{t("menu_import_verify")}</span>
@@ -240,7 +240,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
             type="button"
             aria-label={t("settings_title")}
             onClick={() => window.dispatchEvent(new CustomEvent("show-settings"))}
-            className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-primary hover:bg-muted/40"
+            className="nav-icon-btn h-9 w-9"
           >
             <Settings className="h-[18px] w-[18px]" />
           </button>
@@ -250,7 +250,7 @@ export function NavRail({ collapsed, onToggleCollapsed }: NavRailProps) {
             type="button"
             aria-label={t("menu_exit")}
             onClick={() => getCurrentWindow().close()}
-            className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:text-destructive hover:bg-muted/40"
+            className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             <LogOut className="h-[18px] w-[18px]" />
           </button>

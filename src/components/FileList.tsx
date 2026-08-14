@@ -629,7 +629,7 @@ export function FileList({ className }: { className?: string }) {
             }}
           >
             <button
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted"
+              className="menu-item"
               onClick={() => {
                 removeFile(contextMenu.index);
                 closeContextMenu();
@@ -639,7 +639,7 @@ export function FileList({ className }: { className?: string }) {
               {t("remove_selected")}
             </button>
             <button
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted"
+              className="menu-item"
               onClick={() => handleCopyPath(contextMenu.index)}
             >
               <Copy className="h-3.5 w-3.5" />
@@ -647,7 +647,7 @@ export function FileList({ className }: { className?: string }) {
             </button>
             {fileList[contextMenu.index]?.role !== "verification" && (
               <button
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted"
+                className="menu-item"
                 onClick={() => handleCopyAll(fileList[contextMenu.index])}
               >
                 <Hash className="h-3.5 w-3.5" />

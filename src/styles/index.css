@@ -367,6 +367,54 @@ body {
   animation: menuIn 0.15s ease;
 }
 
+/* 通用菜单项：hover 主题品牌色背景 + 品牌色文字，统一下拉/上下文菜单/侧栏交互 */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border-radius: var(--radius);
+  padding: 0.375rem 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--muted-foreground);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.menu-item:hover {
+  background-color: var(--primary-alpha);
+  color: var(--primary);
+}
+.menu-item:focus-visible {
+  outline: none;
+  background-color: var(--primary-alpha);
+  color: var(--primary);
+}
+.menu-item svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+
+/* 侧栏/顶栏图标按钮 hover：品牌色背景 + 品牌色文字 */
+.nav-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  color: var(--muted-foreground);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.nav-icon-btn:hover {
+  background-color: var(--primary-alpha);
+  color: var(--primary);
+}
+.nav-icon-btn:focus-visible {
+  outline: none;
+  background-color: var(--primary-alpha);
+  color: var(--primary);
+}
+
 /* 关闭按钮语义色：常态透明底灰字，hover 红底白字 */
 .close-btn {
   background-color: var(--close-btn-bg);
