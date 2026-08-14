@@ -10,7 +10,7 @@ mod models;
 
 use commands::batch::start_batch_validation;
 use commands::config::{add_history, clear_history, get_config, get_history, set_config};
-use commands::export::{export_csv, export_json, generate_verification_file};
+use commands::export::{export_csv, export_json, export_verification_files};
 use commands::verification_parser::import_verification_file;
 use commands::filesystem::{
     get_file_metadata, open_file_dialog, open_folder_dialog, open_notepad, save_file_dialog,
@@ -81,7 +81,7 @@ pub fn run() {
             // 导出
             export_csv,
             export_json,
-            generate_verification_file,
+            export_verification_files,
             import_verification_file,
             // 文件系统
             get_file_metadata,

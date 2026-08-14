@@ -1,94 +1,149 @@
-use std::fs;
-use std::path::Path;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 
-use crate::models::HashResult;
+use serde::Serialize;
 
-/// 导出为 CSV 格式（UTF-8 BOM）
+use crate::models::{HashAlgorithm, HashResult, HashStatus};
+
+/// 导出为 CSV（保留原有行为）
 #[tauri::command]
-pub fn export_csv(data: Vec<HashResult>, file_path: String) -> Result<(), String> {
-    if data.is_empty() {
-        return Err("没有数据可导出".to_string());
-    }
-
-    let path = Path::new(&file_path);
-
-    // UTF-8 BOM
-    let mut content = String::from("\u{feff}");
-    // 表头
-    content.push_str("文件路径,算法,哈希值,耗时(秒),状态\n");
-
-    for result in &data {
-        let status_str = match result.status {
-            crate::models::HashStatus::Success => "成功",
-            crate::models::HashStatus::Mismatch => "不匹配",
-            crate::models::HashStatus::Error => "错误",
-        };
-        // 对 CSV 中的逗号和引号进行转义
-        let escaped_path = csv_escape(&result.file_path);
-        content.push_str(&format!(
-            "{},{},{},{:.2},{}\n",
-            escaped_path,
-            result.algorithm,
-            result.hash_value,
-            result.elapsed_time,
-            status_str,
+pub async fn export_csv(data: Vec<HashResult>, file_path: String) -> Result<(), String> {
+    let mut csv = String::from("algorithm,file_path,hash_value,elapsed_time,status\n");
+    for r in &data {
+        csv.push_str(&format!(
+            "{},{},{},{},{:?}\n",
+            r.algorithm, r.file_path, r.hash_value, r.elapsed_time, r.status
         ));
     }
-
-    fs::write(path, content.as_bytes())
-        .map_err(|e| format!("写入 CSV 文件失败: {}", e))?;
-
-    Ok(())
+    std::fs::write(&file_path, csv)
+        .map_err(|e| format!("写入 CSV 失败: {} ({})", e, file_path))
 }
 
-/// 导出为 JSON 格式
+/// 导出为 JSON（保留原有行为）
 #[tauri::command]
-pub fn export_json(data: Vec<HashResult>, file_path: String) -> Result<(), String> {
-    if data.is_empty() {
-        return Err("没有数据可导出".to_string());
-    }
-
-    let path = Path::new(&file_path);
+pub async fn export_json(data: Vec<HashResult>, file_path: String) -> Result<(), String> {
     let json = serde_json::to_string_pretty(&data)
         .map_err(|e| format!("序列化 JSON 失败: {}", e))?;
-
-    fs::write(path, json.as_bytes())
-        .map_err(|e| format!("写入 JSON 文件失败: {}", e))?;
-
-    Ok(())
+    std::fs::write(&file_path, json)
+        .map_err(|e| format!("写入 JSON 失败: {} ({})", e, file_path))
 }
 
-/// 生成验证文件
-#[tauri::command]
-pub fn generate_verification_file(
-    file_path: String,
-    algorithm: String,
-    hash_value: String,
-    output_path: String,
-) -> Result<(), String> {
-    let path = Path::new(&file_path);
-    let filename = path
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| "unknown".to_string());
-
-    let content = format!("{}: {}  {}\n", algorithm.to_uppercase(), hash_value, filename);
-
-    let out_path = Path::new(&output_path);
-    fs::write(out_path, content.as_bytes())
-        .map_err(|e| format!("写入验证文件失败: {}", e))?;
-
-    Ok(())
+/// 校验文件导出报告
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VerificationExportReport {
+    /// 成功写入的校验文件路径
+    pub written: Vec<String>,
+    /// 因无可用哈希（错误/空值）而跳过的条目数
+    pub skipped: usize,
+    /// 失败条目（含路径与原因）
+    pub errors: Vec<VerificationExportError>,
 }
 
-// 导入验证文件的解析逻辑已迁移至 `commands::verification_parser`，
-// 此处仅保留导出相关命令。
+/// 单条导出失败
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VerificationExportError {
+    pub path: String,
+    pub message: String,
+}
 
-/// CSV 字段转义：如果包含逗号、引号或换行，用双引号包裹
-fn csv_escape(s: &str) -> String {
-    if s.contains(',') || s.contains('"') || s.contains('\n') || s.contains('\r') {
-        format!("\"{}\"", s.replace('"', "\"\""))
-    } else {
-        s.to_string()
+/// 算法 → 校验文件扩展名（不含点）
+fn algo_ext(algo: HashAlgorithm) -> &'static str {
+    match algo {
+        HashAlgorithm::MD5 => "md5",
+        HashAlgorithm::SHA1 => "sha1",
+        HashAlgorithm::SHA256 => "sha256",
+        HashAlgorithm::SHA512 => "sha512",
+        HashAlgorithm::Crc32 => "sfv",
     }
+}
+
+/// 构造单行校验内容。
+/// - CRC32 → SFV 格式（大写 hex，单空格）：`filename HEX`
+/// - 文件名以 `-` 开头 → BSD 标签格式（避免被 `sha256sum -c` 误判为选项）：`ALGO (filename) = hash`
+/// - 其余 → GNU coreutils 格式（小写 hex，双空格）：`hash  filename`
+fn format_line(algo: HashAlgorithm, hash: &str, filename: &str) -> String {
+    if algo == HashAlgorithm::Crc32 {
+        format!("{} {}\n", filename, hash.to_uppercase())
+    } else if filename.starts_with('-') {
+        format!("{} ({}) = {}\n", algo.as_str().to_uppercase(), filename, hash.to_lowercase())
+    } else {
+        format!("{}  {}\n", hash.to_lowercase(), filename)
+    }
+}
+
+/// 按算法批量生成标准校验文件，写在与源文件同目录、同名（加算法扩展名）。
+///
+/// 例如 `report.pdf` 勾选 MD5+SHA256 → 在同目录生成 `report.pdf.md5`、`report.pdf.sha256`。
+/// CRC32 生成 `.sfv`。写覆盖风险仅限“它自己的旧校验文件”，不会误伤无关文件。
+#[tauri::command]
+pub async fn export_verification_files(
+    data: Vec<HashResult>,
+) -> Result<VerificationExportReport, String> {
+    let mut report = VerificationExportReport {
+        written: Vec::new(),
+        skipped: 0,
+        errors: Vec::new(),
+    };
+
+    // 按源文件路径分组，保证每个源文件只解析一次目录与文件名
+    let mut by_file: HashMap<String, Vec<&HashResult>> = HashMap::new();
+    for r in &data {
+        by_file.entry(r.file_path.clone()).or_default().push(r);
+    }
+
+    for (file_path, results) in by_file {
+        let path = Path::new(&file_path);
+        let parent = match path.parent() {
+            Some(p) if !p.as_os_str().is_empty() => p.to_path_buf(),
+            _ => {
+                report.errors.push(VerificationExportError {
+                    path: file_path.clone(),
+                    message: "无法解析源文件所在目录".to_string(),
+                });
+                continue;
+            }
+        };
+        let basename = match path.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n.to_string(),
+            None => {
+                report.errors.push(VerificationExportError {
+                    path: file_path.clone(),
+                    message: "源文件名包含非法字符".to_string(),
+                });
+                continue;
+            }
+        };
+
+        // 文件名含换行/回车会破坏行式格式，跳过并告警
+        if basename.contains(['\n', '\r']) {
+            report.errors.push(VerificationExportError {
+                path: file_path.clone(),
+                message: "文件名含换行符，无法安全写入校验文件".to_string(),
+            });
+            continue;
+        }
+
+        for r in results {
+            if r.status == HashStatus::Error || r.hash_value.is_empty() {
+                report.skipped += 1;
+                continue;
+            }
+
+            let ext = algo_ext(r.algorithm);
+            let target: PathBuf = parent.join(format!("{}.{}", basename, ext));
+            let content = format_line(r.algorithm, &r.hash_value, &basename);
+
+            match std::fs::write(&target, content) {
+                Ok(()) => report.written.push(target.to_string_lossy().to_string()),
+                Err(e) => report.errors.push(VerificationExportError {
+                    path: target.to_string_lossy().to_string(),
+                    message: format!("写入失败: {}", e),
+                }),
+            }
+        }
+    }
+
+    Ok(report)
 }
