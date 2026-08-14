@@ -4,17 +4,17 @@
 
 ---
 
-## BUG-005: 文件拖放（drag-drop）完全失效 — Tauri 2 拖放事件与全局 preventDefault 竞态
+## BUG-005: 文件拖放（drag-drop）完全失效 — vendor 改动的 wry 删除了原版 OLE 拖放注册机制
 
-- **日期**：2026-08-10
-- **现象**：文件只能通过点击窗口弹出文件选择对话框添加，无法把文件直接拖入窗口加载。
-- **根因分析**：
-  - Tauri 2 的拖放由 **Rust 层接管**（`getCurrentWebview().onDragDropEvent` / `WindowEvent::DragDrop`），与浏览器原生 `drag`/`drop` 事件是两套独立机制。前端 `onDragDropEvent` 注册成功后，Rust 侧 `WindowEvent::DragDrop` 不再派发（**单消费者**）。因此整条拖放链路唯一依赖 `FileList.tsx` 的 `onDragDropEvent` 成功，App.tsx 中监听的 `files-dropped`（Rust 兜底）在前端注册成功后**不会触发**——`.catch` 里"依赖 Rust 兜底"的注释是误导性的。
-  - `App.tsx` 第 77-90 行的 `useEffect` 在**整个 window** 上注册了原生 `dragover`/`drop` 的 `preventDefault`（注释误以为"WebView2 只有 preventDefault 才触发 onDragDropEvent"）。这与 Tauri 拖放机制**竞态**：在 WebView2 下会干扰页面原生 drag 事件，使 `FileList` 基于 `e.dataTransfer.types.includes("Files")` 的 HTML5 拖拽高亮不稳定，并制造两套机制同时处理同一拖放的竞态，导致拖放实际无效。
-  - 修复：移除全局 `preventDefault`，改为仅阻止"非文件拖放"（拖入图片/链接）被浏览器直接打开；明确 Tauri 拖放数据来自 `onDragDropEvent(payload.paths)`。
-- **影响**：拖放功能不可用，只能走文件选择对话框。
-- **状态**：resolved（移除冲突的全局 preventDefault；capabilities 中 `core:default` 已含 `core:webview:allow-on-drag-drop-event`，权限充足；`onDragDropEvent` 链路 `paths → processPaths → addFiles` 完整可用）
-- **验证建议**：`tauri dev` 运行后拖入文件，观察 `FileList.tsx` 第 95 行 `[drag-drop]` 日志；若仍无日志，检查 webview 构建是否带 drag-drop 支持（`tauri.conf.json` 中 `app.windows[].dragDropEnabled` 必须为 true，当前已为 true）。
+- **日期**：2026-08-10 发现，2026-08-14 收口
+- **现象**：无法将文件从资源管理器直接拖入 Tauri 无边框窗口加入哈希校验列表，只能走"打开文件"对话框。拖入时无高亮、无日志、列表无新增。
+- **根因分析（最终）**：
+  - 本地对 `wry 0.55.1` 做了 vendor 改动（`[patch.crates-io]` 指向 `src-tauri/vendor/wry`），删掉了 wry 原版"枚举 WebView2 子窗口注册 `IDropTarget`"的机制，替换为 container/root 注册 + 延迟重注册 + `WM_TIMER` 自愈方案。这套改动本身破坏了拖放：wry 注入的 OLE `IDropTarget` 根本没触发，JS `onDragDropEvent` 与 Rust `on_window_event(DragDrop)` 都收不到事件。
+  - 同技术栈、同 wry 版本、使用 registry 原版的 AIVault 全程拖拽正常，即铁证。修复 = 移除 `[patch.crates-io]`、wry 回归 registry 原版（Cargo.lock 的 wry 段回到 `source=registry+...` + checksum）。
+- **排查脉络（曾误判，均已推翻）**：根因历经四轮翻转——① 误判"全局 `preventDefault` 与 Tauri 拖放竞态 / 单消费者"；② 误判"DOM `drag*` 监听接管 WebView2 拖放链"；③ 误判"`data-tauri-drag-region` 与 wry OLE 拖放平台冲突"。三者均有同项目/同栈实证支撑，但都只是必要条件（必要非充分），最终经**同栈对照（ErgeMD/AIVault）** 收敛到 vendor wry 改动这一唯一实质差异。中间结论详见下方「拖放经验提炼」E8~E11。
+- **影响**：文件拖放核心功能不可用（P1）。
+- **状态**：resolved（2026-08-14 移除 vendor patch、wry 回归 registry 原版 0.55.1，`cargo check` 通过；2026-08-14 用户实测 `pnpm run tauri dev` 拖放正常）。
+- **验证**：拖入文件后 `FileList.tsx` 的 `onDragDropEvent` 收到 `type=enter/over/drop`，文件进入列表；代码库无 DOM `drag*` 监听、无 `data-tauri-drag-region`。
 
 ---
 
@@ -60,7 +60,7 @@
 
 ---
 
-## BUG-005: 自绘标题栏后窗口无法拖拽移动 — capabilities 缺少窗口操作权限
+## BUG-007: 自绘标题栏后窗口无法拖拽移动 — capabilities 缺少窗口操作权限
 
 - **日期**：2026-08-10
 - **现象**：适配自定义标题栏（`decorations: false` + `data-tauri-drag-region`）后，窗口能正常显示，但拖拽标题栏无法移动窗口；最小化/最大化/关闭按钮也无效。
@@ -107,13 +107,14 @@
 ### E3. Tauri 2 capabilities 是白名单制，权限缺失会静默失效
 - `data-tauri-drag-region` 与 `window.minimize()/close()/setSize()`、`onDragDropEvent` 等均需 `capabilities/default.json` 显式授权；缺失时**不报错但无效**，难定位。
 - 自绘标题栏（`decorations:false`）必须配置 `core:window:allow-start-dragging` / `allow-minimize` / `allow-toggle-maximize` / `allow-is-maximized` / `allow-close` / `allow-set-size` / `allow-set-position` / `allow-show`；`core:default` 已含 drag-drop 权限。
-- 来源：BUG-005b。
+- 来源：BUG-007（窗口移动权限，含 `data-tauri-drag-region` 底层 `start_dragging` 授权）。
 - 规范落点：`design-system.md` §二之二。
 
-### E4. Tauri 2 拖放：Rust 层接管，全局 preventDefault 会与拖放竞态
-- 拖放数据唯一来源是 `getCurrentWebview().onDragDropEvent(payload.paths)`；前端注册后 Rust 侧 `WindowEvent::DragDrop` 不再派发（单消费者）。
-- 不要在 `window` 上对 `drop`/`dragover` 全局 `preventDefault`（仅阻止非文件拖放被浏览器打开即可），否则干扰 HTML5 拖拽高亮并制造竞态。
-- 来源：BUG-005。
+### E4. Tauri 2 拖放：禁止任何 DOM drag* 监听
+- 拖放数据唯一来源是 `getCurrentWebview().onDragDropEvent(payload.paths)`；**禁止**任何 DOM `drag*` 监听（含 window 级 `dragover`/`drop` 与组件根 div 的 `onDragEnter/Over/Leave/Drop`）——注册即接管 WebView2 拖放链，使 Tauri 原生事件完全失效（ErgeMD 实证）。
+- 早期"全局 `preventDefault` 与拖放竞态 / 单消费者"论断已证伪；正确做法是彻底不写 DOM drag* 监听，高亮由 Tauri `enter/over/leave` 驱动。
+- 完整实现指南 / 陷阱清单 / 排查 SOP 见 E8~E11（BUG-005 终章资产）。
+- 来源：BUG-005（终章更正）。
 - 规范落点：`design-system.md` 交互约束条款 8（已存在）。
 
 ### E5. 可视化组件不要内联手写，统一用 components/ui 抽象
@@ -129,3 +130,50 @@
 ### E7. 重大视觉重构先看 git 历史与原组件，不要无脑覆盖
 - 顶栏"不见了"曾误判为新增 TitleBar 问题，实际指向历史 `Header.tsx`；视觉问题优先 `git log` + `git show <commit>:path` 反推，而非在当前错误基础上改。
 - 来源：已知坑（写入 MEMORY.md）。
+
+### E8. Tauri 2 文件拖放：同栈实现指南（BUG-005 终章资产）
+> ErgeMD / AIVault 双项目实证，直接照抄。
+1. **唯一事件入口**：`getCurrentWebview().onDragDropEvent`，路径来自 `event.payload.paths`（OS 绝对路径）。Rust `WindowEvent::DragDrop` 与 JS 同源派发，任选其一消费。
+2. **自绘标题栏拖拽**：`onMouseDown`（仅左键）+ `getCurrentWindow().startDragging()`。**禁用** `data-tauri-drag-region`。
+3. **配置**：`tauri.conf.json` 窗口 `dragDropEnabled: true`。
+4. **权限**：capabilities 用 `core:default`（含 `core:webview:allow-on-drag-drop-event`）；窗口操作（start-dragging/minimize/toggle-maximize/close 等）需显式授权，否则静默失效。
+5. **拖拽高亮**：由 `onDragDropEvent` 的 `enter/over/leave` 驱动，不依赖 HTML5 drag。
+6. **保持底层库为 registry 原版**：禁止 vendor/patch 修改 wry / tauri-runtime-wry。
+
+### E9. 拖放失效陷阱清单（BUG-005 终章资产）
+| 陷阱 | 现象 | 规避 |
+| --- | --- | --- |
+| DOM `drag*` 监听（含 window 级、`onDragEnter/Over/Leave/Drop`） | `onDragDropEvent` 注册成功但 enter/over/drop 全不来 | 代码库一处不留；高亮改由 Tauri 事件驱动 |
+| `data-tauri-drag-region` | Windows 下与 wry OLE 文件拖放冲突，全窗口失效 | 一律 `onMouseDown + startDragging()` |
+| capabilities 权限缺失 | 属性/API 被静默忽略、无报错 | `core:default` + 显式窗口权限 |
+| vendor/patch 底层库（wry） | 破坏原版"枚举子窗口注册 IDropTarget"机制，拖放全失效 | 保持 registry 原版；疑底层先做同栈对照 |
+| 对 WebView2 子窗口用陈旧句柄延迟注册 | `0xC0000005` 崩溃 + CrashSender.exe | 永不缓存 WebView2 子窗口句柄（异步重建）；延迟注册必须新鲜枚举 |
+| 对同一 hwnd 先 Revoke 再 Register | Windows COM DragDrop 极脆弱，可能 abort | 重注册只 `RegisterDragDrop` 不 `Revoke` |
+| 依赖"降级 wry / 删 visible:false" | 均非根因，白折腾 | `visible:false` 不影响拖放（AIVault 实证） |
+| 构建产物陈旧 | `pnpm run build` 后 UI 无变化 | 先查 dist 时间戳，`tauri dev` 走 vite 实时源码 |
+
+### E10. 拖放排查 SOP（BUG-005 终章资产，按顺序执行）
+1. **先分"事件没到" vs "前端没接住"**：`onDragDropEvent` 注册成功但无 `type` 日志 → 原生层（OLE/底层库）；有 `type` 但无文件 → 前端逻辑。
+2. **同栈对照（最高效）**：找同机、同技术栈、同 wry 版本项目（ErgeMD/AIVault）实测拖拽是否正常。正常 → 差异必在本项目独有项（配置/前端/Rust/**vendor patch**）；也失效 → 才考虑环境级（WebView2、OS）。
+3. **读源码确认派发路径**：`tauri-runtime-wry` 的 `with_drag_drop_handler`（`lib.rs` 约 4669-4704 行）经 `proxy.send_event(SynthesizedWindowEvent::DragDrop)` 同源派发 JS 与 Rust；两者都无日志 ⇒ OLE `IDropTarget` 没触发，别耗在前端/权限。
+4. **排查优先级**：DOM `drag*` 监听 → `data-tauri-drag-region` → capabilities 权限 → `dragDropEnabled` → Cargo.lock 本地 patch/vendor → 最后才考虑底层库本身。
+5. **每步定义"如何判断改对"**：无桌面能力时靠日志埋点（注册日志 + type 日志 + Rust 侧日志）分层，避免无验证连改多处。
+6. **不要凭推断改底层库**：怀疑 wry/tauri 缺陷前，先排除项目自身全部独有差异；改 vendor 越改越坏，且污染对照基线。
+
+### E11. 跨项目教训：对照基线 > 独立推断（BUG-005 终章资产）
+1. **对照基线 > 独立推断**：拖放失效第一件事是同栈项目跑一遍，而非源码猜。AIVault"恢复拖拽"一条情报价值超过此前全部四轮源码分析。
+2. **底层库改动 = 最后手段**：vendor/patch 上游 crate 破坏对照可比性；仅"原版方案被证伪"才允许动底层，且必须保留回退路径。
+3. **中间结论标注置信度**：错误假设常"有源码/文档依据"但只是必要条件；单项目经验（ErgeMD 的 DOM 监听根因）不可直接外推为另一项目的根因。
+4. **用户的环境情报是指路明灯**："AIVault 拖拽恢复正常"同时排除 WebView2/OS/wry 版本等环境假设，把差异收敛到本项目独有项。
+
+---
+
+## 拖放铁律修订版（2026-08-14 晚，替代文首 08-13 版）
+
+- 文件拖放**唯一**允许 `getCurrentWebview().onDragDropEvent`，路径来自 `event.payload.paths`。
+- **禁止**任何 DOM `drag*` 监听（组件根 div 与 window 级均禁止）；注册即接管 WebView2 拖放链（ErgeMD 实证）。
+- **禁止** `data-tauri-drag-region`；标题栏用 `onMouseDown + getCurrentWindow().startDragging()`（ErgeMD/AIVault 双实证）。
+- 拖拽高亮由 Tauri `enter/over/leave` 驱动，不依赖 HTML5 drag。
+- **保持 wry / tauri-runtime-wry 为 registry 原版，禁止 vendor 修改**（BUG-005 终章核心教训）。
+- `visible:false`、wry 版本降级均**不影响**拖放（AIVault 实证），不要再当候选修复。
+- 排查时优先同栈对照（ErgeMD/AIVault），差异收敛后再考虑动项目自身代码。

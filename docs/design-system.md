@@ -338,7 +338,7 @@ MainLayout (h-screen w-screen, flex-col, overflow-hidden)
   - 颜色索引 `colorIndex = (groupId - 1) % 5`，经 `GROUP_COLOR_CLASSES` 常量集中管理，**禁止业务内联硬编色**。
 - **着色位置**：仅对**文件列表区的父行文件名**上色（`group ? group.colorClass : "text-foreground"`）；子结果行（算法/哈希/时间）保持中性 `text-foreground/80`、`text-muted-foreground`，不参与分组着色，避免视觉过载。
 - **唯一文件**：`map` 中未命中的文件使用 `--foreground`（默认前景色），与普通文件一致，不做任何强调。
-- **可访问性 + 信息**：着色文件名 `title` 提示「第 N 组 · 算法: 哈希共钥」，鼠标悬停可读出归属组与共同哈希；状态栏（`StatusReportBar`）用 `duplicate_hash_files` / `unique_files` 文案汇总"N 组文件哈希值相同 · M 个唯一文件"。
+- **可访问性 + 信息**：着色文件名 `title` 提示「第 N 组 · 算法: 哈希共钥」，鼠标悬停可读出归属组与共同哈希；状态栏（`StatusReportBar`）以中性 token 汇总 `相同 N 组` / `唯一 M`（键 `dup_groups` / `unique_count`），右侧以状态色汇总 `匹配 / 不匹配 / 错误 / 未验证` 计数（始终展示含 0）。
 - **一致性约束**：该范式同时服务于文件列表区与状态栏的结论陈述；`text-group-*` 工具类必须在 `index.css` 显式映射（自定义 CSS 变量体系下 `/N` 修饰符与默认 Tailwind 不会自动解析，见 §二之一）。
 
 ### 3.10 可视化组件范式（可复用）

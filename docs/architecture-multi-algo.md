@@ -10,7 +10,7 @@
 
 ```
 React 前端 (tauri-app/src/)
-  ├── App.tsx              # 拖放入口、全局布局、监听 files-dropped / batch-* 事件
+  ├── App.tsx              # 全局布局、监听 batch-* 等事件（拖放由 FileList.tsx 的 onDragDropEvent 处理）
   ├── store/appStore.ts    # fileList / expectedHash / lastResults / progress / 控制命令
   ├── components/
   │    ├── FileList.tsx    # 文件列表展示（单 hashValue/status 字段）
