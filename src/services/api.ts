@@ -8,6 +8,7 @@ import type {
   HistoryEntry,
   AppConfig,
   VerificationParseReport,
+  VerificationExportReport,
   FileItem,
 } from "./types";
 
@@ -91,19 +92,11 @@ export async function exportJson(
   return invoke("export_json", { data, filePath });
 }
 
-/** 生成验证文件 */
-export async function generateVerificationFile(
-  filePath: string,
-  algorithm: HashAlgorithm,
-  hashValue: string,
-  outputPath: string,
-): Promise<void> {
-  return invoke("generate_verification_file", {
-    filePath,
-    algorithm,
-    hashValue,
-    outputPath,
-  });
+/** 按算法批量生成标准校验文件（写在与源文件同目录、同名加扩展名） */
+export async function exportVerificationFiles(
+  data: HashResult[],
+): Promise<VerificationExportReport> {
+  return invoke<VerificationExportReport>("export_verification_files", { data });
 }
 
 /** 导入验证文件（返回结构化解析报告，含告警与未识别行） */

@@ -104,6 +104,22 @@ export interface VerificationParseReport {
   truncated: boolean;
 }
 
+/** 校验文件批量导出报告：按算法在每个源文件同目录生成同名（加扩展名）校验文件 */
+export interface VerificationExportReport {
+  /** 成功写入的校验文件路径列表 */
+  written: string[];
+  /** 因无可用哈希（错误 / 空值）而跳过的条目数 */
+  skipped: number;
+  /** 失败条目（含路径与原因） */
+  errors: VerificationExportError[];
+}
+
+/** 单条导出失败 */
+export interface VerificationExportError {
+  path: string;
+  message: string;
+}
+
 /** 文件列表项状态：computed=已计算但未验证, success=验证匹配, mismatch=验证不匹配, error=计算出错, undefined=未计算 */
 export type FileItemStatus = "computed" | "success" | "mismatch" | "error" | undefined;
 
