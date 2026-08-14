@@ -71,5 +71,8 @@ src-tauri/*.log
 # CodeBuddy agent internal data
 .codebuddy/
 
+# CodeGraph local index cache (per-machine)
+.codegraph/
+
 # Node tool cache
 _nm_tmp/
