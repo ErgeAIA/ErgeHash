@@ -3,6 +3,7 @@ import type { ChangeEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useAppStore } from "@/store/appStore";
 import type { HashAlgorithm } from "@/services/types";
 
@@ -74,13 +75,16 @@ export function HashVerification() {
         />
         {/* 有内容时显示的清空按钮 */}
         {expectedHash.trim() && (
-          <button
-            className="absolute right-2 top-2 rounded-full bg-muted p-1 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
-            onClick={() => setExpectedHash("")}
-            title={t("clear")}
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
+          <Tooltip label={t("clear")}>
+            <button
+              type="button"
+              aria-label={t("clear")}
+              className="absolute right-2 top-2 rounded-full bg-muted p-1 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
+              onClick={() => setExpectedHash("")}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </Tooltip>
         )}
       </div>
 

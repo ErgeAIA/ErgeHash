@@ -18,7 +18,9 @@ import { useAppStore } from "@/store/appStore";
 import { useToastStore } from "@/store/toastStore";
 import { openFileDialog, openFolderDialog, scanDirectory } from "@/services/api";
 import { cn } from "@/lib/utils";
+import { handleDroppedPaths } from "@/lib/dropHandler";
 import { SHORTCUT_BINDINGS, formatShortcut, type CommandId } from "@/lib/shortcuts";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 /** 自绘顶栏：横跨整个窗口顶部，与左侧 NavRail 同色一体
  *
@@ -41,8 +43,8 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
   const [showMenu, setShowMenu] = useState(false);
   const menuWrapperRef = useRef<HTMLDivElement>(null);
   const menuPanelRef = useRef<HTMLDivElement>(null);
+  const lastClickTimeRef = useRef<number>(0);
 
-  const addFiles = useAppStore((s) => s.addFiles);
   const copyResult = useAppStore((s) => s.copyResult);
   const addToast = useToastStore((s) => s.addToast);
   const theme = useAppStore((s) => s.theme);
@@ -95,6 +97,20 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
   const handleToggleMaximize = () => getCurrentWindow().toggleMaximize();
   const handleClose = () => getCurrentWindow().close();
 
+  // 手动实现无边框窗口拖拽，避免 data-tauri-drag-region 与文件拖放冲突。
+  // BUG-005 根因：ErgeMD 使用同样方式拖拽正常；data-tauri-drag-region 会吞掉全窗口文件拖放事件。
+  const handleDragMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const now = Date.now();
+    if (now - lastClickTimeRef.current < 300) {
+      lastClickTimeRef.current = 0;
+      void getCurrentWindow().toggleMaximize();
+      return;
+    }
+    lastClickTimeRef.current = now;
+    void getCurrentWindow().startDragging();
+  };
+
   /** 执行菜单项动作并关闭菜单 */
   const runAction = async (action: () => unknown) => {
     setShowMenu(false);
@@ -108,13 +124,13 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
   /* 菜单动作 */
   const openFile = async () => {
     const files = await openFileDialog();
-    if (files && files.length > 0) addFiles(files);
+    if (files && files.length > 0) handleDroppedPaths(files, t);
   };
   const openFolder = async () => {
     const folder = await openFolderDialog();
     if (!folder) return;
     const files = await scanDirectory(folder);
-    if (files.length > 0) addFiles(files);
+    if (files.length > 0) handleDroppedPaths(files, t);
   };
   const copyHash = async () => {
     const ok = await copyResult();
@@ -168,21 +184,22 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
       className="titlebar-no-press flex h-[40px] w-full shrink-0 select-none items-center bg-sidebar text-foreground"
     >
       {/* 左侧：菜单按钮 + 折叠按钮 */}
-      <div className="flex h-full items-center" data-tauri-drag-region="false">
+      <div className="flex h-full items-center">
         <div className="relative h-full" ref={menuWrapperRef}>
-          <button
-            type="button"
-            title={t("menu_file")}
-            onClick={() => setShowMenu((v) => !v)}
-            className="flex h-full w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
-          >
-            <Menu size={18} />
-          </button>
+          <Tooltip label={t("menu_file")}>
+            <button
+              type="button"
+              aria-label={t("menu_file")}
+              onClick={() => setShowMenu((v) => !v)}
+              className="flex h-[40px] w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
+            >
+              <Menu size={18} />
+            </button>
+          </Tooltip>
           {showMenu && (
             <div
               ref={menuPanelRef}
               tabIndex={-1}
-              data-tauri-drag-region="false"
               className="menu-panel absolute left-2 top-full z-50 mt-1 min-w-[220px] rounded-[var(--radius)] border border-border bg-card p-1 shadow-lg outline-none"
               onBlur={(e) => {
                 if (!menuWrapperRef.current?.contains(e.relatedTarget as Node)) {
@@ -229,82 +246,93 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
           )}
         </div>
         {/* 折叠侧栏按钮：在 ☰ 菜单右侧 */}
-        <button
-          type="button"
-          title={collapsed ? t("expand_sidebar") : t("collapse_sidebar")}
-          onClick={onToggleCollapsed}
-          className="flex h-full w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
+        <Tooltip label={collapsed ? t("expand_sidebar") : t("collapse_sidebar")}>
+          <button
+            type="button"
+            aria-label={collapsed ? t("expand_sidebar") : t("collapse_sidebar")}
+            onClick={onToggleCollapsed}
+            className="flex h-[40px] w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
           >
-          {collapsed ? <PanelRightOpen size={16} /> : <PanelLeftClose size={16} />}
-        </button>
+            {collapsed ? <PanelRightOpen size={16} /> : <PanelLeftClose size={16} />}
+          </button>
+        </Tooltip>
 
       </div>
 
       {/* 中间：窗口拖拽区 */}
-      <div className="h-full flex-1" data-tauri-drag-region />
+      <div className="h-full flex-1" onMouseDown={handleDragMouseDown} />
 
       {/* 右侧：历史 / 主题 / 语言（仅图标） + 窗口控制 */}
-      <div
-        className="flex h-full items-center"
-        data-tauri-drag-region="false"
-      >
-        <button
-          type="button"
-          title={t("history")}
-          onClick={() => window.dispatchEvent(new CustomEvent("show-history"))}
-          className="flex h-full w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
+      <div className="flex h-full items-center">
+        <Tooltip label={t("history")}>
+          <button
+            type="button"
+            aria-label={t("history")}
+            onClick={() => window.dispatchEvent(new CustomEvent("show-history"))}
+            className="flex h-[40px] w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
           >
-          <History size={16} />
-        </button>
+            <History size={16} />
+          </button>
+        </Tooltip>
 
         {/* 主题切换 */}
-        <button
-          type="button"
-          title={theme === "light" ? t("dark_mode") : t("light_mode")}
-          onClick={toggleTheme}
-          className="flex h-full w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
+        <Tooltip label={theme === "light" ? t("dark_mode") : t("light_mode")}>
+          <button
+            type="button"
+            aria-label={theme === "light" ? t("dark_mode") : t("light_mode")}
+            onClick={toggleTheme}
+            className="flex h-[40px] w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
           >
-          {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
-        </button>
+            {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+          </button>
+        </Tooltip>
 
         {/* 语言切换 */}
-        <button
-          type="button"
-          title={t("language")}
-          onClick={toggleLanguage}
-          className="flex h-full w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
+        <Tooltip label={t("language")}>
+          <button
+            type="button"
+            aria-label={t("language")}
+            onClick={toggleLanguage}
+            className="flex h-[40px] w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
           >
-          <Globe size={16} />
-        </button>
+            <Globe size={16} />
+          </button>
+        </Tooltip>
 
         {/* 窗口控制 */}
         <div className="ml-1 flex h-full items-center">
-        <button
-          type="button"
-          title={t("minimize")}
-          onClick={handleMinimize}
-          className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
-        >
-          <Minus size={14} />
-        </button>
-        <button
-          type="button"
-          title={maximized ? t("restore") : t("maximize")}
-          onClick={handleToggleMaximize}
-          className="flex h-full w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
-        >
-          {maximized ? <Maximize2 size={14} /> : <Square size={13} />}
-        </button>
-        <button
-          type="button"
-          title={t("close")}
-          onClick={handleClose}
-          className={cn(
-            "close-btn flex h-full w-10 items-center justify-center transition-colors",
-          )}
-        >
-          <X size={16} />
-        </button>
+        <Tooltip label={t("minimize")}>
+          <button
+            type="button"
+            aria-label={t("minimize")}
+            onClick={handleMinimize}
+            className="flex h-[40px] w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
+          >
+            <Minus size={14} />
+          </button>
+        </Tooltip>
+        <Tooltip label={maximized ? t("restore") : t("maximize")}>
+          <button
+            type="button"
+            aria-label={maximized ? t("restore") : t("maximize")}
+            onClick={handleToggleMaximize}
+            className="flex h-[40px] w-10 items-center justify-center text-foreground transition-colors hover:bg-foreground/20"
+          >
+            {maximized ? <Maximize2 size={14} /> : <Square size={13} />}
+          </button>
+        </Tooltip>
+        <Tooltip label={t("close")}>
+          <button
+            type="button"
+            aria-label={t("close")}
+            onClick={handleClose}
+            className={cn(
+              "close-btn flex h-[40px] w-10 items-center justify-center transition-colors",
+            )}
+          >
+            <X size={16} />
+          </button>
+        </Tooltip>
         </div>
       </div>
     </div>

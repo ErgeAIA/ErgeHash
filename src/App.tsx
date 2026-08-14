@@ -3,15 +3,13 @@ import { useTranslation } from "react-i18next";
 import { useAppStore } from "./store/appStore";
 import {
   getConfig,
-  setConfig,
   clearHistory as apiClearHistory,
   addHistory,
   openFileDialog,
   importVerificationFile,
 } from "./services/api";
 import { onHashProgress, onBatchProgress, onBatchFileComplete, onBatchComplete } from "./services/api";
-import { getCurrentWindow, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
-import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { showImportFeedback } from "@/lib/importFeedback";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { MainLayout } from "./components/layout/MainLayout";
 import { NavRail } from "./components/layout/NavRail";
@@ -58,7 +56,6 @@ function App() {
   const updateFileResult = useAppStore((s) => s.updateFileResult);
   const setBytesRead = useAppStore((s) => s.setBytesRead);
   const setTotalBytes = useAppStore((s) => s.setTotalBytes);
-  const addFiles = useAppStore((s) => s.addFiles);
 
   // 对话框状态
   const [showHistory, setShowHistory] = useState(false);
@@ -87,27 +84,12 @@ function App() {
     return () => window.removeEventListener("toggle-sidebar", onToggle);
   }, [toggleSidebar]);
 
-  // 重要：Tauri 2 的文件拖放由 Rust 层接管（onDragDropEvent / WindowEvent::DragDrop），
-  // 与浏览器原生 drag/drop 事件是两套独立机制。前端 onDragDropEvent 注册成功后，
-  // Rust 侧 WindowEvent::DragDrop 不再派发（单消费者机制）。
-  // 因此**不要**在全局对 drop/dragover 做 preventDefault 来"辅助"拖放——这会：
-  //   1. 与 Tauri 拖放事件竞态，干扰 FileList 中基于 HTML5 drag 事件的拖拽高亮；
-  //   2. 在 WebView2 下可能吞掉原生事件，使 React 的 onDragEnter/Leave 高亮不稳定。
-  // 拖放的真实数据来源是 FileList.tsx 中的 getCurrentWebview().onDragDropEvent(payload.paths)。
-  useEffect(() => {
-    // 仅阻止"非文件拖放"（如拖入图片/链接）被浏览器直接打开，绝不影响文件拖放。
-    const preventNonFileDrop = (e: DragEvent) => {
-      if (e.dataTransfer && !Array.from(e.dataTransfer.types).includes("Files")) {
-        e.preventDefault();
-      }
-    };
-    window.addEventListener("dragover", preventNonFileDrop);
-    window.addEventListener("drop", preventNonFileDrop);
-    return () => {
-      window.removeEventListener("dragover", preventNonFileDrop);
-      window.removeEventListener("drop", preventNonFileDrop);
-    };
-  }, []);
+  // 重要（根因，见 docs/.AI/debug-log.md BUG-005）：Tauri 无边框窗口中**禁止任何 DOM drag
+  // 事件监听**（onDragEnter/Over/Leave/Drop，含 window 级），否则会接管 WebView2 的拖放事件链，
+  // 导致 Tauri 原生 onDragDropEvent 完全收不到事件（注册成功但 enter/over/drop 全不来）。
+  // 同技术栈项目 ErgeMD/.trae/documents/.ai/ERROR_LOG.md 第十四条实证此规则。
+  // 因此这里**不**注册任何全局 dragover/drop 监听；拖放高亮与真实路径全部由 FileList.tsx
+  // 的 getCurrentWebview().onDragDropEvent 驱动。非文件拖放（图片/链接）交由 WebView2 默认处理即可。
 
   // 注册全局快捷键
   useKeyboardShortcuts();
@@ -129,23 +111,6 @@ function App() {
         }
         if (typeof config.animations === "boolean") {
           useAppStore.setState({ animations: config.animations });
-        }
-
-        // 恢复窗口几何
-        if (config.windowGeometry) {
-          try {
-            const g = JSON.parse(config.windowGeometry) as {
-              x: number;
-              y: number;
-              width: number;
-              height: number;
-            };
-            const win = getCurrentWindow();
-            await win.setPosition(new PhysicalPosition(g.x, g.y));
-            await win.setSize(new PhysicalSize(g.width, g.height));
-          } catch {
-            // 几何数据无效时忽略
-          }
         }
       } catch {
         // 后端尚未就绪时忽略错误
@@ -174,38 +139,6 @@ function App() {
   useEffect(() => {
     document.documentElement.classList.toggle("animations-off", !animations);
   }, [animations]);
-
-  // 窗口关闭时保存几何信息
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-    getCurrentWindow()
-      .onCloseRequested(async (event) => {
-        event.preventDefault();
-        try {
-          const win = getCurrentWindow();
-          const pos = await win.outerPosition();
-          const size = await win.outerSize();
-          await setConfig(
-            "windowGeometry",
-            JSON.stringify({
-              x: pos.x,
-              y: pos.y,
-              width: size.width,
-              height: size.height,
-            }),
-          );
-        } catch {
-          // 保存失败仍继续关闭
-        }
-        await getCurrentWindow().destroy();
-      })
-      .then((fn) => {
-        unlisten = fn;
-      });
-    return () => {
-      unlisten?.();
-    };
-  }, []);
 
   // 注册 Tauri 事件监听
   useEffect(() => {
@@ -298,18 +231,6 @@ function App() {
         }),
       );
 
-      // Rust 侧文件拖放兜底（on_window_event 转发）
-      unlisteners.push(
-        await getCurrentWebview().listen<string[]>("files-dropped", (e) => {
-          const paths = e.payload;
-          if (paths && paths.length > 0) {
-            addFiles(paths);
-            if (useAppStore.getState().autoCalculate) {
-              void useAppStore.getState().startValidation();
-            }
-          }
-        }),
-      );
     }
 
     setupListeners();
@@ -327,7 +248,6 @@ function App() {
     updateFileResult,
     setBytesRead,
     setTotalBytes,
-    addFiles,
   ]);
 
   /** 确认清空历史记录 */
@@ -352,31 +272,8 @@ function App() {
       if (!paths || paths.length === 0) return;
       try {
         const report = await importVerificationFile(paths[0]);
-        if (report.entries.length === 0) {
-          const msg =
-            report.unrecognized.length > 0
-              ? t("import_unrecognized", { count: report.unrecognized.length })
-              : t("import_error");
-          setStatusMessage(msg);
-          addToast("error", msg);
-          return;
-        }
-        setImportedEntries(report);
-        if (report.truncated || report.warnings.length > 0) {
-          const msg = t("import_partial", {
-            count: report.entries.length,
-            warns: report.warnings.length,
-            unrecognized: report.unrecognized.length,
-          });
-          setStatusMessage(msg);
-          addToast("warning", msg);
-        } else {
-          const msg = t("import_success", { count: report.entries.length });
-          setStatusMessage(msg);
-          addToast("success", msg);
-        }
+        showImportFeedback(report, { setImportedEntries, addToast, setStatusMessage, t });
       } catch {
-        setStatusMessage(t("import_error"));
         addToast("error", t("import_error"));
       }
     };

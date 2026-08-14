@@ -3,6 +3,8 @@ import { useAppStore } from "@/store/appStore";
 import { useToastStore } from "@/store/toastStore";
 import { openFileDialog, openFolderDialog, scanDirectory } from "@/services/api";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { handleDroppedPaths } from "@/lib/dropHandler";
+import i18n from "@/i18n";
 import {
   SHORTCUT_BINDINGS,
   matchShortcut,
@@ -21,19 +23,18 @@ import {
  */
 export function useKeyboardShortcuts() {
   useEffect(() => {
-    const addFiles = useAppStore.getState().addFiles;
     const addToast = useToastStore.getState().addToast;
 
     const openFile = async () => {
       const files = await openFileDialog();
-      if (files && files.length > 0) addFiles(files);
+      if (files && files.length > 0) handleDroppedPaths(files, i18n.t);
     };
 
     const openFolder = async () => {
       const folder = await openFolderDialog();
       if (!folder) return;
       const files = await scanDirectory(folder);
-      if (files.length > 0) addFiles(files);
+      if (files.length > 0) handleDroppedPaths(files, i18n.t);
     };
 
     const copyHash = async () => {

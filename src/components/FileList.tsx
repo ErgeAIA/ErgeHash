@@ -1,19 +1,20 @@
-import { useEffect, useLayoutEffect, useState, useCallback, useRef, useMemo, type DragEvent } from "react";
+import { useEffect, useLayoutEffect, useState, useCallback, useRef, useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { X, Copy, Hash, FileSearch } from "lucide-react";
+import { X, Copy, Hash, FileSearch, ChevronDown, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
-import type { FileResult } from "@/services/types";
-import { scanDirectory, openFileDialog } from "@/services/api";
+import type { FileResult, VerificationEntry } from "@/services/types";
+import { openFileDialog } from "@/services/api";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { cn } from "@/lib/utils";
 import { buildFileGroups } from "@/lib/fileGroups";
+import { handleDroppedPaths } from "@/lib/dropHandler";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 /** 文件拖放列表组件，对应原始 DragDropFileListWidget */
 export function FileList({ className }: { className?: string }) {
   const { t } = useTranslation();
   const fileList = useAppStore((s) => s.fileList);
-  const addFiles = useAppStore((s) => s.addFiles);
   const removeFile = useAppStore((s) => s.removeFile);
 
   /* 拖拽高亮状态 */
@@ -28,6 +29,78 @@ export function FileList({ className }: { className?: string }) {
 
   /* 阻止右键菜单关闭的 ref */
   const menuRef = useRef<HTMLDivElement>(null);
+
+  /* 校验文件折叠状态：被折叠的 verification 文件 path 集合；默认全部折叠 */
+  const [collapsedVfs, setCollapsedVfs] = useState<Set<string>>(() =>
+    new Set(fileList.filter((f) => f.role === "verification").map((f) => f.path)),
+  );
+
+  // 新拖入的校验文件自动加入折叠集合（默认折叠）
+  useEffect(() => {
+    setCollapsedVfs((prev) => {
+      const next = new Set(prev);
+      let changed = false;
+      for (const f of fileList) {
+        if (f.role === "verification" && f.entries && f.entries.length > 0 && !next.has(f.path)) {
+          next.add(f.path);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [fileList]);
+
+  /** 切换校验文件折叠状态 */
+  const toggleVf = useCallback((path: string) => {
+    setCollapsedVfs((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  }, []);
+
+  /* 文件列表滚动状态与滚动提示 */
+  const listScrollRef = useRef<HTMLUListElement>(null);
+  const [scrollState, setScrollState] = useState<{
+    canScrollUp: boolean;
+    canScrollDown: boolean;
+  }>({ canScrollUp: false, canScrollDown: false });
+
+  /** 计算当前滚动容器的可滚动方向 */
+  const updateScrollState = useCallback(() => {
+    const el = listScrollRef.current;
+    if (!el) return;
+    const canUp = el.scrollTop > 1;
+    const canDown = el.scrollHeight - el.clientHeight - el.scrollTop > 1;
+    setScrollState({ canScrollUp: canUp, canScrollDown: canDown });
+  }, []);
+
+  /** 平滑滚动到顶部或底部 */
+  const scrollToEdge = useCallback(
+    (direction: "up" | "down") => {
+      const el = listScrollRef.current;
+      if (!el) return;
+      el.scrollTo({
+        top: direction === "up" ? 0 : el.scrollHeight,
+        behavior: "smooth",
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const el = listScrollRef.current;
+    if (!el) return;
+    updateScrollState();
+    el.addEventListener("scroll", updateScrollState, { passive: true });
+    const ro = new ResizeObserver(updateScrollState);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", updateScrollState);
+      ro.disconnect();
+    };
+  }, [updateScrollState, fileList.length]);
 
   /** 右键菜单边界检测：确保不超出窗口可视区域 */
   useLayoutEffect(() => {
@@ -54,70 +127,30 @@ export function FileList({ className }: { className?: string }) {
     menu.focus();
   }, [contextMenu]);
 
-  /** 处理拖拽进入 */
-  const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.dataTransfer.types.includes("Files")) {
-      setIsDragOver(true);
-    }
-  }, []);
-
-  /** 处理拖拽悬停 */
-  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  /** 处理拖拽离开 */
-  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-  }, []);
-
-  /** 处理文件放置（HTML5 事件仅阻止默认行为；真实路径由 Tauri onDragDropEvent 提供） */
-  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-  }, []);
-
-  /** 处理 Tauri 拖放提供的真实路径：目录则扫描出文件，文件则直接加入 */
-  const processPaths = useCallback(
-    async (paths: string[]) => {
+  /** 处理 Tauri 拖放提供的真实路径：委托给共享 handler（目录展开/分流/导入/哈希统一在此） */
+  const handleDropped = useCallback(
+    (paths: string[]) => {
       if (!paths || paths.length === 0) return;
-      const allFiles: string[] = [];
-      for (const p of paths) {
-        try {
-          // 目录则扫描出文件，文件则返回空数组
-          const scanned = await scanDirectory(p);
-          if (scanned.length > 0) {
-            allFiles.push(...scanned);
-          } else {
-            // 单个文件
-            allFiles.push(p);
-          }
-        } catch {
-          // 扫描失败，当作文件添加
-          allFiles.push(p);
-        }
-      }
-      if (allFiles.length > 0) {
-        addFiles(allFiles);
-      }
+      handleDroppedPaths(paths, t);
     },
-    [addFiles],
+    [t],
   );
 
-  /* 注册 Tauri 拖放事件：获取真实文件路径（替代已失效的 HTML5 File.path），并驱动拖拽高亮 */
+  // 用 ref 持有最新 handler，使拖放监听只注册一次（避免依赖 t 变化时反复解绑/重注册导致监听竞态）
+  const handleDroppedRef = useRef(handleDropped);
+  useEffect(() => {
+    handleDroppedRef.current = handleDropped;
+  }, [handleDropped]);
+
+  /* 注册 Tauri 拖放事件：获取真实文件路径（替代已失效的 HTML5 File.path），并驱动拖拽高亮。
+     机制（已核实 Tauri 2 官方源码）：dragDropEnabled=true 时 Tauri 在 OS 层接管拖放，
+     onDragDropEvent 仅订阅 tauri://drag-* 事件（无 preventDefault API），与 HTML5 drag/drop 无关。 */
   useEffect(() => {
     let unlisten: (() => void) | undefined;
+    let cancelled = false;
     getCurrentWebview()
       .onDragDropEvent((event) => {
         const ev = event.payload;
-        // 调试日志：确认拖放事件链路是否触发
-        console.log("[drag-drop]", ev.type, ev);
         switch (ev.type) {
           case "enter":
           case "over":
@@ -128,23 +161,25 @@ export function FileList({ className }: { className?: string }) {
             break;
           case "drop":
             setIsDragOver(false);
-            void processPaths(ev.paths);
+            handleDroppedRef.current(ev.paths as string[]);
             break;
         }
       })
       .then((fn) => {
-        unlisten = fn;
+        // 若 cleanup 已先行（竞态），立即解绑，避免监听泄漏
+        if (cancelled) fn();
+        else unlisten = fn;
       })
       .catch((err) => {
-        // 事件监听注册失败（权限/版本问题）。注意：Tauri 2 前端 onDragDropEvent 注册成功后
-        // Rust 侧 WindowEvent::DragDrop 不再派发（单消费者），此处无法回退到 Rust 兜底，
-        // 拖放将完全失效——需确保 capabilities 已授权 core:webview:allow-on-drag-drop-event。
+        // 事件监听注册失败（权限/版本问题）。需确保 capabilities 已授权
+        // core:webview:allow-on-drag-drop-event，否则拖放将完全失效。
         console.error("[drag-drop] onDragDropEvent 注册失败", err);
       });
     return () => {
+      cancelled = true;
       unlisten?.();
     };
-  }, [processPaths]);
+  }, []);
 
   /** 对话框打开状态锁：防止对话框关闭后 WebView2 重放点击导致无限弹窗 */
   const dialogOpenRef = useRef(false);
@@ -159,7 +194,7 @@ export function FileList({ className }: { className?: string }) {
       try {
         const paths = await openFileDialog();
         if (paths && paths.length > 0) {
-          addFiles(paths);
+          handleDroppedPaths(paths, t);
         }
       } catch {
         // 用户取消选择，忽略
@@ -170,7 +205,7 @@ export function FileList({ className }: { className?: string }) {
         }, 300);
       }
     },
-    [addFiles],
+    [t],
   );
 
   /** 右键菜单事件 */
@@ -250,6 +285,27 @@ export function FileList({ className }: { className?: string }) {
     [],
   );
 
+  /** 复制校验文件条目中的单个哈希值 */
+  const handleCopyEntryHash = useCallback(async (hash: string) => {
+    if (!hash) return;
+    try {
+      await writeText(hash);
+    } catch {
+      // 剪贴板写入失败，忽略
+    }
+  }, []);
+
+  /** 按文件名对校验文件条目分组 */
+  const groupEntriesByFilename = (entries: VerificationEntry[]) => {
+    const map = new Map<string, VerificationEntry[]>();
+    for (const e of entries) {
+      const list = map.get(e.filename) ?? [];
+      list.push(e);
+      map.set(e.filename, list);
+    }
+    return map;
+  };
+
   const fileGroups = useMemo(() => buildFileGroups(fileList), [fileList]);
 
   /* 错落入场仅首次：应用生命周期内第一次显示文件列表时播放一次 */
@@ -273,28 +329,30 @@ export function FileList({ className }: { className?: string }) {
           fileList.length === 0 ? "cursor-pointer" : "",
         )}
         onClick={fileList.length === 0 ? handleZoneClick : undefined}
-        onDragEnter={handleDragEnter}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
       >
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="filelist-scroll-area group relative min-h-0 flex-1">
           {fileList.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
               <FileSearch className="h-10 w-10 opacity-30" />
               <span>{t("drag_hint")}</span>
             </div>
           ) : (
-            <ul>
+            <ul
+              ref={listScrollRef}
+              className="h-full overflow-y-auto scrollbar-none"
+            >
               {fileList.flatMap((file, fileIndex) => {
                 const children: FileResult[] = file.results ?? [];
                 const group = fileGroups.map.get(file.path);
-                const hasComputedHash = children.some((r) => !!r.hashValue);
+                const isVerification = file.role === "verification";
+                const hasComputedHash = !isVerification && children.some((r) => !!r.hashValue);
+                const isCollapsed = isVerification && collapsedVfs.has(file.path);
                 const parent = (
                   <li
                     key={`p-${file.path}`}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2 cursor-default hover:bg-muted/30",
+                      "group flex items-center gap-3 px-3 py-2 cursor-default hover:bg-muted/30",
+                      isVerification && "bg-secondary/5 hover:bg-secondary/10 cursor-pointer",
                       animateEnter && "list-item-enter",
                     )}
                     style={
@@ -302,27 +360,40 @@ export function FileList({ className }: { className?: string }) {
                         ? { animationDelay: `${Math.min(fileIndex * 40, 240)}ms` }
                         : undefined
                     }
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isVerification) toggleVf(file.path);
+                    }}
                     onContextMenu={(e) => handleContextMenu(e, fileIndex)}
+                    aria-expanded={isVerification ? !isCollapsed : undefined}
                   >
                     <div className="min-w-0 flex-1 flex items-baseline gap-1.5">
-                      <span
-                        className={cn(
-                          "truncate text-base font-bold",
-                          group ? group.colorClass : "text-foreground",
-                        )}
-                        title={
+                      <Tooltip
+                        label={
                           group
                             ? `第 ${group.groupId} 组 · ${group.algorithm.toUpperCase()}: ${group.hash}`
                             : getBasename(file.path)
                         }
+                        className="flex-1 min-w-0"
                       >
-                        {getBasename(file.path)}
-                      </span>
+                        <span
+                          className={cn(
+                            "truncate text-base font-bold",
+                            isVerification ? "text-secondary" : group ? group.colorClass : "text-foreground",
+                          )}
+                          aria-label={getBasename(file.path)}
+                        >
+                          {getBasename(file.path)}
+                        </span>
+                      </Tooltip>
+                      {isVerification && (
+                        <span className="shrink-0 rounded border border-primary/40 bg-primary-alpha px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+                          {t("verification_file")}
+                        </span>
+                      )}
                       {hasComputedHash && (
                         <span
                           className="shrink-0 text-base leading-none text-success"
-                          title={t("computed")}
                           aria-label={t("computed")}
                         >
                           ✓
@@ -331,16 +402,116 @@ export function FileList({ className }: { className?: string }) {
                       <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
                         {typeof file.size === "number" ? formatBytes(file.size) : ""}
                       </span>
+                      {/* 校验文件折叠图标：紧跟大小信息，不再右对齐 */}
+                      {isVerification && file.entries && file.entries.length > 0 && (
+                        <Tooltip label={isCollapsed ? t("expand") : t("collapse")}>
+                          <button
+                            className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleVf(file.path);
+                            }}
+                            aria-label={isCollapsed ? t("expand") : t("collapse")}
+                          >
+                            {isCollapsed ? (
+                              <ChevronRight className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </button>
+                        </Tooltip>
+                      )}
                     </div>
-                    <button
-                      className="ml-1 shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeFile(fileIndex)}
-                      title={t("remove_selected")}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
+                    <Tooltip label={t("remove_selected")}>
+                      <button
+                        className="ml-1 shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFile(fileIndex);
+                        }}
+                        aria-label={t("remove_selected")}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </Tooltip>
                   </li>
                 );
+                if (isVerification && file.entries && file.entries.length > 0) {
+                  const grouped = groupEntriesByFilename(file.entries);
+                  const rows: ReactNode[] = [];
+                  let childIdx = 0;
+                  for (const [filename, entries] of grouped) {
+                    const filenameKey = `vf-${file.path}-${filename}`;
+                    rows.push(
+                      <li
+                        key={filenameKey}
+                        className={cn(
+                          "flex items-center gap-3 pl-10 pr-3 py-1 text-xs text-muted-foreground hover:bg-muted/20",
+                          animateEnter && "list-item-enter",
+                        )}
+                        style={
+                          animateEnter
+                            ? {
+                                animationDelay: `${Math.min(fileIndex * 40 + childIdx * 25, 400)}ms`,
+                              }
+                            : undefined
+                        }
+                      >
+                        <span className="min-w-0 flex-1 flex items-baseline gap-1.5">
+                          <span className="truncate font-medium text-foreground/80">
+                            {filename}
+                          </span>
+                          <span
+                            className="shrink-0 text-base leading-none text-success"
+                            aria-label={t("computed")}
+                          >
+                            ✓
+                          </span>
+                        </span>
+                      </li>,
+                    );
+                    childIdx++;
+                    for (const e of entries) {
+                      rows.push(
+                        <li
+                          key={`${filenameKey}-${e.algorithm}-${e.hashValue}-${childIdx}`}
+                          className={cn(
+                            "flex items-center gap-3 pl-16 pr-3 py-1 text-xs text-muted-foreground hover:bg-muted/20",
+                            animateEnter && "list-item-enter",
+                          )}
+                          style={
+                            animateEnter
+                              ? {
+                                  animationDelay: `${Math.min(fileIndex * 40 + childIdx * 25, 400)}ms`,
+                                }
+                              : undefined
+                          }
+                        >
+                          <span className="w-20 shrink-0 font-medium uppercase text-foreground/70">
+                            {e.algorithm}
+                          </span>
+                          <Tooltip label={e.hashValue} className="flex-1 min-w-0">
+                            <span className="block w-full truncate font-mono text-foreground/80">
+                              {e.hashValue}
+                            </span>
+                          </Tooltip>
+                          <Tooltip label={t("copy")}>
+                            <button
+                              className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                              onClick={() => handleCopyEntryHash(e.hashValue)}
+                              aria-label={t("copy")}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </button>
+                          </Tooltip>
+                        </li>,
+                      );
+                      childIdx++;
+                    }
+                  }
+                  return isCollapsed ? [parent] : [parent, ...rows];
+                }
+
                 const childRows = children.map((r, ri) => (
                   <li
                     key={`c-${file.path}-${r.algorithm}`}
@@ -355,41 +526,74 @@ export function FileList({ className }: { className?: string }) {
                           }
                         : undefined
                     }
-                    title={getBasename(file.path)}
                   >
                     <span className="w-20 shrink-0 font-medium uppercase text-foreground/70">
                       {r.algorithm}
                     </span>
                     <span className="min-w-0 flex-1 flex items-baseline gap-2">
-                      <span
-                        className={cn(
-                          "flex-1 truncate font-mono text-foreground/80",
-                          r.status === "error" ? "text-warning" : "",
-                        )}
-                        title={r.hashValue || r.errorMessage}
+                      <Tooltip
+                        label={r.hashValue || r.errorMessage}
+                        className="flex-1 min-w-0"
                       >
-                        {r.status === "error"
-                          ? r.errorMessage ?? t("error")
-                          : r.hashValue || "—"}
-                      </span>
+                        <span
+                          className={cn(
+                            "block w-full truncate font-mono text-foreground/80",
+                            r.status === "error" ? "text-warning" : "",
+                          )}
+                        >
+                          {r.status === "error"
+                            ? r.errorMessage ?? t("error")
+                            : r.hashValue || "—"}
+                        </span>
+                      </Tooltip>
                       <span className="shrink-0 text-muted-foreground/80">
                         {r.elapsedTime > 0 ? `${r.elapsedTime.toFixed(2)}s` : "—"}
                       </span>
                     </span>
                     {r.status !== "error" && r.hashValue && (
-                      <button
-                        className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
-                        onClick={() => handleCopyHash(r)}
-                        title={t("copy")}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </button>
+                      <Tooltip label={t("copy")}>
+                        <button
+                          className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                          onClick={() => handleCopyHash(r)}
+                          aria-label={t("copy")}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </button>
+                      </Tooltip>
                     )}
                   </li>
                 ));
                 return [parent, ...childRows];
               })}
             </ul>
+          )}
+
+          {/* 向上/向下滚动提示徽章 */}
+          {fileList.length > 0 && (scrollState.canScrollUp || scrollState.canScrollDown) && (
+            <div className="pointer-events-none absolute right-20 top-1/2 z-10 -translate-y-1/2 flex flex-col gap-2 transition-opacity duration-300 opacity-30 group-hover:opacity-100">
+              {scrollState.canScrollUp && (
+                <Tooltip label={t("scroll_to_top")}>
+                  <button
+                    className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full bg-card/90 text-foreground shadow ring-1 ring-border backdrop-blur hover:bg-primary hover:text-primary-foreground hover:ring-primary transition-colors hover:scale-110"
+                    onClick={() => scrollToEdge("up")}
+                    aria-label={t("scroll_to_top")}
+                  >
+                    <ArrowUp className="h-3.5 w-3.5" />
+                  </button>
+                </Tooltip>
+              )}
+              {scrollState.canScrollDown && (
+                <Tooltip label={t("scroll_to_bottom")}>
+                  <button
+                    className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full bg-card/90 text-foreground shadow ring-1 ring-border backdrop-blur hover:bg-primary hover:text-primary-foreground hover:ring-primary transition-colors hover:scale-110"
+                    onClick={() => scrollToEdge("down")}
+                    aria-label={t("scroll_to_bottom")}
+                  >
+                    <ArrowDown className="h-3.5 w-3.5" />
+                  </button>
+                </Tooltip>
+              )}
+            </div>
           )}
         </div>
 
@@ -441,13 +645,15 @@ export function FileList({ className }: { className?: string }) {
               <Copy className="h-3.5 w-3.5" />
               {t("copy_path")}
             </button>
-            <button
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted"
-              onClick={() => handleCopyAll(fileList[contextMenu.index])}
-            >
-              <Hash className="h-3.5 w-3.5" />
-              {t("menu_copy")}
-            </button>
+            {fileList[contextMenu.index]?.role !== "verification" && (
+              <button
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted"
+                onClick={() => handleCopyAll(fileList[contextMenu.index])}
+              >
+                <Hash className="h-3.5 w-3.5" />
+                {t("menu_copy")}
+              </button>
+            )}
           </div>
         </>
       )}

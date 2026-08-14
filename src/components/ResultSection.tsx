@@ -5,6 +5,7 @@ import { useAppStore } from "@/store/appStore";
 import { useToastStore } from "@/store/toastStore";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 import type { FileItemStatus } from "@/services/types";
 
 /** 过滤器类型 */
@@ -25,10 +26,16 @@ export function ResultSection({ className }: { className?: string }) {
     return path.split(/[/\\]/).pop() ?? path;
   };
 
+  // 校验文件只展示在文件列表区，不进入结果统计与表格
+  const sourceFiles = useMemo(
+    () => fileList.filter((f) => f.role !== "verification"),
+    [fileList],
+  );
+
   /** 统计各状态数量 */
   const stats = useMemo(() => {
     let success = 0, mismatch = 0, error = 0, computed = 0;
-    for (const f of fileList) {
+    for (const f of sourceFiles) {
       switch (f.status) {
         case "success": success++; break;
         case "mismatch": mismatch++; break;
@@ -36,14 +43,14 @@ export function ResultSection({ className }: { className?: string }) {
         case "computed": computed++; break;
       }
     }
-    return { total: fileList.length, success, mismatch, error, computed };
-  }, [fileList]);
+    return { total: sourceFiles.length, success, mismatch, error, computed };
+  }, [sourceFiles]);
 
   /** 过滤后的文件列表 */
   const filteredList = useMemo(() => {
-    if (filter === "all") return fileList;
-    return fileList.filter((f) => f.status === filter);
-  }, [fileList, filter]);
+    if (filter === "all") return sourceFiles;
+    return sourceFiles.filter((f) => f.status === filter);
+  }, [sourceFiles, filter]);
 
   /** 复制结果到剪贴板 */
   const handleCopyResult = useCallback(async () => {
@@ -103,7 +110,7 @@ export function ResultSection({ className }: { className?: string }) {
   ];
 
   /** 是否有可显示的结果 */
-  const hasResults = fileList.some((f) => f.hashValue || f.status);
+  const hasResults = sourceFiles.some((f) => f.hashValue || f.status);
 
   /* 错落入场仅首次：结果区第一次出现结果时播放一次 */
   const [hasEntered, setHasEntered] = useState(false);
@@ -169,12 +176,13 @@ export function ResultSection({ className }: { className?: string }) {
                         ? { animationDelay: `${Math.min(index * 40, 240)}ms` }
                         : undefined
                     }
-                    title={file.path}
                   >
                     {/* 文件名 */}
-                    <span className="flex-1 truncate" title={file.path}>
-                      {getBasename(file.path)}
-                    </span>
+                    <Tooltip label={file.path} className="flex-1 min-w-0">
+                      <span className="block w-full truncate">
+                        {getBasename(file.path)}
+                      </span>
+                    </Tooltip>
 
                     {/* 状态 */}
                     <span className="flex shrink-0 items-center gap-1">
@@ -190,24 +198,25 @@ export function ResultSection({ className }: { className?: string }) {
                     </span>
 
                     {/* 哈希值 */}
-                    <span
-                      className="w-40 shrink-0 truncate font-mono text-xs text-muted-foreground"
-                      title={file.hashValue ?? ""}
-                    >
-                      {file.hashValue
-                        ? `${file.hashValue.slice(0, 12)}...${file.hashValue.slice(-6)}`
-                        : "-"}
-                    </span>
+                    <Tooltip label={file.hashValue ?? ""} className="w-40 shrink-0">
+                      <span className="block w-full truncate font-mono text-xs text-muted-foreground">
+                        {file.hashValue
+                          ? `${file.hashValue.slice(0, 12)}...${file.hashValue.slice(-6)}`
+                          : "-"}
+                      </span>
+                    </Tooltip>
 
                     {/* 复制按钮 */}
                     {file.hashValue && (
-                      <button
-                        className="shrink-0 rounded p-1 text-muted-foreground hover:text-primary"
-                        onClick={(e) => handleCopyHash(file.hashValue!, e)}
-                        title={t("menu_copy")}
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </button>
+                      <Tooltip label={t("menu_copy")}>
+                        <button
+                          className="shrink-0 rounded p-1 text-muted-foreground hover:text-primary"
+                          onClick={(e) => handleCopyHash(file.hashValue!, e)}
+                          aria-label={t("menu_copy")}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                      </Tooltip>
                     )}
                   </li>
                 );

@@ -541,3 +541,44 @@ button:not(:disabled):not([role="switch"]):active {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ───────── 品牌色 Tooltip（替代原生 title） ───────── */
+.erge-tooltip {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  align-items: stretch;
+  max-width: 280px;
+  padding: 6px 10px 6px 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.5;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+/* 鼠标右下跟随定位时元素尚未渲染尺寸，先隐藏再淡入，避免首帧跳位 */
+.erge-tooltip:not(.erge-tooltip--visible) {
+  visibility: hidden;
+}
+.erge-tooltip--visible {
+  visibility: visible;
+  opacity: 1;
+}
+/* 左侧品牌竖线：整条贯穿全部行（含换行后所有行） */
+.erge-tooltip__bar {
+  flex-shrink: 0;
+  width: 3px;
+  margin: 2px 8px 2px 0;
+  border-radius: 2px;
+  background: var(--primary);
+}
+.erge-tooltip__content {
+  flex: 1;
+  align-self: center;
+  overflow-wrap: anywhere;
+}

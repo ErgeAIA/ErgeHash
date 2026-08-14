@@ -85,8 +85,8 @@ interface AppState {
   totalBytes: number;
 
   // ---- Actions ----
-  /** 添加文件到列表 */
-  addFiles: (files: string[]) => void;
+  /** 添加文件到列表；role=verification 时可传入解析出的 entries，供子级展示 */
+  addFiles: (files: string[], role?: "source" | "verification", entries?: VerificationEntry[]) => void;
   /** 移除指定索引的文件 */
   removeFile: (index: number) => void;
   /** 清空文件列表 */
@@ -165,13 +165,25 @@ export const useAppStore = create<AppState>((set, get) => ({
   bytesRead: 0,
   totalBytes: 0,
 
-  addFiles: (files) => {
-    // 去重：已有路径不再添加
-    const state = get();
-    const existingPaths = new Set(state.fileList.map((f) => f.path));
-    const newPaths = files.filter((p) => !existingPaths.has(p));
-    const newItems: FileItem[] = newPaths.map((p) => ({ path: p, results: [] }));
-    set({ fileList: [...state.fileList, ...newItems] });
+  addFiles: (files, role = "source", entries) => {
+    // 在 set 回调内基于最新 state 合并，避免并发 addFiles 的 read-then-set 竞态（D3 lost-update）
+    let newPaths: string[] = [];
+    set((state) => {
+      const existingPaths = new Set(state.fileList.map((f) => f.path));
+      const filtered = files.filter((p) => !existingPaths.has(p));
+      newPaths = filtered;
+      const attachEntries =
+        role === "verification" && files.length === 1 && entries && entries.length > 0;
+      const newItems: FileItem[] = filtered.map((p) => ({
+        path: p,
+        role,
+        results: [],
+        ...(attachEntries ? { entries } : {}),
+      }));
+      return newItems.length > 0
+        ? { fileList: [...state.fileList, ...newItems] }
+        : {};
+    });
     // 异步批量获取文件大小（不阻塞 UI）
     if (newPaths.length > 0) {
       getFileSizes(newPaths)
@@ -215,7 +227,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       bytesRead: 0,
       totalBytes: 0,
       statusMessage: "ready",
-      fileList: state.fileList.map((f) => ({ path: f.path, results: [] })),
+      fileList: state.fileList.map((f) => ({ ...f, results: [] })),
     })),
 
   clearAll: () =>
@@ -297,7 +309,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   startValidation: async () => {
     const state = get();
-    if (state.isCalculating || state.fileList.length === 0) return;
+    const sourceFiles = state.fileList.filter((f) => f.role !== "verification");
+    if (state.isCalculating) return;
+    if (sourceFiles.length === 0) {
+      useToastStore.getState().addToast("error", i18n.t("no_source_files"));
+      return;
+    }
 
     const toast = useToastStore.getState().addToast;
     const t = i18n.t.bind(i18n);
@@ -312,7 +329,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
 
     try {
-      const paths = state.fileList.map((f) => f.path);
+      const paths = sourceFiles.map((f) => f.path);
       const expected = state.expectedHash?.trim() || "";
       const allResults: HashResult[] = [];
       const totalAlgos = state.selectedAlgorithms.length;
@@ -492,11 +509,34 @@ export const useAppStore = create<AppState>((set, get) => ({
     }),
 
   setImportedEntries: (report) =>
-    set(() => ({
-      importedEntries: report.entries,
-      expectedHash: "",
-      verificationMode: report.entries.length > 0 ? "file" : "none",
-    })),
+    set((state) => {
+      // 累积已导入的校验条目：同一文件（按文件名）再次导入时以新条目覆盖，
+      // 避免后一次导入整段覆盖前一次，导致「检测到算法」只显示最后一次。
+      const merged = new Map<string, VerificationEntry>();
+      for (const e of state.importedEntries) merged.set(e.filename, e);
+      for (const e of report.entries) merged.set(e.filename, e);
+      const importedEntries = Array.from(merged.values());
+
+      // 回填哈希到输入框作为可见反馈：同样累积，仅追加本次新增的哈希值。
+      const existingLines = new Set(
+        normalizeExpectedHash(state.expectedHash)
+          .split("\n")
+          .map((l) => l.toLowerCase()),
+      );
+      const newHashes = report.entries
+        .map((e) => e.hashValue)
+        .filter((h) => h && !existingLines.has(h.toLowerCase()));
+      const expectedHash =
+        newHashes.length > 0
+          ? [state.expectedHash, ...newHashes].filter(Boolean).join("\n")
+          : state.expectedHash;
+
+      return {
+        importedEntries,
+        expectedHash,
+        verificationMode: importedEntries.length > 0 ? "file" : "none",
+      };
+    }),
 
   setLastResults: (results) => set({ lastResults: results }),
 

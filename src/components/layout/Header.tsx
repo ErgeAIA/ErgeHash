@@ -31,7 +31,7 @@ function Header() {
             "hover:bg-muted cursor-pointer",
           )}
           onClick={toggleLanguage}
-          title={language === "zh" ? "Switch to English" : "切换到中文"}
+          aria-label={language === "zh" ? "Switch to English" : "切换到中文"}
         >
           <Globe className="h-4 w-4" />
         </button>
@@ -43,7 +43,7 @@ function Header() {
             "hover:bg-muted cursor-pointer",
           )}
           onClick={toggleTheme}
-          title={theme === "light" ? t("dark_mode") : t("light_mode")}
+          aria-label={theme === "light" ? t("dark_mode") : t("light_mode")}
         >
           {theme === "light" ? (
             <Moon className="h-4 w-4" />

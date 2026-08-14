@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Play, Pause, Square } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useAppStore } from "@/store/appStore";
 import {
   pauseHashCalculation,
@@ -75,12 +76,11 @@ export function FloatingProgress() {
       {/* 当前文件 + 字节进度 */}
       {currentFile && (
         <div className="flex items-center justify-between gap-2">
-          <span
-            className="min-w-0 flex-1 truncate text-xs text-muted-foreground"
-            title={currentFile}
-          >
-            {getBasename(currentFile)}
-          </span>
+          <Tooltip label={currentFile} className="flex-1 min-w-0">
+            <span className="block w-full truncate text-xs text-muted-foreground">
+              {getBasename(currentFile)}
+            </span>
+          </Tooltip>
           <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
             {totalBytes > 0
               ? `${formatBytes(bytesRead)} / ${formatBytes(totalBytes)}`
@@ -94,26 +94,30 @@ export function FloatingProgress() {
 
       {/* 控制按钮 */}
       <div className="flex items-center justify-end gap-2">
-        <Button
-          variant="warning"
-          size="sm"
-          onClick={handleTogglePause}
-          title={isPaused ? t("resume") : t("pause")}
-        >
-          {isPaused ? (
-            <Play className="h-3.5 w-3.5" />
-          ) : (
-            <Pause className="h-3.5 w-3.5" />
-          )}
-        </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleCancel}
-          title={t("stop")}
-        >
-          <Square className="h-3.5 w-3.5" />
-        </Button>
+        <Tooltip label={isPaused ? t("resume") : t("pause")}>
+          <Button
+            variant="warning"
+            size="sm"
+            onClick={handleTogglePause}
+            aria-label={isPaused ? t("resume") : t("pause")}
+          >
+            {isPaused ? (
+              <Play className="h-3.5 w-3.5" />
+            ) : (
+              <Pause className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        </Tooltip>
+        <Tooltip label={t("stop")}>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleCancel}
+            aria-label={t("stop")}
+          >
+            <Square className="h-3.5 w-3.5" />
+          </Button>
+        </Tooltip>
       </div>
     </div>
   );

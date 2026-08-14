@@ -71,8 +71,6 @@ export interface AppConfig {
   autoCalculate?: boolean;
   /** 是否启用界面动画（默认 true） */
   animations?: boolean;
-  /** 窗口位置信息 */
-  windowGeometry: string | null;
 }
 
 /** 验证文件条目 */
@@ -131,6 +129,10 @@ export interface FileItem {
   path: string;
   /** 文件大小（字节），由 get_file_metadata 填充 */
   size?: number;
+  /** 文件角色：source 参与哈希计算；verification 为校验文件，仅展示与回填，不参与计算 */
+  role?: "source" | "verification";
+  /** 校验文件解析出的条目（仅 role=verification 时有效），用于在文件列表中以子级形式展示 */
+  entries?: VerificationEntry[];
   /** 主导哈希值（取第一个子结果，仅供兼容单值场景） */
   hashValue?: string;
   /** 汇总状态（由 results 推导：error > mismatch > computed） */
