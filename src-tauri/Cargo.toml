@@ -8,11 +8,18 @@ edition = "2021"
 [package.metadata.tauri]
 
 [profile.release]
-opt-level = "s"
+opt-level = 3
 lto = true
 codegen-units = 1
 strip = true
 panic = "abort"
+
+# tauri dev 默认使用 debug 构建（opt-level=0），而 sha2/sha1/md-5 等纯 Rust 加密库
+# 在无优化时极慢（735MB SHA256 从无优化的 ~12s 降到 opt-level=2 的 ~1.x s）。
+# 这里把 dev 构建提升到 opt-level=2，使开发/调试期也能获得可用性能，
+# 同时保留调试信息与增量编译。
+[profile.dev]
+opt-level = 2
 
 [lib]
 name = "erge_hash_lib"
