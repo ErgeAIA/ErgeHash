@@ -162,6 +162,9 @@ fn do_calculate_hash(
     let mut total_read = 0u64;
 
     let mut hasher = make_hasher(algorithm);
+    // 仅在整个整数百分比变化时才发送进度事件：735MB 文件从 735 次 IPC 降到 ≤100 次，
+    // 大幅削减跨语言调用开销，同时保留可用进度粒度。
+    let mut last_progress: i32 = -1;
 
     loop {
         state.check_interrupted()?;
@@ -174,17 +177,33 @@ fn do_calculate_hash(
         hasher.update(&buffer[..bytes_read]);
         total_read += bytes_read as u64;
 
-        // 发送进度
+        // 发送进度（按整数百分比节流）
         let progress = if file_size > 0 {
-            (total_read as f64 / file_size as f64 * 100.0) as u8
+            (total_read as f64 / file_size as f64 * 100.0) as i32
         } else {
             100
         };
+        if progress != last_progress {
+            last_progress = progress;
+            let _ = app.emit(
+                "hash-progress",
+                HashProgress {
+                    file_path: file_path.to_string(),
+                    progress: progress as u8,
+                    bytes_read: total_read,
+                    total_bytes: file_size,
+                },
+            );
+        }
+    }
+
+    // 确保收尾进度 100% 一定发出（末块可能未恰好触发百分比变化）
+    if last_progress != 100 {
         let _ = app.emit(
             "hash-progress",
             HashProgress {
                 file_path: file_path.to_string(),
-                progress,
+                progress: 100,
                 bytes_read: total_read,
                 total_bytes: file_size,
             },

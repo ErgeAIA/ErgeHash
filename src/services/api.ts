@@ -43,12 +43,15 @@ export async function cancelHashCalculation(): Promise<void> {
   return invoke("cancel_hash_calculation");
 }
 
-/** 开始批量校验 */
+/** 开始批量校验（一次读取同时为所有算法计算哈希，多算法不再重复读文件） */
 export async function startBatchValidation(
   filePaths: string[],
-  algorithm: HashAlgorithm,
+  algorithms: HashAlgorithm[],
 ): Promise<BatchResult> {
-  return invoke<BatchResult>("start_batch_validation", { filePaths, algorithm });
+  return invoke<BatchResult>("start_batch_validation", {
+    filePaths,
+    algorithms,
+  });
 }
 
 /** 获取应用配置 */

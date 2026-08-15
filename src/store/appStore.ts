@@ -331,13 +331,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const paths = sourceFiles.map((f) => f.path);
       const expected = state.expectedHash?.trim() || "";
-      const allResults: HashResult[] = [];
-      const totalAlgos = state.selectedAlgorithms.length;
-      for (let i = 0; i < totalAlgos; i++) {
-        const batch = await startBatchValidation(paths, state.selectedAlgorithms[i]);
-        allResults.push(...batch.results);
-        set({ progress: Math.round(((i + 1) / totalAlgos) * 100) });
-      }
+      // 一次读取同时为所有选中算法计算哈希（Rust 端单趟多哈希，避免每种算法重读文件）
+      const batch = await startBatchValidation(paths, state.selectedAlgorithms);
+      const allResults: HashResult[] = batch.results;
 
       set({ isCalculating: false, progress: 100, statusMessage: "completed", lastResults: allResults });
 
