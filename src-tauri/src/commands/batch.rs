@@ -10,7 +10,7 @@ use tauri::{AppHandle, Emitter, State};
 use crate::hashing::{
     check_interrupted, make_hasher, HashCache, HashSink, CHUNK_SIZE,
 };
-use crate::models::{BatchProgress, BatchResult, HashAlgorithm, HashResult, HashStatus};
+use crate::models::{BatchProgress, BatchResult, HashProgress, HashResult, HashAlgorithm, HashStatus};
 use crate::AppState;
 
 /// 开始批量校验（整批在 blocking 线程中顺序执行，不占用异步 worker；
@@ -51,6 +51,7 @@ pub async fn start_batch_validation(
             let file_results = process_single_file(
                 &file_path,
                 &algorithms,
+                &app,
                 &pause_flag,
                 &cancel_flag,
                 &hash_cache,
@@ -111,9 +112,13 @@ pub async fn start_batch_validation(
 /// 性能要点：无论请求多少种算法，文件只被打开并顺序读取一遍（原实现每种算法
 /// 各读一遍，多算法时产生 N 倍磁盘/IO 开销）。同一份数据块同时喂给所有未命中
 /// 缓存的 hasher，与 Python hashlib 单次多哈希的工作方式一致。
+///
+/// 进度事件：按整数百分比变化 emit `hash-progress`，让前端进度条在批量校验时
+/// 也能平滑更新（≤100 次/文件），避免单文件只有 0→100 的跳变。
 fn process_single_file(
     file_path: &str,
     algorithms: &[HashAlgorithm],
+    app: &AppHandle,
     pause_flag: &Arc<AtomicBool>,
     cancel_flag: &Arc<AtomicBool>,
     hash_cache: &Arc<Mutex<HashCache>>,
@@ -175,7 +180,10 @@ fn process_single_file(
         .collect();
 
     let mut buffer = vec![0u8; CHUNK_SIZE];
+    let mut processed: u64 = 0;
     let mut cancelled = false;
+    // 按整数百分比节流 hash-progress，避免小文件也高频 emit
+    let mut last_progress: i32 = -1;
 
     loop {
         if check_interrupted(pause_flag.as_ref(), cancel_flag.as_ref()).is_err() {
@@ -195,6 +203,39 @@ fn process_single_file(
         for h in hashers.iter_mut().flatten() {
             h.update(&buffer[..bytes_read]);
         }
+        processed += bytes_read as u64;
+
+        // emit 当前文件读取进度（按百分比节流）
+        let progress = if file_size > 0 {
+            (processed as f64 / file_size as f64 * 100.0) as i32
+        } else {
+            100
+        };
+        if progress != last_progress {
+            last_progress = progress;
+            let _ = app.emit(
+                "hash-progress",
+                HashProgress {
+                    file_path: file_path.to_string(),
+                    progress: progress as u8,
+                    bytes_read: processed,
+                    total_bytes: file_size,
+                },
+            );
+        }
+    }
+
+    // 确保 100% 一定发出（文件大小不是 CHUNK_SIZE 整数倍时末块可能未触发百分比变化）
+    if !cancelled && last_progress != 100 && file_size > 0 {
+        let _ = app.emit(
+            "hash-progress",
+            HashProgress {
+                file_path: file_path.to_string(),
+                progress: 100,
+                bytes_read: file_size,
+                total_bytes: file_size,
+            },
+        );
     }
 
     algorithms

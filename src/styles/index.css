@@ -557,6 +557,19 @@ body {
   transform: rotate(-8deg);
 }
 
+/* 进度条光泽扫光动画 */
+@keyframes progressShine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+.animate-progress-shine {
+  animation: progressShine 1.4s ease-in-out infinite;
+}
+
 /* 全局按压反馈：按钮按下微缩（switch 开关与顶栏窗口控制除外） */
 button:not(:disabled):not([role="switch"]):active {
   scale: 0.97;

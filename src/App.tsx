@@ -56,6 +56,7 @@ function App() {
   const updateFileResult = useAppStore((s) => s.updateFileResult);
   const setBytesRead = useAppStore((s) => s.setBytesRead);
   const setTotalBytes = useAppStore((s) => s.setTotalBytes);
+  const setBatchProgress = useAppStore((s) => s.setBatchProgress);
 
   // 对话框状态
   const [showHistory, setShowHistory] = useState(false);
@@ -192,9 +193,9 @@ function App() {
 
       unlisteners.push(
         await onBatchProgress((p) => {
-          if (p.total > 0) {
-            setProgress(Math.round((p.done / p.total) * 100));
-          }
+          // batch-progress 只更新整体文件计数，当前文件百分比与字节进度
+          // 由 hash-progress 平滑推进，避免两者同时写 progress 导致回退/跳变。
+          setBatchProgress({ done: p.done, total: p.total });
           setStatusMessage("calculating");
         }),
       );

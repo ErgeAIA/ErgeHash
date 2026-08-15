@@ -83,6 +83,8 @@ interface AppState {
   bytesRead: number;
   /** 当前文件总字节数 */
   totalBytes: number;
+  /** 批量整体进度：已处理文件数 / 总数 */
+  batchProgress: { done: number; total: number } | null;
 
   // ---- Actions ----
   /** 添加文件到列表；role=verification 时可传入解析出的 entries，供子级展示 */
@@ -141,6 +143,8 @@ interface AppState {
   setBytesRead: (value: number) => void;
   /** 设置总字节数 */
   setTotalBytes: (value: number) => void;
+  /** 设置批量整体进度（已处理文件数 / 总数） */
+  setBatchProgress: (value: { done: number; total: number } | null) => void;
   /** 复制结果到剪贴板，返回是否成功 */
   copyResult: () => Promise<boolean>;
 }
@@ -164,6 +168,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   lastResults: null,
   bytesRead: 0,
   totalBytes: 0,
+  batchProgress: null,
 
   addFiles: (files, role = "source", entries) => {
     // 在 set 回调内基于最新 state 合并，避免并发 addFiles 的 read-then-set 竞态（D3 lost-update）
@@ -226,6 +231,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       lastResults: null,
       bytesRead: 0,
       totalBytes: 0,
+      batchProgress: null,
       statusMessage: "ready",
       fileList: state.fileList.map((f) => ({ ...f, results: [] })),
     })),
@@ -242,6 +248,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       lastResults: null,
       bytesRead: 0,
       totalBytes: 0,
+      batchProgress: null,
       statusMessage: "ready",
     }),
 
@@ -332,10 +339,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       const paths = sourceFiles.map((f) => f.path);
       const expected = state.expectedHash?.trim() || "";
       // 一次读取同时为所有选中算法计算哈希（Rust 端单趟多哈希，避免每种算法重读文件）
+      set({ batchProgress: { done: 0, total: paths.length } });
       const batch = await startBatchValidation(paths, state.selectedAlgorithms);
       const allResults: HashResult[] = batch.results;
 
-      set({ isCalculating: false, progress: 100, statusMessage: "completed", lastResults: allResults });
+      set({ isCalculating: false, progress: 100, statusMessage: "completed", lastResults: allResults, batchProgress: { done: paths.length, total: paths.length } });
 
       // 逐文件绑定模式（导入校验文件）：按 文件名→算法 精确匹配，杜绝跨文件误命中
       if (state.verificationMode === "file" && state.importedEntries.length > 0) {
@@ -539,6 +547,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setBytesRead: (value) => set({ bytesRead: value }),
 
   setTotalBytes: (value) => set({ totalBytes: value }),
+
+  setBatchProgress: (value) => set({ batchProgress: value }),
 
   copyResult: async () => {
     // 优先复制结构化哈希行（文件名: 哈希），对齐 PyQt 语义；无结果时回退复制整个结果区
