@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ErgeHash 快速指南</title>
     <style>
+      :root {
+        --fg: #333;
+        --bg: #fff;
+        --muted: #666;
+        --accent: #ba4d0f;
+        --accent-alpha: rgba(186, 77, 15, 0.08);
+        --code-bg: #f0f0f0;
+        --border: #e5e5e5;
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -12,33 +22,32 @@
       }
 
       body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        line-height: 1.75;
-        color: #333;
-        background: #ffffff;
-        padding: 8px;
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        line-height: 1.7;
+        color: var(--fg);
+        background: var(--bg);
+        padding: 8px 12px;
       }
 
       h1 {
-        font-size: 1.8em;
-        color: #2c3e50;
-        margin-bottom: 18px;
-        border-bottom: 2px solid #ba4d0f;
+        font-size: 1.7em;
+        margin-bottom: 16px;
         padding-bottom: 10px;
+        border-bottom: 2px solid var(--accent);
       }
 
       h2 {
-        color: #34495e;
+        font-size: 1.2em;
         margin: 22px 0 10px 0;
         padding: 6px 0 6px 12px;
-        border-left: 4px solid #ba4d0f;
-        background-color: rgba(186, 77, 15, 0.08);
+        border-left: 4px solid var(--accent);
+        background: var(--accent-alpha);
       }
 
       h3 {
-        color: #ba4d0f;
+        font-size: 1.05em;
+        color: var(--accent);
         margin: 16px 0 8px 0;
-        font-size: 1.1em;
       }
 
       p {
@@ -47,61 +56,85 @@
 
       ul,
       ol {
-        margin: 8px 0 8px 22px;
+        margin: 8px 0 8px 20px;
       }
 
       li {
-        margin: 5px 0;
+        margin: 6px 0;
+      }
+
+      a {
+        color: var(--accent);
+        text-decoration: none;
       }
 
       code {
-        background-color: #f0f0f0;
-        padding: 2px 6px;
+        display: inline-block;
+        background: var(--code-bg);
+        padding: 1px 5px;
         border-radius: 4px;
         font-family: Consolas, "Courier New", monospace;
+        font-size: 0.9em;
         color: #c0392b;
       }
 
-      pre {
-        background-color: #2d3436;
-        color: #fff;
-        padding: 12px 14px;
-        border-radius: 8px;
-        overflow-x: auto;
-        margin: 10px 0;
-        font-family: Consolas, "Courier New", monospace;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 10px 0;
-        border-radius: 8px;
-        overflow: hidden;
-      }
-
-      th,
-      td {
+      .hint {
+        background: var(--accent-alpha);
+        border-left: 3px solid var(--accent);
         padding: 8px 12px;
-        text-align: left;
-        border-bottom: 1px solid #eee;
+        margin: 10px 0;
+        border-radius: 0 6px 6px 0;
       }
 
-      th {
-        background-color: #ba4d0f;
-        color: #fff;
-        font-weight: 600;
+      .kbd-list {
+        list-style: none;
+        margin-left: 0;
       }
 
-      tr:nth-child(even) {
-        background-color: #f8f9fa;
+      .kbd-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 8px;
+        border-bottom: 1px solid var(--border);
       }
 
-      hr {
-        border: none;
-        height: 1px;
-        background: #ddd;
-        margin: 18px 0;
+      .kbd-list li:last-child {
+        border-bottom: none;
+      }
+
+      .kbd-list code {
+        flex-shrink: 0;
+        margin-right: 12px;
+      }
+
+      .kbd-list span {
+        color: var(--muted);
+        text-align: right;
+      }
+
+      .algo-list {
+        list-style: none;
+        margin-left: 0;
+        display: grid;
+        gap: 6px;
+      }
+
+      .algo-list li {
+        display: flex;
+        justify-content: space-between;
+        padding: 7px 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+      }
+
+      .algo-list strong {
+        color: var(--accent);
+      }
+
+      .algo-list span {
+        color: var(--muted);
+        font-size: 0.92em;
       }
     </style>
   </head>
@@ -111,72 +144,70 @@
     <p>
       ErgeHash（二哈）是一款 Windows 桌面文件哈希校验工具，基于
       <strong>Tauri 2 + React/TypeScript</strong> 构建，哈希计算由 Rust
-      原生实现，速度快、资源占用低。当前版本 <strong>v0.3.0</strong>。
+      原生实现。当前版本 <strong>v0.3.0</strong>。
     </p>
 
     <h2>一、核心功能</h2>
 
     <h3>计算哈希</h3>
     <ol>
-      <li><strong>添加文件</strong>：拖拽文件/文件夹到列表，或按 <code>Ctrl+O</code> 选文件、<code>Ctrl+Shift+O</code> 选文件夹。</li>
+      <li><strong>添加文件</strong>：拖拽文件或文件夹到列表，或按 <code>Ctrl+O</code> 选文件、<code>Ctrl+Shift+O</code> 选文件夹。</li>
       <li><strong>选择算法</strong>：在左侧边栏勾选算法（可多选）。</li>
-      <li><strong>开始计算</strong>：点击「开始校验」，或按 <code>Ctrl+Enter</code>。结果回填到文件列表，可逐条复制。</li>
+      <li><strong>开始计算</strong>：点击「开始校验」或按 <code>Ctrl+Enter</code>。结果回填到文件列表，可逐条复制。</li>
     </ol>
 
     <h3>校验文件</h3>
     <ol>
-      <li><strong>准备预期哈希</strong>：两种方式任选其一——导入校验文件（<code>Ctrl+I</code>，支持 <code>.md5</code>/<code>.sha256</code>/<code>.sfv</code> 等），或在列表的预期哈希框中粘贴哈希值。</li>
-      <li><strong>比对</strong>：点击「开始校验」，每行显示匹配 / 不匹配状态。</li>
+      <li><strong>准备预期哈希</strong>：导入校验文件（<code>Ctrl+I</code>，支持 <code>.md5</code>/<code>.sha256</code>/<code>.sfv</code> 等），或在列表的预期哈希框中粘贴哈希值。</li>
+      <li><strong>开始比对</strong>：按 <code>Ctrl+Enter</code>，每行显示匹配 / 不匹配状态。</li>
     </ol>
 
     <h3>资源管理器右键菜单</h3>
-    <p>安装后在文件上右键，可直接调用 ErgeHash：</p>
+    <p>安装后，在文件上右键可直接调用：</p>
     <ul>
-      <li><strong>计算哈希</strong>：弹出报告窗显示所选文件的哈希值（可复制）。</li>
+      <li><strong>计算哈希</strong>：弹出报告窗显示所选文件的哈希值。</li>
       <li><strong>对比文件</strong>：多选文件后右键「对比文件」，报告窗列出全部文件并标明是否一致。</li>
       <li><strong>校验文件</strong>：对校验文件右键，自动解析并比对。</li>
     </ul>
 
     <h2>二、支持算法</h2>
-    <table>
-      <tr><th>算法</th><th>说明</th><th>典型用途</th></tr>
-      <tr><td>SHA-256</td><td>推荐（默认）</td><td>文件完整性验证</td></tr>
-      <tr><td>SHA-512</td><td>安全</td><td>高安全需求</td></tr>
-      <tr><td>SHA-1</td><td>兼容</td><td>旧系统 / 历史兼容</td></tr>
-      <tr><td>MD5</td><td>传统</td><td>快速校验（不推荐用于安全场景）</td></tr>
-      <tr><td>CRC32</td><td>校验和</td><td>快速完整性 / 传输校验</td></tr>
-    </table>
+    <ul class="algo-list">
+      <li><strong>SHA-256</strong> <span>推荐（默认）</span></li>
+      <li><strong>SHA-512</strong> <span>高安全需求</span></li>
+      <li><strong>SHA-1</strong> <span>旧系统兼容</span></li>
+      <li><strong>MD5</strong> <span>快速校验（不推荐安全场景）</span></li>
+      <li><strong>CRC32</strong> <span>传输校验</span></li>
+    </ul>
 
     <h2>三、快捷键</h2>
-    <table>
-      <tr><th>快捷键</th><th>功能</th></tr>
-      <tr><td><code>Ctrl+O</code></td><td>打开文件</td></tr>
-      <tr><td><code>Ctrl+Shift+O</code></td><td>打开文件夹</td></tr>
-      <tr><td><code>Ctrl+I</code></td><td>导入校验文件</td></tr>
-      <tr><td><code>Ctrl+Enter</code></td><td>开始校验</td></tr>
-      <tr><td><code>Ctrl+Alt+C</code></td><td>复制哈希结果</td></tr>
-      <tr><td><code>Ctrl+E</code></td><td>导出结果</td></tr>
-      <tr><td><code>Ctrl+H</code></td><td>历史记录</td></tr>
-      <tr><td><code>Ctrl+Alt+H</code></td><td>清空历史</td></tr>
-      <tr><td><code>Ctrl+Alt+T</code></td><td>切换主题</td></tr>
-      <tr><td><code>Ctrl+Alt+L</code></td><td>切换语言</td></tr>
-      <tr><td><code>Ctrl+/</code></td><td>打开本指南</td></tr>
-      <tr><td><code>Ctrl+B</code></td><td>折叠 / 展开侧栏</td></tr>
-      <tr><td><code>Ctrl+,</code></td><td>打开设置</td></tr>
-      <tr><td><code>Ctrl+Q</code></td><td>退出</td></tr>
-      <tr><td><code>Ctrl+Shift+Backspace</code></td><td>清空文件列表</td></tr>
-    </table>
+    <ul class="kbd-list">
+      <li><code>Ctrl+O</code> <span>打开文件</span></li>
+      <li><code>Ctrl+Shift+O</code> <span>打开文件夹</span></li>
+      <li><code>Ctrl+I</code> <span>导入校验文件</span></li>
+      <li><code>Ctrl+Enter</code> <span>开始校验</span></li>
+      <li><code>Ctrl+Alt+C</code> <span>复制哈希结果</span></li>
+      <li><code>Ctrl+E</code> <span>导出结果</span></li>
+      <li><code>Ctrl+H</code> <span>历史记录</span></li>
+      <li><code>Ctrl+Alt+H</code> <span>清空历史</span></li>
+      <li><code>Ctrl+Alt+T</code> <span>切换主题</span></li>
+      <li><code>Ctrl+Alt+L</code> <span>切换语言</span></li>
+      <li><code>Ctrl+/</code> <span>打开本指南</span></li>
+      <li><code>Ctrl+B</code> <span>折叠 / 展开侧栏</span></li>
+      <li><code>Ctrl+,</code> <span>打开设置</span></li>
+      <li><code>Ctrl+Q</code> <span>退出</span></li>
+      <li><code>Ctrl+Shift+Backspace</code> <span>清空文件列表</span></li>
+    </ul>
 
     <h2>四、主题与设置</h2>
     <ul>
-      <li><strong>暗色模式</strong>：点击标题栏主题按钮可一键切换亮 / 暗，选择会自动保存，下次启动沿用。</li>
-      <li><strong>设置</strong>：按 <code>Ctrl+,</code> 打开设置，可切换主题、查看支持算法与版本信息。</li>
-      <li><strong>历史记录</strong>：<code>Ctrl+H</code> 查看最近计算记录，可快速重新计算历史文件。</li>
+      <li><strong>主题</strong>：点击标题栏主题按钮切换亮 / 暗，自动保存。</li>
+      <li><strong>设置</strong>：按 <code>Ctrl+,</code> 打开设置，可查看版本与支持算法。</li>
+      <li><strong>历史记录</strong>：按 <code>Ctrl+H</code> 查看，可快速重新计算历史文件。</li>
     </ul>
 
     <h2>五、反馈</h2>
     <p>
-      开发者：<strong>B站·宝藏二哥</strong>。使用中有建议或发现问题，欢迎反馈至
+      开发者：<strong>B站·宝藏二哥</strong>。有建议或问题请反馈至
       <a href="mailto:ergeaia@agent.qq.com">ergeaia@agent.qq.com</a>。
     </p>
   </body>

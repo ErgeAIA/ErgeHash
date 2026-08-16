@@ -84,26 +84,8 @@ export function QuickGuideDialog({ open, onOpenChange }: QuickGuideDialogProps) 
       /<a /g,
       '<a style="color: #4CAF50;" ',
     );
-    content = content.replace(
-      /<pre>/g,
-      '<pre style="background-color: #2d2d2d; color: #e0e0e0;">',
-    );
-    content = content.replace(
-      /<code>/g,
-      '<code style="color: #e0e0e0;">',
-    );
-    content = content.replace(
-      /<table>/g,
-      '<table style="background-color: #2d2d2d; color: #ffffff;">',
-    );
-    content = content.replace(
-      /<th>/g,
-      '<th style="background-color: #3498db; color: #ffffff;">',
-    );
-    content = content.replace(
-      /<td>/g,
-      '<td style="color: #ffffff;">',
-    );
+    // 注意：不覆盖 table/th/td/pre/code，统一交给 prose-invert 处理，
+    // 避免内联样式与原 CSS 冲突导致条纹、白底等显示异常。
 
     return content;
   }, [htmlContent, theme]);
