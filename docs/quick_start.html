@@ -3,9 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ErgeHash v0.1.0 - 使用指南</title>
+    <title>ErgeHash 快速指南</title>
     <style>
-      /* CSS Reset */
       * {
         margin: 0;
         padding: 0;
@@ -14,709 +13,171 @@
 
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        line-height: 1.6;
+        line-height: 1.75;
         color: #333;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        padding: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
-      }
-
-      .dark-mode {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        color: #e6e6e6;
+        background: #ffffff;
+        padding: 8px;
       }
 
       h1 {
-        text-align: center;
+        font-size: 1.8em;
         color: #2c3e50;
-        margin-bottom: 30px;
-        font-size: 2.5em;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-        border-bottom: 3px solid #3498db;
-        padding-bottom: 15px;
-      }
-
-      .dark-mode h1 {
-        color: #ecf0f1;
-        border-bottom: 3px solid #3498db;
+        margin-bottom: 18px;
+        border-bottom: 2px solid #ba4d0f;
+        padding-bottom: 10px;
       }
 
       h2 {
         color: #34495e;
-        margin: 25px 0 15px 0;
-        padding: 10px 0;
-        border-left: 4px solid #3498db;
-        background-color: rgba(52, 152, 219, 0.1);
-        padding-left: 15px;
-      }
-
-      .dark-mode h2 {
-        color: #bdc3c7;
-        background-color: rgba(52, 152, 219, 0.2);
+        margin: 22px 0 10px 0;
+        padding: 6px 0 6px 12px;
+        border-left: 4px solid #ba4d0f;
+        background-color: rgba(186, 77, 15, 0.08);
       }
 
       h3 {
-        color: #2980b9;
-        margin: 20px 0 10px 0;
-        font-size: 1.3em;
-      }
-
-      .dark-mode h3 {
-        color: #3498db;
-      }
-
-      h4 {
-        color: #27ae60;
-        margin: 15px 0 8px 0;
+        color: #ba4d0f;
+        margin: 16px 0 8px 0;
         font-size: 1.1em;
       }
 
-      .dark-mode h4 {
-        color: #2ecc71;
-      }
-
       p {
-        margin: 10px 0;
-        padding: 8px 15px;
+        margin: 8px 0;
       }
 
       ul,
       ol {
-        margin: 10px 0 10px 20px;
-        padding-left: 20px;
+        margin: 8px 0 8px 22px;
       }
 
       li {
-        margin: 8px 0;
-        padding: 5px 0;
-      }
-
-      strong {
-        color: #2c3e50;
-        font-weight: 600;
-      }
-
-      .dark-mode strong {
-        color: #ecf0f1;
+        margin: 5px 0;
       }
 
       code {
-        background-color: #1a1a1a;
+        background-color: #f0f0f0;
         padding: 2px 6px;
         border-radius: 4px;
-        font-family: "Courier New", monospace;
-        color: #e74c3c;
-        /* border: 1px solid #dfe6e9; */
-      }
-
-      .dark-mode code {
-        background-color: #2d3436;
-        color: #fdcb6e;
-        border: 1px solid #636e72;
+        font-family: Consolas, "Courier New", monospace;
+        color: #c0392b;
       }
 
       pre {
         background-color: #2d3436;
         color: #fff;
-        padding: 15px;
+        padding: 12px 14px;
         border-radius: 8px;
         overflow-x: auto;
-        margin: 15px 0;
-        border: 1px solid #636e72;
-        font-family: "Courier New", monospace;
-      }
-
-      .dark-mode pre {
-        background-color: #1a1a2e;
-        border: 1px solid #3498db;
-      }
-
-      hr {
-        border: none;
-        height: 2px;
-        background: linear-gradient(
-          to right,
-          transparent,
-          #3498db,
-          transparent
-        );
-        margin: 30px 0;
-      }
-
-      .feature-section {
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin: 15px 0;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border-left: 5px solid #3498db;
-      }
-
-      .dark-mode .feature-section {
-        background-color: #1e2a3a;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        border-left: 5px solid #3498db;
-      }
-
-      .emoji-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .shortcut-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 15px;
-        margin: 15px 0;
-      }
-
-      .shortcut-item {
-        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-        padding: 15px;
-        border-radius: 8px;
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .dark-mode .shortcut-item {
-        background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%);
-      }
-
-      .algorithm-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 15px;
-        margin: 15px 0;
-      }
-
-      .algorithm-item {
-        background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
-        padding: 15px;
-        border-radius: 8px;
-        color: white;
-      }
-
-      .dark-mode .algorithm-item {
-        background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-      }
-
-      .tip-box {
-        background-color: #ffeaa7;
-        border-left: 5px solid #fdcb6e;
-        padding: 15px;
-        margin: 15px 0;
-        border-radius: 0 8px 8px 0;
-      }
-
-      .dark-mode .tip-box {
-        background-color: #e17055;
-      }
-
-      .info-box {
-        background-color: #74b9ff;
-        color: white;
-        padding: 15px;
-        margin: 15px 0;
-        border-radius: 8px;
-        border-left: 5px solid #0984e3;
-      }
-
-      .dark-mode .info-box {
-        background-color: #0984e3;
+        margin: 10px 0;
+        font-family: Consolas, "Courier New", monospace;
       }
 
       table {
         width: 100%;
         border-collapse: collapse;
-        margin: 15px 0;
-        background-color: white;
+        margin: 10px 0;
         border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      .dark-mode table {
-        background-color: #1e2a3a;
       }
 
       th,
       td {
-        padding: 12px 15px;
+        padding: 8px 12px;
         text-align: left;
         border-bottom: 1px solid #eee;
       }
 
-      .dark-mode th,
-      .dark-mode td {
-        border-bottom: 1px solid #4a5568;
-      }
-
       th {
-        background-color: #3498db;
-        color: white;
-      }
-
-      .dark-mode th {
-        background-color: #2980b9;
+        background-color: #ba4d0f;
+        color: #fff;
+        font-weight: 600;
       }
 
       tr:nth-child(even) {
         background-color: #f8f9fa;
       }
 
-      .dark-mode tr:nth-child(even) {
-        background-color: #2d3436;
-      }
-
-      tr:hover {
-        background-color: #e3f2fd;
-      }
-
-      .dark-mode tr:hover {
-        background-color: #34495e;
-      }
-
-      .toc {
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      }
-
-      .dark-mode .toc {
-        background-color: #1e2a3a;
-      }
-
-      .toc h2 {
-        border-left: none;
-        background-color: transparent;
-        border-bottom: 2px solid #3498db;
-      }
-
-      .toc ul {
-        column-count: 2;
-        column-gap: 30px;
-      }
-
-      .dark-mode .toc ul {
-        column-count: 2;
-      }
-
-      .copy-btn {
-        background-color: #3498db;
-        color: white;
+      hr {
         border: none;
-        padding: 5px 10px;
-        border-radius: 4px;
-        cursor: pointer;
-        float: right;
-        margin-top: -30px;
-      }
-
-      .dark-mode .copy-btn {
-        background-color: #2980b9;
-      }
-
-      .copy-btn:hover {
-        background-color: #2980b9;
-      }
-
-      .dark-mode .copy-btn:hover {
-        background-color: #3498db;
-      }
-
-      @media (max-width: 768px) {
-        body {
-          padding: 10px;
-        }
-
-        h1 {
-          font-size: 2em;
-        }
-
-        .shortcut-list,
-        .algorithm-list {
-          grid-template-columns: 1fr;
-        }
-
-        .toc ul {
-          column-count: 1;
-        }
+        height: 1px;
+        background: #ddd;
+        margin: 18px 0;
       }
     </style>
   </head>
   <body>
-    <h1>ErgeHash v0.1.0 - 使用指南</h1>
+    <h1>ErgeHash 快速指南</h1>
 
-    <div class="toc">
-      <h2>目录</h2>
-      <ul>
-        <li><a href="#core-features">核心功能</a></li>
-        <li><a href="#ui-ux">UI/UX 功能</a></li>
-        <li><a href="#algorithms">支持的哈希算法</a></li>
-        <li><a href="#tips">快速技巧</a></li>
-        <li><a href="#config">配置文件位置</a></li>
-        <li><a href="#shortcuts">键盘快捷键</a></li>
-        <li><a href="#performance">性能指标</a></li>
-        <li><a href="#specs">相关信息</a></li>
-        <li><a href="#feedback">反馈和改进</a></li>
-      </ul>
-    </div>
+    <p>
+      ErgeHash（二哈）是一款 Windows 桌面文件哈希校验工具，基于
+      <strong>Tauri 2 + React/TypeScript</strong> 构建，哈希计算由 Rust
+      原生实现，速度快、资源占用低。当前版本 <strong>v0.3.0</strong>。
+    </p>
 
-    <div id="core-features">
-      <h2>核心功能</h2>
+    <h2>一、核心功能</h2>
 
-      <div class="feature-section">
-        <h3>单文件哈希计算</h3>
-        <ol>
-          <li>
-            <strong>打开文件</strong>: 点击"添加文件"按钮或拖拽文件到文件列表
-          </li>
-          <li>
-            <strong>选择算法</strong>: 在左侧边栏选择算法 (SHA-256 / MD5 / SHA-1
-            / SHA-512)
-          </li>
-          <li><strong>计算哈希</strong>: 点击"开始批量校验"按钮</li>
-          <li><strong>查看结果</strong>: 完整哈希值会显示在右侧面板</li>
-        </ol>
-      </div>
+    <h3>计算哈希</h3>
+    <ol>
+      <li><strong>添加文件</strong>：拖拽文件/文件夹到列表，或按 <code>Ctrl+O</code> 选文件、<code>Ctrl+Shift+O</code> 选文件夹。</li>
+      <li><strong>选择算法</strong>：在左侧边栏勾选算法（可多选）。</li>
+      <li><strong>开始计算</strong>：点击「开始校验」，或按 <code>Ctrl+Enter</code>。结果回填到文件列表，可逐条复制。</li>
+    </ol>
 
-      <div class="feature-section">
-        <h3>批量处理</h3>
-        <ol>
-          <li><strong>添加多个文件</strong>: 拖拽多个文件或文件夹</li>
-          <li><strong>点击"开始批量校验"</strong>: 自动处理所有文件</li>
-          <li><strong>暂停/继续</strong>: 使用暂停/继续按钮控制进度</li>
-          <li><strong>查看结果</strong>: 实时显示处理进度和结果</li>
-        </ol>
-      </div>
+    <h3>校验文件</h3>
+    <ol>
+      <li><strong>准备预期哈希</strong>：两种方式任选其一——导入校验文件（<code>Ctrl+I</code>，支持 <code>.md5</code>/<code>.sha256</code>/<code>.sfv</code> 等），或在列表的预期哈希框中粘贴哈希值。</li>
+      <li><strong>比对</strong>：点击「开始校验」，每行显示匹配 / 不匹配状态。</li>
+    </ol>
 
-      <div class="feature-section">
-        <h3>哈希校验</h3>
-        <ol>
-          <li><strong>输入预期哈希</strong>: 在验证区域输入要校验的哈希值</li>
-          <li><strong>点击"比较哈希值"</strong>: 对比计算结果</li>
-          <li><strong>查看比对结果</strong>: 显示匹配/不匹配的状态</li>
-        </ol>
-      </div>
+    <h3>资源管理器右键菜单</h3>
+    <p>安装后在文件上右键，可直接调用 ErgeHash：</p>
+    <ul>
+      <li><strong>计算哈希</strong>：弹出报告窗显示所选文件的哈希值（可复制）。</li>
+      <li><strong>对比文件</strong>：多选文件后右键「对比文件」，报告窗列出全部文件并标明是否一致。</li>
+      <li><strong>校验文件</strong>：对校验文件右键，自动解析并比对。</li>
+    </ul>
 
-      <div class="feature-section">
-        <h3>快速比较</h3>
-        <ol>
-          <li><strong>添加两个文件</strong>: 拖拽两个文件到文件列表</li>
-          <li><strong>点击"快速比较"</strong>: 自动比较两个文件的哈希值</li>
-          <li><strong>查看结果</strong>: 显示文件是否相同</li>
-          <li>
-            <strong>大文件优化</strong>: 文件大小超过1G时，只比较文件前5M的信息
-          </li>
-        </ol>
-      </div>
-    </div>
+    <h2>二、支持算法</h2>
+    <table>
+      <tr><th>算法</th><th>说明</th><th>典型用途</th></tr>
+      <tr><td>SHA-256</td><td>推荐（默认）</td><td>文件完整性验证</td></tr>
+      <tr><td>SHA-512</td><td>安全</td><td>高安全需求</td></tr>
+      <tr><td>SHA-1</td><td>兼容</td><td>旧系统 / 历史兼容</td></tr>
+      <tr><td>MD5</td><td>传统</td><td>快速校验（不推荐用于安全场景）</td></tr>
+      <tr><td>CRC32</td><td>校验和</td><td>快速完整性 / 传输校验</td></tr>
+    </table>
 
-    <hr />
+    <h2>三、快捷键</h2>
+    <table>
+      <tr><th>快捷键</th><th>功能</th></tr>
+      <tr><td><code>Ctrl+O</code></td><td>打开文件</td></tr>
+      <tr><td><code>Ctrl+Shift+O</code></td><td>打开文件夹</td></tr>
+      <tr><td><code>Ctrl+I</code></td><td>导入校验文件</td></tr>
+      <tr><td><code>Ctrl+Enter</code></td><td>开始校验</td></tr>
+      <tr><td><code>Ctrl+Alt+C</code></td><td>复制哈希结果</td></tr>
+      <tr><td><code>Ctrl+E</code></td><td>导出结果</td></tr>
+      <tr><td><code>Ctrl+H</code></td><td>历史记录</td></tr>
+      <tr><td><code>Ctrl+Alt+H</code></td><td>清空历史</td></tr>
+      <tr><td><code>Ctrl+Alt+T</code></td><td>切换主题</td></tr>
+      <tr><td><code>Ctrl+Alt+L</code></td><td>切换语言</td></tr>
+      <tr><td><code>Ctrl+/</code></td><td>打开本指南</td></tr>
+      <tr><td><code>Ctrl+B</code></td><td>折叠 / 展开侧栏</td></tr>
+      <tr><td><code>Ctrl+,</code></td><td>打开设置</td></tr>
+      <tr><td><code>Ctrl+Q</code></td><td>退出</td></tr>
+      <tr><td><code>Ctrl+Shift+Backspace</code></td><td>清空文件列表</td></tr>
+    </table>
 
-    <div id="ui-ux">
-      <h2>UI 介绍</h2>
+    <h2>四、主题与设置</h2>
+    <ul>
+      <li><strong>暗色模式</strong>：点击标题栏主题按钮可一键切换亮 / 暗，选择会自动保存，下次启动沿用。</li>
+      <li><strong>设置</strong>：按 <code>Ctrl+,</code> 打开设置，可切换主题、查看支持算法与版本信息。</li>
+      <li><strong>历史记录</strong>：<code>Ctrl+H</code> 查看最近计算记录，可快速重新计算历史文件。</li>
+    </ul>
 
-      <div class="feature-section">
-        <div class="emoji-header">
-          <h3>🌙 暗黑模式</h3>
-        </div>
-        <ul>
-          <li><strong>位置</strong>: 左上角标题栏右边</li>
-          <li><strong>功能</strong>: 一键切换亮黑主题</li>
-          <li><strong>效果</strong>: 整个应用立即切换主题</li>
-          <li><strong>记忆</strong>: 主题选择会自动保存</li>
-        </ul>
-
-        <div class="tip-box">
-          <strong>使用方法</strong>:
-          <pre>点击 🌙 按钮 → 主题立即切换 → 下次启动自动加载</pre>
-        </div>
-      </div>
-
-      <div class="feature-section">
-        <div class="emoji-header">
-          <h3>📱 左侧导航按钮</h3>
-        </div>
-
-        <h4>📒 记事本</h4>
-        <ul>
-          <li>点击打开 Windows 系统记事本</li>
-          <li>方便记录和编辑文本信息</li>
-        </ul>
-
-        <h4>📋 历史记录</h4>
-        <ul>
-          <li>查看最近的哈希计算记录</li>
-          <li>快速重新计算历史文件</li>
-        </ul>
-
-        <h4>⚙️ 设置</h4>
-        <ul>
-          <li>显示应用设置对话框</li>
-          <li>
-            支持:
-            <ul>
-              <li>快速主题切换</li>
-              <li>查看支持的算法列表</li>
-              <li>应用版本和信息</li>
-            </ul>
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <hr />
-
-    <div id="algorithms">
-      <h2>支持的哈希算法</h2>
-
-      <div class="algorithm-list">
-        <div class="algorithm-item">
-          <h4>SHA-256</h4>
-          <p><strong>标准</strong>: 推荐</p>
-          <p><strong>用途</strong>: 文件完整性验证（默认）</p>
-        </div>
-        <div class="algorithm-item">
-          <h4>SHA-512</h4>
-          <p><strong>标准</strong>: 安全</p>
-          <p><strong>用途</strong>: 高安全需求</p>
-        </div>
-        <div class="algorithm-item">
-          <h4>SHA-1</h4>
-          <p><strong>标准</strong>: 兼容</p>
-          <p><strong>用途</strong>: 旧系统兼容</p>
-        </div>
-        <div class="algorithm-item">
-          <h4>MD5</h4>
-          <p><strong>标准</strong>: 传统</p>
-          <p><strong>用途</strong>: 快速验证（不推荐用于安全）</p>
-        </div>
-      </div>
-    </div>
-
-    <hr />
-
-    <div id="tips">
-      <h2>快速技巧</h2>
-
-      <div class="tip-box">
-        <h3>拖拽加载</h3>
-        <pre>
-直接拖拽文件或文件夹到文件列表 → 自动添加
-支持多文件/文件夹同时拖拽</pre
-        >
-      </div>
-
-      <div class="feature-section">
-        <h3>批量校验技巧</h3>
-        <ul>
-          <li>拖拽整个文件夹自动加载所有文件</li>
-          <li>大文件会自动分块处理（81KB 每块）</li>
-          <li>相同文件自动使用缓存，加快处理速度</li>
-        </ul>
-      </div>
-
-      <div class="tip-box">
-        <h3>右键菜单</h3>
-        <pre>
-在文件列表中右键点击:
-- 移除选中文件
-- 清空所有文件  
-- 复制文件路径</pre
-        >
-      </div>
-
-      <div class="tip-box">
-        <h3>复制结果</h3>
-        <pre>
-在结果面板中:
-- 双击选中哈希值
-- Ctrl+C 复制
-- 或点击"复制"按钮</pre
-        >
-      </div>
-    </div>
-
-    <hr />
-
-    <div id="config">
-      <h2>配置文件位置</h2>
-
-      <div class="info-box">
-        <p>配置和历史记录存储在:</p>
-        <pre>
-%USERPROFILE%\.ergehash\
-├── config.json      # 应用设置
-└── history.json     # 计算历史</pre
-        >
-      </div>
-
-      <h3>包含内容</h3>
-      <ul>
-        <li>选中的算法</li>
-        <li>主题偏好 (亮色/暗黑)</li>
-        <li>窗口大小和位置</li>
-        <li>最近 50 条计算记录</li>
-      </ul>
-    </div>
-
-    <hr />
-
-    <div id="shortcuts">
-      <h2>键盘快捷键</h2>
-
-      <div class="shortcut-list">
-        <div class="shortcut-item">
-          <span><code>Ctrl+O</code></span>
-          <span>打开文件</span>
-        </div>
-        <div class="shortcut-item">
-          <span><code>Ctrl+F</code></span>
-          <span>打开文件夹</span>
-        </div>
-        <div class="shortcut-item">
-          <span><code>Ctrl+Z</code></span>
-          <span>清空文件列表</span>
-        </div>
-        <div class="shortcut-item">
-          <span><code>Ctrl+C</code></span>
-          <span>复制哈希结果</span>
-        </div>
-        <div class="shortcut-item">
-          <span><code>Delete</code></span>
-          <span>删除选中文件</span>
-        </div>
-      </div>
-    </div>
-
-    <hr />
-
-    <div id="performance">
-      <h2>性能指标</h2>
-
-      <div class="feature-section">
-        <h3>测试环境</h3>
-        <ul>
-          <li>CPU: Intel/AMD 多核处理器</li>
-          <li>内存: 8GB+ 推荐</li>
-          <li>存储: SSD（推荐）或 HDD</li>
-        </ul>
-      </div>
-
-      <div class="feature-section">
-        <h3>处理速度参考</h3>
-        <ul>
-          <li><strong>1 GB 文件</strong>: ~1-3 秒 (SSD), ~3-8 秒 (HDD)</li>
-          <li><strong>100 MB 文件</strong>: ~0.1-0.3 秒 (SSD), ~0.3-0.8 秒 (HDD)</li>
-          <li><strong>10 MB 文件</strong>: ~10-30 毫秒 (SSD), ~30-80 毫秒 (HDD)</li>
-        </ul>
-      </div>
-
-      <div class="feature-section">
-        <h3>缓存优化</h3>
-        <ul>
-          <li>相同文件重复计算时自动使用缓存</li>
-          <li>缓存密钥: <code>(文件大小, 算法)</code></li>
-          <li>显著加快批量处理速度</li>
-        </ul>
-      </div>
-    </div>
-
-    <hr />
-
-    <div id="specs">
-      <h2>相关信息</h2>
-
-      <ul>
-        <li><strong>应用版本</strong>: v0.1.0</li>
-        <li><strong>Python 版本</strong>: 3.8+</li>
-        <li><strong>GUI 框架</strong>: PyQt5 (>=5.15.0)</li>
-        <li><strong>哈希库</strong>: hashlib (Python 内置)</li>
-        <li><strong>打包工具</strong>: PyInstaller</li>
-        <li><strong>独立运行</strong>: 是 (无需安装)</li>
-        <li><strong>开发者</strong>: <a href="https://space.bilibili.com/67221461" target="_blank">B站·宝藏二哥</a></li>
-      </ul>
-    </div>
-
-    <hr />
-
-    <div id="feedback">
-      <h2>反馈和改进</h2>
-
-      <p>如有任何建议或发现问题，欢迎提出反馈！</p>
-
-      <div class="info-box">
-        <p>
-          请将反馈发送至
-          <a href="mailto:maplechastity@gmail.com" target="_blank"
-            >maplechastity@gmail.com</a
-          >
-        </p>
-      </div>
-    </div>
-
-    <script>
-      // 添加暗黑模式切换功能
-      document.addEventListener("DOMContentLoaded", function () {
-        const body = document.body;
-        const darkModeToggle = document.createElement("button");
-        darkModeToggle.textContent = "🌙";
-        darkModeToggle.style.position = "fixed";
-        darkModeToggle.style.top = "20px";
-        darkModeToggle.style.right = "20px";
-        darkModeToggle.style.fontSize = "24px";
-        darkModeToggle.style.padding = "10px";
-        darkModeToggle.style.border = "none";
-        darkModeToggle.style.borderRadius = "50%";
-        darkModeToggle.style.background = "#3498db";
-        darkModeToggle.style.color = "white";
-        darkModeToggle.style.cursor = "pointer";
-        darkModeToggle.style.zIndex = "1000";
-
-        // 检查本地存储的主题设置
-        if (localStorage.getItem("darkMode") === "enabled") {
-          body.classList.add("dark-mode");
-          darkModeToggle.textContent = "☀️";
-        }
-
-        darkModeToggle.addEventListener("click", function () {
-          body.classList.toggle("dark-mode");
-
-          if (body.classList.contains("dark-mode")) {
-            darkModeToggle.textContent = "☀️";
-            localStorage.setItem("darkMode", "enabled");
-          } else {
-            darkModeToggle.textContent = "🌙";
-            localStorage.setItem("darkMode", "disabled");
-          }
-        });
-
-        document.body.appendChild(darkModeToggle);
-
-        // 为代码块添加复制按钮
-        const pres = document.querySelectorAll("pre");
-        pres.forEach((pre) => {
-          const button = document.createElement("button");
-          button.className = "copy-btn";
-          button.textContent = "复制";
-          button.onclick = () => {
-            navigator.clipboard.writeText(pre.textContent).then(() => {
-              button.textContent = "已复制!";
-              setTimeout(() => {
-                button.textContent = "复制";
-              }, 2000);
-            });
-          };
-          pre.parentNode.insertBefore(button, pre);
-        });
-      });
-    </script>
+    <h2>五、反馈</h2>
+    <p>
+      开发者：<strong>B站·宝藏二哥</strong>。使用中有建议或发现问题，欢迎反馈至
+      <a href="mailto:ergeaia@agent.qq.com">ergeaia@agent.qq.com</a>。
+    </p>
   </body>
 </html>
