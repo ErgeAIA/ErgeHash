@@ -95,6 +95,10 @@ function App() {
   useKeyboardShortcuts();
   const addToast = useToastStore((s) => s.addToast);
 
+  // 配置是否已从后端加载完成；未加载前不应用主题类，避免初始 theme 覆盖
+  // 反 FOUC 脚本 / Rust 初始化脚本已设的 dark 类（否则会先白后暗）。
+  const [configLoaded, setConfigLoaded] = useState(false);
+
   // 初始化：从后端加载配置
   // 注意：窗口 show 由 Rust 侧 setup 钩子负责，此处不调用 show()。
   // 原因：JS 侧 show 依赖 React 挂载 + IPC 链路，若 getConfig() 慢/挂起则窗口永不显示；
@@ -114,6 +118,9 @@ function App() {
         }
       } catch {
         // 后端尚未就绪时忽略错误
+      } finally {
+        // 无论成功失败都标记已加载，确保主题切换能即时生效（不卡在门控外）
+        setConfigLoaded(true);
       }
     }
     initConfig();
@@ -125,15 +132,16 @@ function App() {
     i18n.changeLanguage(language);
   }, [language, i18n]);
 
-  // 主题变更时切换 dark 类
+  // 主题变更时切换 dark 类；configLoaded 前不执行，避免初始 theme 覆盖反 FOUC 类
   useEffect(() => {
+    if (!configLoaded) return;
     const root = document.documentElement;
     if (theme === "dark") {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
-  }, [theme]);
+  }, [theme, configLoaded]);
 
   // 动画开关：关闭时在根元素挂禁用动画 class（一键关闭所有动画）
   useEffect(() => {

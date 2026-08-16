@@ -152,7 +152,10 @@ interface AppState {
 export const useAppStore = create<AppState>((set, get) => ({
   fileList: [],
   selectedAlgorithms: ["sha256"],
-  theme: "light",
+  theme:
+    (typeof localStorage !== "undefined"
+      ? (localStorage.getItem("erge.theme") as "light" | "dark" | null)
+      : null) ?? "light",
   language: "zh",
   autoCalculate: false,
   animations: true,
@@ -302,7 +305,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     void setConfig("algorithm", algos.join(","));
   },
 
-  setTheme: (theme) => set({ theme }),
+  setTheme: (theme) => {
+    set({ theme });
+    try {
+      localStorage.setItem("erge.theme", theme);
+    } catch {
+      /* localStorage 不可用时忽略 */
+    }
+  },
 
   setLanguage: (language) => set({ language }),
 
@@ -310,6 +320,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => {
       const theme = state.theme === "light" ? "dark" : "light";
       void setConfig("theme", theme);
+      try {
+        localStorage.setItem("erge.theme", theme);
+      } catch {
+        /* localStorage 不可用时忽略 */
+      }
       return { theme };
     }),
 

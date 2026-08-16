@@ -438,6 +438,7 @@ export default function ReportApp() {
         </span>
         <button
           onClick={close}
+          onMouseDown={(e) => e.stopPropagation()}
           className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-destructive hover:text-white"
           aria-label={t("report_close")}
         >

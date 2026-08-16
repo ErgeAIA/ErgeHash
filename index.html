@@ -5,6 +5,16 @@
     <link rel="icon" type="image/svg+xml" href="/app.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>二哥的文件哈希检验工具 - ErgeHash</title>
+    <script>
+      // 反 FOUC：在首帧绘制前同步应用主题类，避免先白后暗。
+      // 主题以 localStorage 为同步缓存（由 store 在变更/加载时写入），
+      // 报告窗等同理由 Rust initialization_script 在解析期注入。
+      try {
+        var t = localStorage.getItem("erge.theme");
+        if (t === "dark") document.documentElement.classList.add("dark");
+        else if (t === "light") document.documentElement.classList.remove("dark");
+      } catch (e) {}
+    </script>
   </head>
 
   <body>
