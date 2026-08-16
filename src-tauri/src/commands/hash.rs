@@ -1,13 +1,13 @@
 use std::fs::File;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::Ordering;
 use std::time::Instant;
 
 use tauri::{AppHandle, Emitter, State};
 
 use crate::hashing::{file_cache_key, make_hasher, CHUNK_SIZE};
-use crate::models::{HashAlgorithm, HashProgress, HashResult, HashStatus};
+use crate::models::{HashAlgorithm, HashProgress, HashResult, HashStatus, VerifyResult};
 use crate::AppState;
 
 /// 计算单个文件哈希值
@@ -43,7 +43,7 @@ pub async fn calculate_hash(
         }
     }
 
-    let (hash_value, _file_size) = do_calculate_hash(&file_path, algorithm, &app, &state)?;
+    let (hash_value, _file_size) = do_calculate_hash(&file_path, algorithm, &app, state.inner())?;
 
     let elapsed = start_time.elapsed().as_secs_f64();
 
@@ -147,7 +147,7 @@ fn do_calculate_hash(
     file_path: &str,
     algorithm: HashAlgorithm,
     app: &AppHandle,
-    state: &State<'_, AppState>,
+    state: &AppState,
 ) -> Result<(String, u64), String> {
     let path = Path::new(file_path);
 
@@ -211,4 +211,182 @@ fn do_calculate_hash(
     }
 
     Ok((hasher.finalize_hex(), file_size))
+}
+
+/// 右键菜单批量计算：对一组路径用指定算法计算完整哈希（复用哈希内核与缓存，
+/// 不触发前端进度条），返回每个文件的结果。用于「右键 → 计算/比较」的报告窗口。
+#[tauri::command]
+pub fn compute_hashes(
+    paths: Vec<String>,
+    algorithm: HashAlgorithm,
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> Vec<HashResult> {
+    paths
+        .iter()
+        .map(|p| compute_full(p, algorithm, &app, state.inner()))
+        .collect()
+}
+
+fn compute_full(
+    file_path: &str,
+    algorithm: HashAlgorithm,
+    app: &AppHandle,
+    state: &AppState,
+) -> HashResult {
+    use std::time::Instant;
+
+    let start = Instant::now();
+    let path = Path::new(file_path);
+
+    // 命中缓存直接返回
+    if let Ok(meta) = path.metadata() {
+        let key = file_cache_key(file_path, meta.len(), algorithm);
+        if let Some(h) = state.hash_cache.lock().unwrap().get(&key).cloned() {
+            return HashResult {
+                file_path: file_path.to_string(),
+                algorithm,
+                hash_value: h,
+                elapsed_time: 0.0,
+                status: HashStatus::Success,
+                from_cache: true,
+                error_message: None,
+            };
+        }
+    }
+
+    let result = match do_calculate_hash(file_path, algorithm, app, state) {
+        Ok((hash_value, _size)) => {
+            if let Ok(meta) = path.metadata() {
+                state.hash_cache.lock().unwrap().insert(
+                    file_cache_key(file_path, meta.len(), algorithm),
+                    hash_value.clone(),
+                );
+            }
+            HashResult {
+                file_path: file_path.to_string(),
+                algorithm,
+                hash_value,
+                elapsed_time: start.elapsed().as_secs_f64(),
+                status: HashStatus::Success,
+                from_cache: false,
+                error_message: None,
+            }
+        }
+        Err(e) => HashResult {
+            file_path: file_path.to_string(),
+            algorithm,
+            hash_value: String::new(),
+            elapsed_time: start.elapsed().as_secs_f64(),
+            status: HashStatus::Error,
+            from_cache: false,
+            error_message: Some(e),
+        },
+    };
+
+    result
+}
+
+/// 算法名（小写）转枚举；支持 sha-256 等带连字符写法。
+fn algo_from_str(s: &str) -> Option<HashAlgorithm> {
+    match s.to_ascii_lowercase().as_str() {
+        "sha256" | "sha-256" => Some(HashAlgorithm::SHA256),
+        "md5" => Some(HashAlgorithm::MD5),
+        "sha1" | "sha-1" => Some(HashAlgorithm::SHA1),
+        "sha512" | "sha-512" => Some(HashAlgorithm::SHA512),
+        "crc32" => Some(HashAlgorithm::Crc32),
+        _ => None,
+    }
+}
+
+/// 右键菜单「用校验文件验证」：解析校验文件，按条目相对目录解析实际文件、
+/// 用条目声明的算法计算哈希并与期望哈希比对，返回逐条目结果。
+#[tauri::command]
+pub fn verify_checksum_file(
+    checksum_file: String,
+    app: AppHandle,
+    state: State<AppState>,
+) -> Result<Vec<VerifyResult>, String> {
+    // 重置中断标志：右键报告窗与计算窗共享 AppState，若此前某次计算被取消，残留的
+    // cancel_flag 会让本命令首行 check_interrupted 立即报错，导致所有条目 error。
+    state.cancel_flag.store(false, Ordering::Relaxed);
+    state.pause_flag.store(false, Ordering::Relaxed);
+
+    let report = crate::commands::verification_parser::parse_verification_file(&checksum_file)
+        .map_err(|e| e)?;
+    // 校验文件所在目录（用于路径越界保护）。canonicalize 失败（极少见）则退化为不限制。
+    let base_dir = Path::new(&checksum_file)
+        .parent()
+        .and_then(|p| p.canonicalize().ok());
+
+    let mut results: Vec<VerifyResult> = Vec::new();
+    for entry in report.entries {
+        // 解析被校验文件绝对路径：目录 join 条目名后 canonicalize 规范化，并拦截路径遍历
+        // （如 "../secret.txt" 或绝对路径）指向校验文件目录之外的文件。
+        let joined = match Path::new(&checksum_file).parent() {
+            Some(p) => p.join(&entry.filename),
+            None => PathBuf::from(entry.filename.clone()),
+        };
+        let resolved = match joined.canonicalize() {
+            Ok(canon) => {
+                if base_dir.as_ref().map_or(true, |b| canon.starts_with(b)) {
+                    canon
+                } else {
+                    results.push(VerifyResult {
+                        file_path: joined.to_string_lossy().to_string(),
+                        algorithm: entry.algorithm.clone(),
+                        expected: entry.hash_value.clone(),
+                        actual: String::new(),
+                        status: "error".to_string(),
+                        error_message: Some("路径越界，已拒绝校验".to_string()),
+                    });
+                    continue;
+                }
+            }
+            Err(_) => {
+                results.push(VerifyResult {
+                    file_path: joined.to_string_lossy().to_string(),
+                    algorithm: entry.algorithm.clone(),
+                    expected: entry.hash_value.clone(),
+                    actual: String::new(),
+                    status: "error".to_string(),
+                    error_message: Some(format!("文件不存在: {}", joined.display())),
+                });
+                continue;
+            }
+        };
+        let file_path = resolved.to_string_lossy().to_string();
+        let algo = algo_from_str(&entry.algorithm);
+        let (status, actual, err) = match algo {
+            Some(a) => {
+                let res = compute_full(&file_path, a, &app, state.inner());
+                match res.status {
+                    HashStatus::Success => {
+                        let ok = res.hash_value.eq_ignore_ascii_case(&entry.hash_value);
+                        (
+                            if ok { "match".to_string() } else { "mismatch".to_string() },
+                            res.hash_value,
+                            None,
+                        )
+                    }
+                    HashStatus::Error => ("error".to_string(), String::new(), res.error_message),
+                    _ => ("error".to_string(), String::new(), res.error_message),
+                }
+            }
+            None => (
+                "error".to_string(),
+                String::new(),
+                Some(format!("不支持的算法: {}", entry.algorithm)),
+            ),
+        };
+        results.push(VerifyResult {
+            file_path,
+            algorithm: entry.algorithm,
+            expected: entry.hash_value,
+            actual,
+            status,
+            error_message: err,
+        });
+    }
+    Ok(results)
 }

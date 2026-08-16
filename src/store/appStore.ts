@@ -208,9 +208,27 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   removeFile: (index) =>
-    set((state) => ({
-      fileList: state.fileList.filter((_, i) => i !== index),
-    })),
+    set((state) => {
+      const target = state.fileList[index];
+      const fileList = state.fileList.filter((_, i) => i !== index);
+      // 删除校验文件（role=verification）时，其解析出的逐文件绑定条目已无意义，
+      // 必须同步清空 importedEntries / verificationMode，否则列表还会残留
+      // 指向已删文件的"未匹配"条目，状态栏/分组统计也会持续错误。
+      const removedVerification =
+        target?.role === "verification";
+      return {
+        fileList,
+        importedEntries: removedVerification ? [] : state.importedEntries,
+        verificationMode: removedVerification
+          ? state.expectedHash.trim()
+            ? "single"
+            : "none"
+          : state.verificationMode,
+        // 被删文件的计算结果已失效，整体结果跟随重新计算；不留过时数据。
+        lastResults: null,
+        statusMessage: "ready",
+      };
+    }),
 
   clearFiles: () =>
     set((state) => ({

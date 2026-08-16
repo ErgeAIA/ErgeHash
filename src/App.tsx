@@ -18,7 +18,6 @@ import { FileList } from "./components/FileList";
 import { ExpectedHashSection } from "./components/ExpectedHashSection";
 import { StatusReportBar } from "./components/StatusReportBar";
 import { BottomActionBar } from "./components/BottomActionBar";
-import { FloatingProgress } from "./components/FloatingProgress";
 import { HistoryDialog } from "./components/dialogs/HistoryDialog";
 import { SettingsDialog } from "./components/dialogs/SettingsDialog";
 import { QuickGuideDialog } from "./components/dialogs/QuickGuideDialog";
@@ -336,8 +335,6 @@ function App() {
         onConfirm={handleConfirmClearHistory}
       />
       <ToastHost />
-      {/* 悬浮计算进度 toast */}
-      <FloatingProgress />
     </MainLayout>
   );
 }

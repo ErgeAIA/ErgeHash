@@ -39,7 +39,7 @@ pub struct ParseReport {
 }
 
 /// 支持的文件名裸哈希（无文件名时从源文件名派生）
-fn parse_verification_file(file_path: &str) -> Result<ParseReport, String> {
+pub(crate) fn parse_verification_file(file_path: &str) -> Result<ParseReport, String> {
     let path = Path::new(file_path);
     if !path.exists() {
         return Err(format!("verification file not found: {}", file_path));

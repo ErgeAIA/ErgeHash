@@ -138,7 +138,7 @@ impl Default for AppConfig {
     fn default() -> Self {
         AppConfig {
             algorithm: "sha256".to_string(),
-            theme: "light".to_string(),
+            theme: "dark".to_string(),
             language: "zh".to_string(),
             auto_calculate: Some(false),
             animations: Some(true),
@@ -156,4 +156,35 @@ pub struct VerificationEntry {
     pub hash_value: String,
     /// 文件名
     pub filename: String,
+}
+
+/// 右键菜单启动请求（由命令行参数解析得到，传递给报告窗口）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ContextMenuRequest {
+    /// 操作类型：compute（计算单个/多个哈希）、compare（比较多个文件一致性）或 verify（用校验文件验证）
+    pub operation: String,
+    /// 指定算法
+    pub algorithm: HashAlgorithm,
+    /// 传入的文件路径
+    pub paths: Vec<String>,
+}
+
+/// 校验文件验证结果（右键菜单「用校验文件验证」时由后端逐条目比对得到）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VerifyResult {
+    /// 被校验文件的路径（相对校验文件目录解析后的绝对/相对路径）
+    pub file_path: String,
+    /// 算法（小写，如 sha256）
+    pub algorithm: String,
+    /// 校验文件中的期望哈希
+    pub expected: String,
+    /// 实际计算得到的哈希（error 时为空）
+    pub actual: String,
+    /// 状态：match（一致）/ mismatch（不一致）/ error（文件缺失或计算失败）
+    pub status: String,
+    /// 错误信息（仅 status 为 error 时有值）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_message: Option<String>,
 }

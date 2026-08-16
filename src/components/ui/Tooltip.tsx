@@ -76,7 +76,7 @@ export function Tooltip({ label, children, disabled, className }: TooltipProps) 
   return (
     <>
       <span
-        className={`inline-flex flex-shrink-0 ${className ?? ""}`}
+        className={className ?? "inline-flex flex-shrink-0"}
         onMouseEnter={show}
         onMouseLeave={hide}
         onFocus={show}

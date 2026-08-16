@@ -252,9 +252,10 @@ fn process_single_file(
                     elapsed_time: 0.0,
                     status: HashStatus::Error,
                     from_cache: false,
-                    error_message: Some("操作已取消".to_string()),
+                    error_message: Some("__I18N_CANCELLED__".to_string()),
                 };
             }
+
 
             match hasher {
                 // 缓存命中：直接回写缓存值

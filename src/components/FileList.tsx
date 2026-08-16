@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { buildFileGroups } from "@/lib/fileGroups";
 import { handleDroppedPaths } from "@/lib/dropHandler";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { FloatingProgress } from "@/components/FloatingProgress";
 
 /** 文件拖放列表组件，对应原始 DragDropFileListWidget */
 export function FileList({ className }: { className?: string }) {
@@ -330,6 +331,8 @@ export function FileList({ className }: { className?: string }) {
         )}
         onClick={fileList.length === 0 ? handleZoneClick : undefined}
       >
+        {/* 悬浮计算进度面板：相对于文件列表卡片居中 */}
+        <FloatingProgress />
         <div className="filelist-scroll-area group relative min-h-0 flex-1">
           {fileList.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">

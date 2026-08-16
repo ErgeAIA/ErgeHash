@@ -113,7 +113,7 @@ export function FloatingProgress() {
       : null;
 
   return (
-    <div className="fixed left-1/2 top-1/2 z-50 w-[380px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border/60 bg-card/92 p-5 shadow-2xl backdrop-blur-md">
+    <div className="absolute left-1/2 top-1/2 z-50 w-[380px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-card/92 p-5 shadow-2xl backdrop-blur-md">
       {/* 标题行：状态 + 百分比 + 文件计数 */}
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -143,9 +143,9 @@ export function FloatingProgress() {
       </div>
 
       {/* 文件名 + 字节进度 */}
-      <div className="mb-2 space-y-1">
-        <Tooltip label={currentFile || ""}>
-          <div className="truncate text-sm font-medium text-foreground">
+      <div className="mb-2 min-w-0 space-y-1">
+        <Tooltip label={currentFile || ""} className="block min-w-0">
+          <div className="block w-full min-w-0 truncate text-sm font-medium text-foreground">
             {currentFile ? getBasename(currentFile) : t("preparing")}
           </div>
         </Tooltip>
