@@ -41,6 +41,8 @@
   "menu_tools": "工具",
   "tools": "工具",
   "menu_guide": "快速指南",
+  "home_shortcuts": "常用快捷键",
+  "home_view_all": "查看全部快捷键",
   "menu_clear_history": "清空历史记录",
   "menu_import_verify": "导入验证文件",
   "menu_batch_process": "批量处理文件夹",

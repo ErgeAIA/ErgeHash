@@ -41,6 +41,8 @@
   "menu_tools": "Tools",
   "tools": "Tools",
   "menu_guide": "Quick Guide",
+  "home_shortcuts": "Common Shortcuts",
+  "home_view_all": "View all shortcuts",
   "menu_clear_history": "Clear History",
   "menu_import_verify": "Import Verification File",
   "menu_batch_process": "Batch Process Folder",

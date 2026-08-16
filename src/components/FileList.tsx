@@ -11,6 +11,7 @@ import { buildFileGroups } from "@/lib/fileGroups";
 import { handleDroppedPaths } from "@/lib/dropHandler";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { FloatingProgress } from "@/components/FloatingProgress";
+import { SHORTCUT_BINDINGS, formatShortcut } from "@/lib/shortcuts";
 
 /** 文件拖放列表组件，对应原始 DragDropFileListWidget */
 export function FileList({ className }: { className?: string }) {
@@ -335,9 +336,46 @@ export function FileList({ className }: { className?: string }) {
         <FloatingProgress />
         <div className="filelist-scroll-area group relative min-h-0 flex-1">
           {fileList.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-              <FileSearch className="h-10 w-10 opacity-30" />
-              <span>{t("drag_hint")}</span>
+            <div className="flex h-full flex-col items-center justify-center gap-4 text-sm text-muted-foreground">
+              <div className="flex flex-col items-center gap-2">
+                <FileSearch className="h-10 w-10 opacity-30" />
+                <span>{t("drag_hint")}</span>
+              </div>
+              {/* 空状态常用快捷键：半透明，hover 全显；阻止冒泡避免触发打开文件对话框 */}
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="group/hk flex flex-col items-center gap-2 rounded-xl border border-border px-5 py-3 opacity-50 transition-opacity hover:opacity-100"
+                style={{ backgroundColor: "color-mix(in srgb, var(--muted) 50%, transparent)" }}
+              >
+                <span className="text-xs font-medium text-muted-foreground">{t("home_shortcuts")}</span>
+                <ul className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                  {(
+                    [
+                      { cmd: "open_file", labelKey: "menu_open" },
+                      { cmd: "batch_process", labelKey: "menu_batch_process" },
+                      { cmd: "import_verify", labelKey: "menu_import_verify" },
+                      { cmd: "start_verify", labelKey: "start_verify" },
+                    ] as const
+                  ).map(({ cmd, labelKey }) => (
+                    <li key={cmd} className="flex items-center gap-2 text-xs text-foreground">
+                      <kbd className="inline-flex min-w-[1.5rem] items-center justify-center rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
+                        {formatShortcut(SHORTCUT_BINDINGS[cmd])}
+                      </kbd>
+                      <span>{t(labelKey)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.dispatchEvent(new CustomEvent("show-quick-guide"));
+                  }}
+                  className="text-xs text-primary hover:underline"
+                >
+                  {t("home_view_all")} →
+                </button>
+              </div>
             </div>
           ) : (
             <ul
