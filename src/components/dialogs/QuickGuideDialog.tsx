@@ -31,7 +31,7 @@ export function QuickGuideDialog({ open, onOpenChange }: QuickGuideDialogProps) 
 
         {/* 指南内容区域（React 组件渲染，跟随主题） */}
         <div className="flex-1 overflow-auto px-6 min-h-0">
-          <QuickGuideContent />
+          <QuickGuideContent onClose={() => onOpenChange(false)} />
         </div>
 
         <DialogFooter>

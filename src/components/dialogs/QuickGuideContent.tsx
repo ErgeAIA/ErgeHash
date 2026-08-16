@@ -67,7 +67,7 @@ function Para({ children }: { children: React.ReactNode }) {
 }
 
 /** 快速指南正文（React 组件，跟随主题 CSS 变量，文案走 i18n） */
-export function QuickGuideContent() {
+export function QuickGuideContent({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const sc = (cmd: CommandId) => formatShortcut(SHORTCUT_BINDINGS[cmd]);
 
@@ -157,10 +157,22 @@ export function QuickGuideContent() {
         </ul>
       </section>
 
-      {/* 反馈（指向设置「关于」，避免与设置页重复） */}
+      {/* 反馈（指向设置「关于」，避免与设置页重复；点击直接跳转并关闭指南） */}
       <section>
         <SectionTitle>{t("guide_feedback")}</SectionTitle>
-        <Para>{t("guide_feedback_hint")}</Para>
+        <Para>
+          {t("guide_feedback_hint")}
+          <button
+            type="button"
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent("show-settings"));
+              onClose();
+            }}
+            className="ml-1 text-primary hover:underline"
+          >
+            {t("settings_title")} → {t("about_title")}
+          </button>
+        </Para>
       </section>
     </div>
   );
