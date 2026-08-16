@@ -10,33 +10,23 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAppStore } from "@/store/appStore";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { Settings, Sun, Moon, Hash, Info, ExternalLink } from "lucide-react";
+import { Settings, Sun, Moon, Info, ExternalLink } from "lucide-react";
+import { APP_VERSION, APP_EMAIL, APP_BILIBILI_URL } from "@/lib/constants";
 
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-/** 支持的算法列表（含 CRC32，见 docs/architecture-multi-algo.md §7.1） */
-const ALGORITHMS = [
-  { name: "SHA-256", desc: { zh: "安全哈希算法 256 位，最常用的哈希算法", en: "Secure Hash Algorithm 256-bit, most commonly used" } },
-  { name: "MD5", desc: { zh: "消息摘要算法 5，速度快但已不推荐用于安全场景", en: "Message Digest Algorithm 5, fast but not recommended for security" } },
-  { name: "SHA-1", desc: { zh: "安全哈希算法 1，已被发现碰撞漏洞", en: "Secure Hash Algorithm 1, collision vulnerabilities found" } },
-  { name: "SHA-512", desc: { zh: "安全哈希算法 512 位，提供更高安全性", en: "Secure Hash Algorithm 512-bit, provides higher security" } },
-  { name: "CRC32", desc: { zh: "循环冗余校验，轻量快速，常用于完整性校验", en: "Cyclic redundancy check, lightweight and fast, common for integrity checks" } },
-] as const;
-
-/** 设置对话框 */
+/** 设置对话框（含「关于」整合区块） */
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useAppStore((s) => s.theme);
   const toggleTheme = useAppStore((s) => s.toggleTheme);
   const autoCalculate = useAppStore((s) => s.autoCalculate);
   const setAutoCalculate = useAppStore((s) => s.setAutoCalculate);
   const animations = useAppStore((s) => s.animations);
   const setAnimations = useAppStore((s) => s.setAnimations);
-
-  const currentLang = i18n.language as "zh" | "en";
 
   /** 打开外部链接 */
   const handleOpenLink = async (url: string) => {
@@ -49,7 +39,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[500px] max-h-[400px] flex flex-col">
+      <DialogContent className="max-w-[500px] max-h-[520px] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
@@ -102,47 +92,37 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             </div>
           </section>
 
-          {/* 支持的算法 */}
-          <section>
-            <h3 className="flex items-center gap-2 text-sm font-semibold mb-2">
-              <Hash className="h-4 w-4" />
-              {t("supported_algorithms")}
-            </h3>
-            <div className="space-y-1.5">
-              {ALGORITHMS.map((algo) => (
-                <div
-                  key={algo.name}
-                  className="flex items-start gap-2 rounded-[var(--radius)] border border-border px-4 py-2"
-                >
-                  <span className="text-sm font-medium shrink-0">
-                    {algo.name}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {algo.desc[currentLang]}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* 关于 */}
+          {/* 关于（整合区块） */}
           <section>
             <h3 className="flex items-center gap-2 text-sm font-semibold mb-2">
               <Info className="h-4 w-4" />
               {t("about_title")}
             </h3>
-            <div className="rounded-[var(--radius)] border border-border px-4 py-3 space-y-2">
-              <p className="text-sm font-medium">ErgeHash v0.3.0</p>
-              <div className="flex items-center gap-4">
+            <div className="rounded-[var(--radius)] border border-border px-4 py-3 space-y-1.5">
+              <p className="text-sm font-medium">
+                {t("about_app_name")} v{APP_VERSION}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("about_tagline")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("about_author")}
+              </p>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
                 <button
                   className="flex items-center gap-1 text-xs text-primary hover:underline"
-                  onClick={() =>
-                    handleOpenLink("https://space.bilibili.com/67221461")
-                  }
+                  onClick={() => handleOpenLink(APP_BILIBILI_URL)}
                 >
                   <ExternalLink className="h-3 w-3" />
                   {t("bilibili_prompt")}
                 </button>
+                <a
+                  className="flex items-center gap-1 text-xs text-primary hover:underline"
+                  href={`mailto:${APP_EMAIL}`}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  {APP_EMAIL}
+                </a>
               </div>
             </div>
           </section>
