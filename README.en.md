@@ -130,11 +130,29 @@ pnpm run build
 
 ## Author
 
-**宝藏二哥AIA / ErgeAIA** — independent developer. Philosophy: share without barriers, tricks, or reservations.
+<table>
+<tr>
+<td align="center" width="200">
+<img src="https://github.com/ErgeAIA.png" width="100" style="border-radius: 50%"><br>
+<b>宝藏二哥AIA / ErgeAIA</b><br>
+<sub>Keep tinkering, never stop</sub>
+</td>
+<td>
 
-- Video: [Bilibili](https://space.bilibili.com/67221461) · [Zhihu](https://www.zhihu.com/people/meli55a/posts)
-- Code: [GitHub](https://github.com/ErgeAIA) · [Gitee](https://gitee.com/ErgeAIA)
-- Email: ergeaia@agent.qq.com
+**About me**: Independent developer / Full-stack engineer / Product manager / Vibe Coding practitioner
+
+**Tech stack**: Tauri · Rust · React · Python · Claude · Cursor · Trae
+
+**Philosophy**: Share without barriers, tricks, or reservations
+
+**Links**:
+- 📺 [Bilibili](https://space.bilibili.com/67221461) · [Zhihu](https://www.zhihu.com/people/meli55a/posts) · WeChat
+- 🐙 [GitHub](https://github.com/ErgeAIA) · [Gitee](https://gitee.com/ErgeAIA)
+- 📦 Featured projects: [ErgeAIA-skills](https://github.com/ErgeAIA/ErgeAIA-skills) · [ErgeMD](https://github.com/ErgeAIA/ErgeMD) · [catapult-cn](https://github.com/ErgeAIA/catapult-cn)
+
+</td>
+</tr>
+</table>
 
 ---
 
