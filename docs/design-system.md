@@ -104,9 +104,9 @@ Tauri 2 的权限模型是**白名单制**：HTML 属性（`data-tauri-drag-regi
 
 ### 字体栈
 
-- **正文 / UI 文本**（`body` 默认）：优先 IBM Plex Sans、Noto Sans SC，回退至系统 UI 字体与中文黑体。
+- **正文 / UI 文本**（`body` 默认）：优先 IBM Plex Sans，回退至系统 UI 字体与中文黑体（中文不自带字体，靠系统 CJK 回退）。
   ```css
-  font-family: "IBM Plex Sans", "Noto Sans SC", "Segoe UI", Roboto,
+  font-family: "IBM Plex Sans", "Segoe UI", Roboto,
     "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
   ```
 - **等宽文本**（哈希值、算法标识等需对齐展示者）：优先 JetBrains Mono、IBM Plex Mono，回退至系统等宽字体，统一使用 `.font-mono` 工具类。
@@ -115,13 +115,38 @@ Tauri 2 的权限模型是**白名单制**：HTML 属性（`data-tauri-drag-regi
     "SFMono-Regular", Consolas, "Courier New", monospace;
   ```
 
-> 字体文件自托管于 `src/assets/fonts/`（IBM Plex Sans / Noto Sans SC / JetBrains Mono 各 Regular/Medium/Bold 共 9 个 `.ttf`，与 AIVault 同源），`index.css` 中以 `@font-face` 声明引入（`font-display: swap`）。Noto Sans SC 含中文全字形，单字重约 10MB，本地自托管不依赖系统字体。
+> **字体资产（2026-08-17 精简）**：自托管字体位于 `src/assets/fonts/`，**仅 6 个 woff2**（IBM Plex Sans + JetBrains Mono 各 Regular/Medium/Bold），合计 ≈ 141 KB，`index.css` 中以 `@font-face`（`format("woff2")`、`font-display: swap`）引入。**不再打包 Noto Sans SC**（原 3×~10MB）：中文由系统字体回退（`PingFang SC` / `Microsoft YaHei` / `Hiragino Sans GB`）。子集化命令见 §二之三。原始 ttf 备份在 `.font-backup/`（已从 `src` 移出，避免 Vite 误打包）。
 
 ### 基准字号与行高
 
 - 根字号 `font-size: 15px`（AIVault 基准），`line-height: 1.6`。
 - 组件内文字在基准上用 Tailwind 文本尺寸微调（`text-xs`/`text-sm` 等），不脱离该基准过大偏移。
 - 哈希展示使用 `.font-mono`（等宽），保证逐字符对齐、易核对。
+
+---
+
+## 二之三、前端资产规范（SVG 图标 / 字体）
+
+### 图标 / Logo 用 SVG
+
+- 应用 logo、功能图标、导航图标优先用 **SVG**（矢量无限缩放不糊、文件极小、可用 `currentColor` 跟随主题变色、无多余像素）。`public/` 已存放主题感知 SVG（`ergehash-logo-horizontal.svg`/`-light.svg`、`app.svg`、`tauri.svg`、`vite.svg`）。
+- **渐变 / 光影 logo 不要从 PNG 自动转 SVG**：自动描边（potrace / 在线 PNG→SVG）只能平涂，会把渐变光影丢成"发灰发假"的色块，或直接把 PNG base64 嵌进 `<image>`（等于还是位图、更肥）。正确做法：拿品牌**真矢量源**（AI/EPS/官方 SVG），或在 Figma/Illustrator **手动重建**——轮廓照描、渐变用 `<linearGradient>` / `<radialGradient>`、投影/发光用 `<feDropShadow>` / `<feGaussianBlur>`。
+- **OS 壳层图标**（`tauri.conf.json` 要求的窗口图标、各尺寸 favicon）接受 PNG / `.ico`，不接受 SVG；Tauri 用 png/ico。
+
+### SVG 清理（svgo）
+
+- 编辑器导出的 SVG 常带 Inkscape/Illustrator 残留命名空间、注释、隐藏图层、`id` 泛滥等冗余（不影响形状但增大体积、降低可读性）。
+- 清理用 **svgo**，配置 `svgo.config.cjs`（`floatPrecision:3`、`removeViewBox:false`、`removeEditorsNSData:true` 等）——**保持形状不变**：不删 `viewBox`（坐标基准），不强行合并路径，渐变/滤镜定义（`<linearGradient>`/`<filter>`）保留（那是光影本身）。
+- 全局工具：任意目录 `svgo-clean <file>`（已全局安装 svgo + 包装脚本，自动套用主目录 `~/.svgo.config.cjs`）。项目内 `npx svgo --config svgo.config.cjs`。
+
+### 字体（woff2 子集化，2026-08-17 落地）
+
+- 自托管字体从「9 个 .ttf（含 Noto Sans SC 3×~10MB）」精简为 **6 个 woff2**（IBM Plex Sans + JetBrains Mono 各 3 字重），合计 ≈ 141 KB，降约 99.5%。
+- **不再打包 Noto Sans SC**：中文由系统字体回退（`PingFang SC` / `Microsoft YaHei` / `Hiragino Sans GB`）。桌面应用各 OS 自带高质量中文渲染，打包完整 CJK 字体属冗余。若日后坚持跨平台完全一致的中文观感，只能走"子集到常用汉字"路线，但文件名里的生僻字/emoji 可能缺字，不推荐。
+- 子集化命令（需 `fonttools` + `brotli`）：
+  `python -m fontTools.subset <f>.ttf --unicodes=U+0020-007E,U+00A0-00FF,U+0100-017F,U+2000-206F,U+3000-303F,U+FF00-FFEF --flavor=woff2 --output-file=<f>.woff2`
+  子集仅含拉丁+标点+中文标点，CJK 字面靠系统字体逐字回退（文件名含中文在等宽上下文中会回退显示，可接受）。Tauri WebView2 原生支持 woff2。
+- 原始 ttf 备份在 `.font-backup/`（已从 `src` 移出，避免 Vite 误打包）。
 
 ---
 
@@ -196,11 +221,12 @@ Tauri 2 的权限模型是**白名单制**：HTML 属性（`data-tauri-drag-regi
 - **纵向结构（上 → 下）**：
 
   1. **LOGO 区**（`h-12`）：主题感知 SVG logo（深色 `ergehash-logo-horizontal.svg`、亮色 `-light.svg`），折叠态显示 `app.svg`；点击触发侧栏折叠/展开。
-  2. **滚动区**（`flex-1 overflow-y-auto`，滚动条隐藏）：
+  2. **滚动区**（`flex-1 overflow-y-auto`，滚动条隐藏），含两组：
      - 算法选择组（SHA-256 / MD5 / SHA-1 / SHA-512 / CRC32），顶部与 LOGO 区保持 `mt-2` 间距，避免贴太近。
-     - 工具组（记事本、导出）。
+     - **功能组**（组标题 `nav_feature`，2026-08-17 由"工具组"改名并合并设置）：记事本（`NotepadText`）、打开文件（`FolderOpen`）、导入验证（`FileInput`）为动作项；**自动检验**（`Zap`）、**动画**（`Sparkles`）为开关联动项（开启态带 `nav-active-indicator` 高亮，见 §二之一）；组标题 `text-muted-foreground` 小字。
+     - 导出已移出 NavRail（改在结果区 FAB 与顶栏 ☰ 菜单，见 §3.7 / §3.2）。
   3. **算法组标题徽章**：全选 / 取消全选为圆形微型按钮（`h-5 w-5`），徽章内图标尺寸 `14×14`，保持与组标题同高对齐，不挤压主视觉。
-  3. **底部固定区**：设置 + 退出（`shrink-0`），折叠态竖排图标，展开态纵向文字按钮。
+  4. **底部固定区**：关于（`Info`）+ 退出（`LogOut`），均为 `h-10 w-10` 图标按钮（`shrink-0`），折叠态竖排、展开态横向；退出 hover 红底红字（`hover:bg-destructive/10 hover:text-destructive`，语义见 §二之一）。原独立"设置"分组已撤销，开关并入功能组（见上）。
 
 - **导航项选中态**（用户项目对比确认）：菜单项左侧出现**主题品牌色竖线** + 文字变为**主题品牌色** + 背景使用**半透明品牌色**。
   - 实现：左竖线通过 `before:` 伪元素 `bg-primary`；文字用 `text-primary`；背景用 `--primary-alpha`（`color-mix(in srgb, var(--primary) 10%, transparent)`），并映射为 `.bg-primary-alpha`，避免 Tailwind 的 `bg-primary/10` 在自定义变量体系下失效。
@@ -264,7 +290,7 @@ Tauri 2 的权限模型是**白名单制**：HTML 属性（`data-tauri-drag-regi
 
 ### 3.9 设置等功能性按钮位置
 
-- 设置、退出等全局功能入口置于**左侧导航栏底部**（`NavRail` 底部固定区），而非内容区或顶栏，保持"功能导航在左、操作在右下"的分区。
+- 全局功能入口（关于 / 退出）置于**左侧导航栏底部**（`NavRail` 底部固定区，均为图标按钮），而非内容区或顶栏，保持"功能导航在左、操作在右下"的分区。开关类（自动检验 / 动画）并入功能组，不再设独立"设置"分组（2026-08-17 重组）。
 
 ---
 
@@ -281,8 +307,8 @@ MainLayout (h-screen w-screen, flex-col, overflow-hidden)
 │   ├── 左侧栏容器 (bg-sidebar, width 220/64)
 │   │   └── NavRail
 │   │       ├── LOGO 区 (h-12)
-│   │       ├── 滚动区 (算法 / 一级项 / 分组)
-│   │       └── 底部固定区 (设置 / 退出)
+│   │       ├── 滚动区 (算法组 / 功能组: 记事本·打开文件·导入验证·自动检验·动画)
+│   │       └── 底部固定区 (关于 / 退出)
 │   └── 右侧内容区 (m-2 rounded-2xl bg-panel)
 │       ├── 一区 FileList (flex-[1.2])
 │       │   └── 拖放/文件表格卡片 (relative)
@@ -365,3 +391,29 @@ MainLayout (h-screen w-screen, flex-col, overflow-hidden)
 9. 动效只用语义化 CSS 过渡，不引重型动画库。
 10. 开关/按钮/对话框统一用 `components/ui/` 下组件，不在业务组件内联手写。
 11. 相同文件分组着色遵循 §3.11：`buildFileGroups` 计算组，父行文件名循环 `--group-1..5`，唯一文件不着色；`text-group-*` 在 `index.css` 显式映射（见 §二之一）。
+
+---
+
+## 七、工程经验与陷阱（Bug 修复与性能教训）
+
+### 1. 校验结果缓存的 IO 陷阱（2026-08-17 修复）
+
+- **现象**：检验过一次文件后，再点「检验」仍像重新校验（大文件仍慢、进度照走），用户认为"计算结果不能存储"。
+- **根因**：`src-tauri/src/commands/batch.rs` 的 `process_single_file` 已有 `HashCache`（按 `path+size+mtime+algo` 命中时 `fromCache:true`），命中后只跳过**哈希计算**——但**即使某文件所有请求算法都已命中缓存，仍会 `File::open` 并逐字节读取整个文件**（读取循环照常执行，仅 hasher 为空）。磁盘 IO 与进度事件照常发生，表现为"重新检验"，且大文件依旧慢。
+- **修复**：构建 hasher 后判断——当某文件**所有请求算法均命中缓存**时，直接回写缓存结果（仍 emit 100% 进度维持前端浮层一致），**跳过整文件读取**；部分命中则仍读取并计算未命中项（保证文件被改动即正确失效重算）。
+- **教训**：`HashCache` 仅内存 `Arc<Mutex<HashMap>>`、**重启失效**；若要跨重启持久化需落盘（SQLite/文件），属后续可选项。
+
+### 2. 构建验证铁律（Rust 改动必须重新出包）
+
+- 仅 `pnpm run build` 只构建前端，**Rust 改动不进安装包**；曾因装了旧 `target/release/bundle/nsis/*.exe` 导致用户实测"全部不通过"。
+- 任何 `src-tauri/**` 改动后必须 `pnpm run tauri build` 重新出 `ErgeHash_x64-setup.exe` 并安装测试；纯前端改动才只需 `pnpm run build`。
+
+### 3. 资产体积管控（字体 / SVG）
+
+- 字体、SVG 等静态资产极易被"顺手下载整包"拖垮安装包体积（本次 Noto Sans SC 单就占 30MB）。新增资产前先问：是否真需要自带？能否系统回退 / 子集化 / 转 woff2？
+- 视觉改动遵循「构建通过 ≠ 样式生效」：Tailwind v4 自定义变量体系下工具类未显式映射时**静默失效、不报错**，必须用户实测截图确认（见 §二之一）。
+
+### 4. UI 重组偏好（2026-08-17）
+
+- 导航栏分组按"功能语义"而非"技术实现"命名：原"工具组"改名为**功能组**，并把"设置"分组里的开关（自动检验/动画）并入功能组，**撤销独立设置分组**，底部仅留关于/退出。原则：减少孤立分组、相关操作就近归类。
+- 关于页（SettingsDialog）做减法：去掉内容区外框线框、移除中间"微信"二维码 hover 图标（仅留打赏/B 站），保持信息密度克制。

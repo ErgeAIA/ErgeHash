@@ -4,14 +4,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { useAppStore } from "@/store/appStore";
+import { Info } from "lucide-react";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { Settings, Sun, Moon, Info, Mail, Tv } from "lucide-react";
-import { APP_VERSION, APP_EMAIL, APP_BILIBILI_URL, APP_GITHUB_URL } from "@/lib/constants";
+import { APP_VERSION, APP_BILIBILI_URL, APP_GITHUB_URL } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+import { useState, memo } from "react";
 
 /** GitHub 官方 mark（lucide-react 已移除品牌图标，内联以保证显示） */
 function GithubIcon({ className }: { className?: string }) {
@@ -27,20 +25,46 @@ function GithubIcon({ className }: { className?: string }) {
   );
 }
 
+/** 互动图标按钮（悬停显示二维码） */
+const QrButton = memo(
+  ({
+    imgSrc,
+    hovered,
+    onHover,
+  }: {
+    imgSrc: string;
+    hovered: boolean;
+    onHover: (v: boolean) => void;
+  }) => (
+    <div
+      onMouseEnter={() => onHover(true)}
+      onMouseLeave={() => onHover(false)}
+      className={cn(
+        "flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-lg border transition-colors",
+        hovered
+          ? "border-primary bg-primary/10"
+          : "border-border bg-muted"
+      )}
+    >
+      <img
+        src={imgSrc}
+        alt=""
+        className="h-[22px] w-[22px] object-contain"
+      />
+    </div>
+  )
+);
+QrButton.displayName = "QrButton";
+
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-/** 设置对话框（含「关于」整合区块） */
+/** 关于对话框 */
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { t } = useTranslation();
-  const theme = useAppStore((s) => s.theme);
-  const toggleTheme = useAppStore((s) => s.toggleTheme);
-  const autoCalculate = useAppStore((s) => s.autoCalculate);
-  const setAutoCalculate = useAppStore((s) => s.setAutoCalculate);
-  const animations = useAppStore((s) => s.animations);
-  const setAnimations = useAppStore((s) => s.setAnimations);
+  const [hoveredQr, setHoveredQr] = useState<"tip" | "friend" | "bilibili" | null>(null);
 
   /** 打开外部链接 */
   const handleOpenLink = async (url: string) => {
@@ -51,112 +75,194 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   };
 
+  const qrMap: Record<string, { src: string; label: string }> = {
+    tip: { src: "/qr-tip.png", label: t("about_qr_tip") },
+    bilibili: { src: "/qr-bilibili.png", label: t("about_qr_bilibili") },
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[500px] max-h-[520px] flex flex-col">
+      <DialogContent className="max-w-[680px] max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            {t("settings_title")}
+            <Info className="h-5 w-5" />
+            {t("about_title")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-auto px-6 space-y-4 min-h-0">
-          {/* 外观设置 */}
-          <section>
-            <h3 className="flex items-center gap-2 text-sm font-semibold mb-2">
-              <Sun className="h-4 w-4" />
-              {t("appearance_settings")}
-            </h3>
-            <div className="flex items-center justify-between rounded-[var(--radius)] border border-border px-4 py-3">
-              <div className="flex items-center gap-2 text-sm">
-                {theme === "dark" ? (
-                  <Moon className="h-4 w-4" />
-                ) : (
-                  <Sun className="h-4 w-4" />
-                )}
-                <span>
-                  {t("current_theme")}{" "}
-                  {theme === "dark" ? t("dark_mode") : t("light_mode")}
-                </span>
+          {/* 关于（ErgeMD 风格） */}
+          <section className="relative">
+            <div
+              className="rounded-[var(--radius)] bg-card p-4 text-foreground"
+              onMouseLeave={() => setHoveredQr(null)}
+            >
+              {/* 应用信息 */}
+              <div className="flex items-start gap-3 mb-3">
+                <img
+                  src="/app.svg"
+                  alt="ErgeHash"
+                  className="h-16 w-16 shrink-0 rounded-xl"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <h2 className="text-base font-bold">{t("about_app_name")}</h2>
+                    <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] text-primary">
+                      v{APP_VERSION}
+                    </span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {t("about_app_description")}
+                  </p>
+                  <p className="mt-1 text-[11px] italic text-muted-foreground/60">
+                    — {t("about_slogan")}
+                  </p>
+                </div>
               </div>
-              <Button variant="outline" size="sm" onClick={toggleTheme}>
-                {t("toggle_theme")}
-              </Button>
-            </div>
-            {/* 拖入自动开始 */}
-            <div className="mt-2 flex items-center justify-between rounded-[var(--radius)] border border-border px-4 py-3">
-              <div className="flex items-center gap-2 text-sm">
-                <span>{t("auto_calculate")}</span>
-              </div>
-              <Switch
-                checked={autoCalculate}
-                onCheckedChange={setAutoCalculate}
-              />
-            </div>
-            {/* 界面动画开关 */}
-            <div className="mt-2 flex items-center justify-between rounded-[var(--radius)] border border-border px-4 py-3">
-              <div className="flex items-center gap-2 text-sm">
-                <span>{t("enable_animations")}</span>
-              </div>
-              <Switch
-                checked={animations}
-                onCheckedChange={setAnimations}
-              />
-            </div>
-          </section>
 
-          {/* 关于（整合区块） */}
-          <section>
-            <h3 className="flex items-center gap-2 text-sm font-semibold mb-2">
-              <Info className="h-4 w-4" />
-              {t("about_title")}
-            </h3>
-            <div className="rounded-[var(--radius)] border border-border px-4 py-3 space-y-2">
-              <p className="text-sm font-medium">
-                {t("about_app_name")} v{APP_VERSION}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("about_tagline")}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("about_author")}
-              </p>
-              {/* 联系徽章：B站 / GitHub / 邮件，统一 pill 样式 */}
-              <div className="flex flex-wrap items-center gap-2 pt-1">
+              {/* 特性标签 */}
+              <div className="mb-3 flex flex-wrap justify-center gap-2">
+                {[
+                  { icon: "🔐", label: t("about_feature1") },
+                  { icon: "📥", label: t("about_feature2") },
+                  { icon: "⚡", label: t("about_feature3") },
+                  { icon: "🖱️", label: t("about_feature4") },
+                  { icon: "📄", label: t("about_feature5") },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-1 text-[11px] text-muted-foreground"
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="my-3 h-px bg-border" />
+
+              {/* 作者名片 */}
+              <div className="mb-3">
+                <div className="flex justify-center mb-2">
+                  <div className="h-[72px] w-[72px] overflow-hidden rounded-full border-2 border-border bg-muted shadow-[0_0_20px_rgba(0,0,0,0.15)]">
+                    <img
+                      src="/avatar.png"
+                      alt={t("about_author")}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        const img = e.currentTarget as HTMLImageElement;
+                        img.style.display = "none";
+                        const parent = img.parentElement;
+                        if (parent) {
+                          parent.textContent = "😊";
+                          parent.className += " flex items-center justify-center text-2xl text-muted-foreground";
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="mb-1 text-center text-base font-bold">
+                  {t("about_author")}
+                </div>
+                <p className="mb-2 text-center text-xs italic text-muted-foreground/70">
+                  — {t("about_author_quote")}
+                </p>
+                <div className="mb-3 flex flex-wrap justify-center gap-2">
+                  {[
+                    t("about_author_tag1"),
+                    t("about_author_tag2"),
+                    t("about_author_tag3"),
+                    t("about_author_tag4"),
+                  ].map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-md border border-border bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                {/* 左右分栏卡片 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* 左侧：个人简介 */}
+                  <div className="rounded-xl bg-muted/50 p-4 border-l-[3px] border-l-[var(--primary)]">
+                    <p className="whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
+                      {t("about_author_bio")}
+                    </p>
+                    <div className="mt-3 flex items-center justify-center gap-4">
+                      <QrButton
+                        imgSrc="/reward-ico.png"
+                        hovered={hoveredQr === "tip"}
+                        onHover={(v) => setHoveredQr(v ? "tip" : null)}
+                      />
+                      <QrButton
+                        imgSrc="/bilibili-ico.png"
+                        hovered={hoveredQr === "bilibili"}
+                        onHover={(v) => setHoveredQr(v ? "bilibili" : null)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 右侧：B站卡片 */}
+                  <div className="rounded-xl bg-muted/50 p-4 text-center border-l-[3px] border-l-pink-500">
+                    <div className="mb-2 flex items-center justify-center gap-2">
+                      <img
+                        src="/bilibili-ico.png"
+                        alt="B站"
+                        className="h-10 w-10 object-contain"
+                      />
+                      <span className="text-sm font-semibold">
+                        {t("about_bilibili_title")}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenLink(APP_BILIBILI_URL)}
+                      className="mb-2 inline-flex items-center gap-1 rounded-lg border border-pink-500 bg-transparent px-4 py-1.5 text-xs font-medium text-pink-500 transition-colors hover:bg-pink-500/10"
+                    >
+                      {t("about_bilibili_button")}
+                      <span>↗</span>
+                    </button>
+                    <p className="whitespace-pre-line text-[11px] leading-relaxed text-muted-foreground/70">
+                      {t("about_bilibili_desc")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 二维码弹窗 */}
+              {hoveredQr && qrMap[hoveredQr] && (
+                <div className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-4 shadow-lg">
+                  <div className="rounded-lg bg-white p-1">
+                    <img
+                      src={qrMap[hoveredQr].src}
+                      alt={qrMap[hoveredQr].label}
+                      className="h-48 w-48 object-contain"
+                    />
+                  </div>
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    {qrMap[hoveredQr].label}
+                  </p>
+                </div>
+              )}
+
+              {/* 底部 */}
+              <div className="mt-3 flex items-center justify-center gap-3 border-t border-border pt-3 text-xs text-muted-foreground">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs text-foreground transition-colors hover:border-primary hover:text-primary"
-                  onClick={() => handleOpenLink(APP_BILIBILI_URL)}
-                >
-                  <Tv className="h-3.5 w-3.5" />
-                  {t("bilibili_prompt")}
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs text-foreground transition-colors hover:border-primary hover:text-primary"
                   onClick={() => handleOpenLink(APP_GITHUB_URL)}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-transparent px-2 py-1 transition-colors hover:border-primary hover:text-primary"
                 >
                   <GithubIcon className="h-3.5 w-3.5" />
-                  GitHub
+                  <span>{t("about_github_star")}</span>
                 </button>
-                <a
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs text-foreground transition-colors hover:border-primary hover:text-primary"
-                  href={`mailto:${APP_EMAIL}`}
-                >
-                  <Mail className="h-3.5 w-3.5" />
-                  {APP_EMAIL}
-                </a>
+                <span className="opacity-40">|</span>
+                <span>{t("about_footer")}</span>
               </div>
             </div>
           </section>
         </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("close")}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

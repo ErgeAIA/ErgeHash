@@ -4,6 +4,7 @@ import {
   formatShortcut,
   type CommandId,
 } from "@/lib/shortcuts";
+import { ALGO_COLOR_CLASS } from "@/lib/constants";
 
 /** 支持算法（名称固定，描述为 i18n；说明用途属用法，归指南） */
 const ALGORITHMS: { name: string; key: string }[] = [
@@ -122,7 +123,11 @@ export function QuickGuideContent({ onClose }: { onClose: () => void }) {
               key={a.name}
               className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2"
             >
-              <span className="font-mono text-sm font-medium text-primary">
+              <span className="flex items-center gap-2 font-mono text-sm font-medium text-foreground">
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${ALGO_COLOR_CLASS[a.key]}`}
+                  aria-hidden="true"
+                />
                 {a.name}
               </span>
               <span className="text-xs text-muted-foreground">
@@ -133,17 +138,17 @@ export function QuickGuideContent({ onClose }: { onClose: () => void }) {
         </div>
       </section>
 
-      {/* 快捷键 */}
+      {/* 快捷键（两栏网格，一行两个快捷键，每个含 Kbd + 标签） */}
       <section>
         <SectionTitle>{t("guide_shortcuts")}</SectionTitle>
-        <div className="space-y-1.5">
+        <div className="grid grid-cols-2 gap-1.5">
           {SHORTCUTS.map(({ cmd, labelKey }) => (
             <div
               key={cmd}
-              className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2"
+              className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2"
             >
               <Kbd>{formatShortcut(SHORTCUT_BINDINGS[cmd])}</Kbd>
-              <span className="text-sm text-foreground">{t(labelKey)}</span>
+              <span className="text-sm text-foreground truncate">{t(labelKey)}</span>
             </div>
           ))}
         </div>
@@ -165,12 +170,12 @@ export function QuickGuideContent({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={() => {
-              window.dispatchEvent(new CustomEvent("show-settings"));
+              window.dispatchEvent(new CustomEvent("show-about"));
               onClose();
             }}
             className="ml-1 text-primary hover:underline"
           >
-            {t("settings_title")} → {t("about_title")}
+            {t("about_title")} →
           </button>
         </Para>
       </section>

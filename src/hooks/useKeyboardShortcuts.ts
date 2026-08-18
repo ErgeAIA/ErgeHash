@@ -56,7 +56,7 @@ export function useKeyboardShortcuts() {
       guide: () => window.dispatchEvent(new CustomEvent("show-quick-guide")),
       quit: () => void getCurrentWindow().close(),
       toggle_sidebar: () => window.dispatchEvent(new CustomEvent("toggle-sidebar")),
-      show_settings: () => window.dispatchEvent(new CustomEvent("show-settings")),
+      show_settings: () => window.dispatchEvent(new CustomEvent("show-about")),
       start_verify: () => void useAppStore.getState().startValidation(),
       clear_list: () => useAppStore.getState().clearFiles(),
     };

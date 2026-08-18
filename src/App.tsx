@@ -20,6 +20,7 @@ import { StatusReportBar } from "./components/StatusReportBar";
 import { BottomActionBar } from "./components/BottomActionBar";
 import { HistoryDialog } from "./components/dialogs/HistoryDialog";
 import { SettingsDialog } from "./components/dialogs/SettingsDialog";
+import EasterEgg from "./components/dialogs/EasterEgg";
 import { QuickGuideDialog } from "./components/dialogs/QuickGuideDialog";
 import { ExportDialog } from "./components/dialogs/ExportDialog";
 import { ConfirmDialog } from "./components/dialogs/ConfirmDialog";
@@ -61,6 +62,26 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showQuickGuide, setShowQuickGuide] = useState(false);
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
+
+  // F12 触发彩蛋页（同时拦截浏览器/WebView 默认 DevTools 行为）
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F12") {
+        e.preventDefault();
+        setShowEasterEgg((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // 关闭 WebView 原生右键菜单（打开/刷新/查看元素等）
+  useEffect(() => {
+    const preventContextMenu = (e: MouseEvent) => e.preventDefault();
+    document.addEventListener("contextmenu", preventContextMenu);
+    return () => document.removeEventListener("contextmenu", preventContextMenu);
+  }, []);
   const [showExport, setShowExport] = useState(false);
   const [confirmClearHistory, setConfirmClearHistory] = useState(false);
   // 侧栏折叠状态（持久化到 localStorage，重启后保持）
@@ -287,7 +308,7 @@ function App() {
     };
 
     window.addEventListener("show-history", onShowHistory);
-    window.addEventListener("show-settings", onShowSettings);
+    window.addEventListener("show-about", onShowSettings);
     window.addEventListener("show-quick-guide", onShowQuickGuide);
     window.addEventListener("export-results", onExportResults);
     window.addEventListener("clear-history", onClearHistory);
@@ -295,7 +316,7 @@ function App() {
 
     return () => {
       window.removeEventListener("show-history", onShowHistory);
-      window.removeEventListener("show-settings", onShowSettings);
+      window.removeEventListener("show-about", onShowSettings);
       window.removeEventListener("show-quick-guide", onShowQuickGuide);
       window.removeEventListener("export-results", onExportResults);
       window.removeEventListener("clear-history", onClearHistory);
@@ -343,6 +364,9 @@ function App() {
         onConfirm={handleConfirmClearHistory}
       />
       <ToastHost />
+      {showEasterEgg && (
+        <EasterEgg onClose={() => setShowEasterEgg(false)} />
+      )}
     </MainLayout>
   );
 }

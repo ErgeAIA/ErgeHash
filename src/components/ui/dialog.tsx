@@ -168,10 +168,10 @@ function DialogContent({
         {children}
         {/* 右上角关闭按钮 */}
         <button
-          className="absolute right-3 top-3 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="close-btn absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           onClick={() => onOpenChange(false)}
         >
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4" strokeWidth={1.5} />
           <span className="sr-only">Close</span>
         </button>
       </div>

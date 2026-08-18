@@ -1,66 +1,45 @@
 @import "tailwindcss";
 
-/* 本地字体（自托管 .ttf，对齐 AIVault 设计系统字体体系）
-   字体文件位于 src/assets/fonts/；如需改用 .woff2/.woff，需同步下方 src url */
+/* 本地字体（自托管 .woff2，子集化拉丁+标点，中文回退系统字体）
+   字体文件位于 src/assets/fonts/；由 fonttools 子集化并转 woff2 */
 @font-face {
   font-family: "IBM Plex Sans";
-  src: url("../assets/fonts/IBMPlexSans-Regular.ttf") format("truetype");
+  src: url("../assets/fonts/IBMPlexSans-Regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "IBM Plex Sans";
-  src: url("../assets/fonts/IBMPlexSans-Medium.ttf") format("truetype");
+  src: url("../assets/fonts/IBMPlexSans-Medium.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "IBM Plex Sans";
-  src: url("../assets/fonts/IBMPlexSans-Bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Noto Sans SC";
-  src: url("../assets/fonts/NotoSansSC-Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Noto Sans SC";
-  src: url("../assets/fonts/NotoSansSC-Medium.ttf") format("truetype");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Noto Sans SC";
-  src: url("../assets/fonts/NotoSansSC-Bold.ttf") format("truetype");
+  src: url("../assets/fonts/IBMPlexSans-Bold.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "JetBrains Mono";
-  src: url("../assets/fonts/JetBrainsMono-Regular.ttf") format("truetype");
+  src: url("../assets/fonts/JetBrainsMono-Regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "JetBrains Mono";
-  src: url("../assets/fonts/JetBrainsMono-Medium.ttf") format("truetype");
+  src: url("../assets/fonts/JetBrainsMono-Medium.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "JetBrains Mono";
-  src: url("../assets/fonts/JetBrainsMono-Bold.ttf") format("truetype");
+  src: url("../assets/fonts/JetBrainsMono-Bold.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -157,9 +136,9 @@
 body {
   margin: 0;
   padding: 0;
-  /* 字体栈对齐 AIVault 设计体系：优先 IBM Plex Sans / Noto Sans SC，
-     回退至系统 UI 字体与中文黑体，保证跨平台一致的现代无衬线观感 */
-  font-family: "IBM Plex Sans", "Noto Sans SC", "Segoe UI", Roboto,
+  /* 字体栈：优先 IBM Plex Sans（拉丁），中文回退系统黑体（雅黑/苹方），
+     轻量且跨平台一致的现代无衬线观感 */
+  font-family: "IBM Plex Sans", "Segoe UI", Roboto,
     "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
   font-size: 15px;
   line-height: 1.6;

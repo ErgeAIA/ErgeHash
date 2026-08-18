@@ -7,6 +7,8 @@ export interface SwitchProps
   checked: boolean;
   /** 切换回调 */
   onCheckedChange: (checked: boolean) => void;
+  /** 是否始终显示为激活态（轨道使用品牌色），用于二选一开关如主题切换 */
+  alwaysActive?: boolean;
 }
 
 /** 主题感知的胶囊开关
@@ -15,7 +17,7 @@ export interface SwitchProps
  *  - 过渡：背景色与圆点位置均带 transition
  */
 const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
-  ({ className, checked, onCheckedChange, ...props }, ref) => {
+  ({ className, checked, alwaysActive, onCheckedChange, ...props }, ref) => {
     return (
       <button
         type="button"
@@ -25,7 +27,7 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
         onClick={() => onCheckedChange(!checked)}
         className={cn(
           "relative h-5 w-9 shrink-0 rounded-full transition-colors duration-200 ease-in-out",
-          checked ? "bg-primary" : "bg-muted",
+          checked || alwaysActive ? "bg-primary" : "bg-muted",
           className,
         )}
         {...props}

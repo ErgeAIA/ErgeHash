@@ -193,7 +193,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
               onClick={() => setShowMenu((v) => !v)}
               className="flex h-[40px] w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
             >
-              <Menu size={18} />
+              <Menu size={20} />
             </button>
           </Tooltip>
           {showMenu && (
@@ -253,7 +253,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
             onClick={onToggleCollapsed}
             className="flex h-[40px] w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
           >
-            {collapsed ? <PanelRightOpen size={16} /> : <PanelLeftClose size={16} />}
+            {collapsed ? <PanelRightOpen size={20} /> : <PanelLeftClose size={20} />}
           </button>
         </Tooltip>
 
@@ -271,7 +271,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
             onClick={() => window.dispatchEvent(new CustomEvent("show-history"))}
             className="flex h-[40px] w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
           >
-            <History size={16} />
+            <History size={20} />
           </button>
         </Tooltip>
 
@@ -283,7 +283,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
             onClick={toggleTheme}
             className="flex h-[40px] w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
           >
-            {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+            {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
           </button>
         </Tooltip>
 
@@ -295,7 +295,7 @@ export function TitleBar({ collapsed, onToggleCollapsed }: TitleBarProps) {
             onClick={toggleLanguage}
             className="flex h-[40px] w-10 items-center justify-center text-primary transition-colors hover:bg-foreground/20"
           >
-            <Globe size={16} />
+            <Globe size={20} />
           </button>
         </Tooltip>
 
