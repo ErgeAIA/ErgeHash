@@ -13,9 +13,11 @@
 [![Rust](https://img.shields.io/badge/Rust-stable-DEA584?style=for-the-badge&logo=rust&logoColor=black)](https://www.rust-lang.org)
 [![pnpm](https://img.shields.io/badge/pnpm-8+-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io)
 
-[English README](./README.en.md) · [CHANGELOG](./CHANGELOG.md)
+[English README](./README.en.md)
 
 ![ErgeHash](./public/ergehash-logo-horizontal.svg)
+
+![ErgeHash 主界面](./docs/screenshots/main.png)
 
 ## 核心功能
 

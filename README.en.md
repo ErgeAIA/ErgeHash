@@ -13,9 +13,11 @@ A lightweight, cross-platform **desktop file hash verification tool**. Core phil
 [![Rust](https://img.shields.io/badge/Rust-stable-DEA584?style=for-the-badge&logo=rust&logoColor=black)](https://www.rust-lang.org)
 [![pnpm](https://img.shields.io/badge/pnpm-8+-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io)
 
-[中文 README](./README.md) · [CHANGELOG](./CHANGELOG.en.md)
+[中文 README](./README.md)
 
 ![ErgeHash](./public/ergehash-logo-horizontal.svg)
+
+![ErgeHash main interface](./docs/screenshots/main.png)
 
 ## Features
 
