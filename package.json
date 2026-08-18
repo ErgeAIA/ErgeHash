@@ -1,7 +1,7 @@
 {
   "name": "erge-hash",
   "private": true,
-  "version": "0.9.97",
+  "version": "0.9.96",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
