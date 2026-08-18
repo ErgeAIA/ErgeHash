@@ -22,7 +22,7 @@ pub fn reveal_main_window(app: AppHandle, state: State<'_, AppState>) -> Result<
         state.main_revealed.store(true, Ordering::SeqCst);
         Ok(())
     } else {
-        Err("主窗口不存在".into())
+        Err(crate::models::error_codes::MAIN_WINDOW_MISSING.to_string())
     }
 }
 

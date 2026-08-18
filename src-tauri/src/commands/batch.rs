@@ -101,7 +101,13 @@ pub async fn start_batch_validation(
         Ok::<BatchResult, String>(batch_result)
     })
     .await
-    .map_err(|e| format!("批量校验线程异常: {}", e))?;
+    .map_err(|e| {
+        format!(
+            "{}|{}",
+            crate::models::error_codes::BATCH_THREAD_PANIC,
+            e
+        )
+    })?;
 
     // inner 已是 Result<BatchResult, String>，直接返回（不再 Ok 包裹）
     inner
@@ -126,7 +132,7 @@ fn process_single_file(
     let path = Path::new(file_path);
 
     // 统一错误构造：当文件不存在/无法访问时，为每种算法各返回一条错误结果
-    let err_all = |msg: String| -> Vec<HashResult> {
+    let err_all = |code: &'static str, detail: Option<String>| -> Vec<HashResult> {
         algorithms
             .iter()
             .map(|&algorithm| HashResult {
@@ -136,18 +142,28 @@ fn process_single_file(
                 elapsed_time: 0.0,
                 status: HashStatus::Error,
                 from_cache: false,
-                error_message: Some(msg.clone()),
+                error_code: Some(code.to_string()),
+                error_detail: detail.clone(),
+                error_message: None,
             })
             .collect()
     };
 
     if !path.exists() {
-        return err_all(format!("文件不存在: {}", file_path));
+        return err_all(
+            crate::models::error_codes::FILE_NOT_FOUND,
+            Some(file_path.to_string()),
+        );
     }
 
     let metadata = match path.metadata() {
         Ok(m) => m,
-        Err(e) => return err_all(e.to_string()),
+        Err(e) => {
+            return err_all(
+                crate::models::error_codes::APP_DATA_DIR_FAILED,
+                Some(e.to_string()),
+            )
+        }
     };
     let file_size = metadata.len();
     let mtime = metadata
@@ -160,7 +176,12 @@ fn process_single_file(
     // 打开一次
     let mut file = match File::open(path) {
         Ok(f) => f,
-        Err(e) => return err_all(e.to_string()),
+        Err(e) => {
+            return err_all(
+                crate::models::error_codes::READ_FILE_FAILED,
+                Some(e.to_string()),
+            )
+        }
     };
 
     // 为每个算法建一个 hasher；命中缓存的用 None 占位（跳过计算，直接回写缓存值）
@@ -179,6 +200,46 @@ fn process_single_file(
         })
         .collect();
 
+    // 全部算法已命中缓存：跳过整文件读取，直接回写缓存结果，避免重复磁盘 IO
+    let all_cached = !algorithms.is_empty() && hashers.iter().all(|h| h.is_none());
+    if all_cached {
+        // 仍 emit 100% 进度，保持前端浮层进度一致性
+        if file_size > 0 {
+            let _ = app.emit(
+                "hash-progress",
+                HashProgress {
+                    file_path: file_path.to_string(),
+                    progress: 100,
+                    bytes_read: file_size,
+                    total_bytes: file_size,
+                },
+            );
+        }
+        return algorithms
+            .iter()
+            .map(|&algorithm| {
+                let key = (file_path.to_string(), file_size, mtime, algorithm);
+                let cached = hash_cache
+                    .lock()
+                    .unwrap()
+                    .get(&key)
+                    .cloned()
+                    .unwrap_or_default();
+                HashResult {
+                    file_path: file_path.to_string(),
+                    algorithm,
+                    hash_value: cached,
+                    elapsed_time: 0.0,
+                    status: HashStatus::Success,
+                    from_cache: true,
+                    error_code: None,
+                    error_detail: None,
+                    error_message: None,
+                }
+            })
+            .collect();
+    }
+
     let mut buffer = vec![0u8; CHUNK_SIZE];
     let mut processed: u64 = 0;
     let mut cancelled = false;
@@ -193,7 +254,12 @@ fn process_single_file(
 
         let bytes_read = match file.read(&mut buffer) {
             Ok(n) => n,
-            Err(e) => return err_all(format!("读取文件失败: {}", e)),
+            Err(e) => {
+                return err_all(
+                    crate::models::error_codes::READ_FILE_FAILED,
+                    Some(e.to_string()),
+                )
+            }
         };
         if bytes_read == 0 {
             break;
@@ -252,7 +318,11 @@ fn process_single_file(
                     elapsed_time: 0.0,
                     status: HashStatus::Error,
                     from_cache: false,
-                    error_message: Some("__I18N_CANCELLED__".to_string()),
+                    error_code: Some(
+                        crate::models::error_codes::COMPUTE_CANCELLED.to_string(),
+                    ),
+                    error_detail: None,
+                    error_message: None,
                 };
             }
 
@@ -273,6 +343,8 @@ fn process_single_file(
                         elapsed_time: 0.0,
                         status: HashStatus::Success,
                         from_cache: true,
+                        error_code: None,
+                        error_detail: None,
                         error_message: None,
                     }
                 }
@@ -287,6 +359,8 @@ fn process_single_file(
                         elapsed_time: 0.0,
                         status: HashStatus::Success,
                         from_cache: false,
+                        error_code: None,
+                        error_detail: None,
                         error_message: None,
                     }
                 }

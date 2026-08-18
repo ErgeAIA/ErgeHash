@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Tooltip } from "./components/ui/Tooltip";
 import { getConfig, addHistory } from "./services/api";
 import type { HashAlgorithm } from "./services/types";
+import { translateErrorCode, parseTauriError } from "./lib/errorMessages";
 import i18n from "@/i18n";
 
 interface CtxRequest {
@@ -22,6 +23,8 @@ interface HashResult {
   elapsedTime: number;
   status: string;
   fromCache: boolean;
+  errorCode: string | null;
+  errorDetail: string | null;
   errorMessage: string | null;
 }
 
@@ -31,6 +34,8 @@ interface VerifyResult {
   expected: string;
   actual: string;
   status: string; // match | mismatch | error
+  errorCode: string | null;
+  errorDetail: string | null;
   errorMessage: string | null;
 }
 
@@ -107,13 +112,16 @@ export default function ReportApp() {
             all.push(...list);
           } catch (e) {
             // 单个校验文件解析失败不应中断其余文件：记录一条 error 占位继续
+            const { code, detail } = parseTauriError(e);
             all.push({
               filePath: cf,
               algorithm: "",
               expected: "",
               actual: "",
               status: "error",
-              errorMessage: `解析失败: ${String(e)}`,
+              errorCode: code,
+              errorDetail: detail ?? null,
+              errorMessage: null,
             });
           }
         }
@@ -340,7 +348,7 @@ export default function ReportApp() {
                   </div>
                   {r.status === "error" ? (
                     <div className="mt-1 text-xs" style={{ color }}>
-                      {r.errorMessage || t("report_error")}
+                      {translateErrorCode(r.errorCode, r.errorDetail, t, r.errorMessage) || t("report_error")}
                     </div>
                   ) : (
                     <div className="mt-1 space-y-0.5">
@@ -506,7 +514,7 @@ export default function ReportApp() {
                 </div>
               ) : (
                 <div className="mt-1 text-xs text-destructive">
-                  {r.errorMessage || t("report_error")}
+                  {translateErrorCode(r.errorCode, r.errorDetail, t, r.errorMessage) || t("report_error")}
                 </div>
               )}
             </div>

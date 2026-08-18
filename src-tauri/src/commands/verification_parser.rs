@@ -42,12 +42,21 @@ pub struct ParseReport {
 pub(crate) fn parse_verification_file(file_path: &str) -> Result<ParseReport, String> {
     let path = Path::new(file_path);
     if !path.exists() {
-        return Err(format!("verification file not found: {}", file_path));
+        return Err(format!(
+            "{}|{}",
+            crate::models::error_codes::VERIFY_FILE_NOT_FOUND,
+            file_path
+        ));
     }
 
     let mut file_too_large = false;
-    let bytes = open_bounded(path, &mut file_too_large)
-        .map_err(|e| format!("failed to read verification file: {}", e))?;
+    let bytes = open_bounded(path, &mut file_too_large).map_err(|e| {
+        format!(
+            "{}|{}",
+            crate::models::error_codes::VERIFY_FILE_READ_FAILED,
+            e
+        )
+    })?;
 
     // 编码自愈：非法 UTF-8 用 lossy 尽力解析
     let (content, encoding_fallback) = match String::from_utf8(bytes) {
@@ -144,7 +153,13 @@ pub(crate) fn parse_verification_file(file_path: &str) -> Result<ParseReport, St
 
 /// 读取文件，超限则只取前 SIZE_CAP 字节（size 上限自愈）
 fn open_bounded(path: &Path, too_large: &mut bool) -> Result<Vec<u8>, String> {
-    let file = File::open(path).map_err(|e| e.to_string())?;
+    let file = File::open(path).map_err(|e| {
+        format!(
+            "{}|{}",
+            crate::models::error_codes::VERIFY_FILE_READ_FAILED,
+            e
+        )
+    })?;
     let size = file
         .metadata()
         .map(|m| m.len() as usize)

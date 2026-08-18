@@ -13,6 +13,7 @@ import { normalizeExpectedHash } from "@/lib/hash";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { useToastStore } from "./toastStore";
 import i18n from "@/i18n";
+import { translateErrorCode, parseTauriError } from "@/lib/errorMessages";
 
 /**
  * 由子结果数组推导父级汇总状态与主导哈希。
@@ -107,8 +108,12 @@ interface AppState {
   setSelectedAlgorithms: (algos: HashAlgorithm[]) => void;
   /** 设置自动开始校验开关（持久化） */
   setAutoCalculate: (value: boolean) => void;
+  /** 切换自动开始校验开关（持久化） */
+  toggleAutoCalculate: () => void;
   /** 设置界面动画开关（持久化） */
   setAnimations: (value: boolean) => void;
+  /** 切换界面动画开关（持久化） */
+  toggleAnimations: () => void;
   /** 开始校验：验证区有输入时先计算全部文件哈希再逐一比对；为空时仅计算哈希 */
   startValidation: () => Promise<void>;
   /** 直接设置主题（初始化用，不持久化） */
@@ -340,10 +345,24 @@ export const useAppStore = create<AppState>((set, get) => ({
     void setConfig("auto_calculate", value);
   },
 
+  toggleAutoCalculate: () =>
+    set((state) => {
+      const next = !state.autoCalculate;
+      void setConfig("auto_calculate", next);
+      return { autoCalculate: next };
+    }),
+
   setAnimations: (value) => {
     set({ animations: value });
     void setConfig("animations", value);
   },
+
+  toggleAnimations: () =>
+    set((state) => {
+      const next = !state.animations;
+      void setConfig("animations", next);
+      return { animations: next };
+    }),
 
   setCalculating: (value) => set({ isCalculating: value }),
 
@@ -493,7 +512,9 @@ export const useAppStore = create<AppState>((set, get) => ({
         toast("success", t("toast_all_match"));
       }
     } catch (err) {
-      set((s) => ({ resultText: s.resultText + `\n✗ ${String(err)}\n`, isCalculating: false, statusMessage: "ready" }));
+      const { code, detail } = parseTauriError(err);
+      const msg = translateErrorCode(code, detail, i18n.t.bind(i18n));
+      set((s) => ({ resultText: s.resultText + `\n✗ ${msg}\n`, isCalculating: false, statusMessage: "ready" }));
     }
   },
 

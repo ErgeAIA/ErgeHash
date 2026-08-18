@@ -31,7 +31,7 @@ function Header() {
             "hover:bg-muted cursor-pointer",
           )}
           onClick={toggleLanguage}
-          aria-label={language === "zh" ? "Switch to English" : "切换到中文"}
+          aria-label={language === "zh" ? t("switch_to_en") : t("switch_to_zh")}
         >
           <Globe className="h-4 w-4" />
         </button>

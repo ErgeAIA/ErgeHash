@@ -15,17 +15,32 @@ pub async fn export_csv(data: Vec<HashResult>, file_path: String) -> Result<(), 
             r.algorithm, r.file_path, r.hash_value, r.elapsed_time, r.status
         ));
     }
-    std::fs::write(&file_path, csv)
-        .map_err(|e| format!("写入 CSV 失败: {} ({})", e, file_path))
+    std::fs::write(&file_path, csv).map_err(|e| {
+        format!(
+            "{}|{}",
+            crate::models::error_codes::WRITE_CSV_FAILED,
+            e
+        )
+    })
 }
 
 /// 导出为 JSON（保留原有行为）
 #[tauri::command]
 pub async fn export_json(data: Vec<HashResult>, file_path: String) -> Result<(), String> {
-    let json = serde_json::to_string_pretty(&data)
-        .map_err(|e| format!("序列化 JSON 失败: {}", e))?;
-    std::fs::write(&file_path, json)
-        .map_err(|e| format!("写入 JSON 失败: {} ({})", e, file_path))
+    let json = serde_json::to_string_pretty(&data).map_err(|e| {
+        format!(
+            "{}|{}",
+            crate::models::error_codes::SERIALIZE_JSON_FAILED,
+            e
+        )
+    })?;
+    std::fs::write(&file_path, json).map_err(|e| {
+        format!(
+            "{}|{}",
+            crate::models::error_codes::WRITE_JSON_FAILED,
+            e
+        )
+    })
 }
 
 /// 校验文件导出报告
@@ -45,7 +60,14 @@ pub struct VerificationExportReport {
 #[serde(rename_all = "camelCase")]
 pub struct VerificationExportError {
     pub path: String,
-    pub message: String,
+    /// 结构化错误码（i18n 用）
+    pub error_code: String,
+    /// 错误动态参数（系统错误等不可枚举内容，供前端文案插值）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_detail: Option<String>,
+    /// 兜底错误信息（当 error_code 在前端无映射时显示）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_message: Option<String>,
 }
 
 /// 算法 → 校验文件扩展名（不含点）
@@ -100,7 +122,9 @@ pub async fn export_verification_files(
             _ => {
                 report.errors.push(VerificationExportError {
                     path: file_path.clone(),
-                    message: "无法解析源文件所在目录".to_string(),
+                    error_code: crate::models::error_codes::EXPORT_DIR_UNRESOLVABLE.to_string(),
+                    error_detail: None,
+                    error_message: None,
                 });
                 continue;
             }
@@ -110,7 +134,9 @@ pub async fn export_verification_files(
             None => {
                 report.errors.push(VerificationExportError {
                     path: file_path.clone(),
-                    message: "源文件名包含非法字符".to_string(),
+                    error_code: crate::models::error_codes::EXPORT_ILLEGAL_FILENAME.to_string(),
+                    error_detail: None,
+                    error_message: None,
                 });
                 continue;
             }
@@ -120,7 +146,9 @@ pub async fn export_verification_files(
         if basename.contains(['\n', '\r']) {
             report.errors.push(VerificationExportError {
                 path: file_path.clone(),
-                message: "文件名含换行符，无法安全写入校验文件".to_string(),
+                error_code: crate::models::error_codes::EXPORT_FILENAME_NEWLINE.to_string(),
+                error_detail: None,
+                error_message: None,
             });
             continue;
         }
@@ -139,7 +167,9 @@ pub async fn export_verification_files(
                 Ok(()) => report.written.push(target.to_string_lossy().to_string()),
                 Err(e) => report.errors.push(VerificationExportError {
                     path: target.to_string_lossy().to_string(),
-                    message: format!("写入失败: {}", e),
+                    error_code: crate::models::error_codes::EXPORT_WRITE_FAILED.to_string(),
+                    error_detail: Some(e.to_string()),
+                    error_message: None,
                 }),
             }
         }

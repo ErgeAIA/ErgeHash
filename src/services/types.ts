@@ -15,7 +15,11 @@ export interface HashResult {
   status: "success" | "mismatch" | "error";
   /** 是否来自缓存 */
   fromCache: boolean;
-  /** 错误信息（可选） */
+  /** 结构化错误码（i18n 用，仅 status=error 时有值） */
+  errorCode?: string;
+  /** 错误动态参数（文件路径、系统错误等不可枚举内容，供文案插值） */
+  errorDetail?: string;
+  /** 兜底错误信息（errorCode 无前端映射时显示） */
   errorMessage?: string;
 }
 
@@ -117,7 +121,12 @@ export interface VerificationExportReport {
 /** 单条导出失败 */
 export interface VerificationExportError {
   path: string;
-  message: string;
+  /** 结构化错误码（i18n 用） */
+  errorCode: string;
+  /** 错误动态参数（供文案插值） */
+  errorDetail?: string;
+  /** 兜底错误信息（errorCode 无映射时显示） */
+  errorMessage?: string;
 }
 
 /** 文件列表项状态：computed=已计算但未验证, success=验证匹配, mismatch=验证不匹配, error=计算出错, undefined=未计算 */
@@ -135,7 +144,11 @@ export interface FileResult {
   status: FileItemStatus;
   /** 是否来自缓存 */
   fromCache: boolean;
-  /** 错误信息（可选） */
+  /** 结构化错误码（i18n 用，仅 status=error 时有值） */
+  errorCode?: string;
+  /** 错误动态参数（文件路径、系统错误等不可枚举内容，供文案插值） */
+  errorDetail?: string;
+  /** 兜底错误信息（errorCode 无映射时显示） */
   errorMessage?: string;
 }
 
@@ -153,7 +166,11 @@ export interface FileItem {
   hashValue?: string;
   /** 汇总状态（由 results 推导：error > mismatch > computed） */
   status?: FileItemStatus;
-  /** 错误信息 */
+  /** 结构化错误码（i18n 用，仅 status=error 时有值） */
+  errorCode?: string;
+  /** 错误动态参数（文件路径、系统错误等不可枚举内容，供文案插值） */
+  errorDetail?: string;
+  /** 错误信息（兜底） */
   errorMessage?: string;
   /** 每个算法一行子结果，按算法维度累积 */
   results: FileResult[];

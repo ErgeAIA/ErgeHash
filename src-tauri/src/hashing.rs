@@ -85,11 +85,11 @@ pub type HashCache = HashMap<(String, u64, u128, HashAlgorithm), String>;
 /// 独立于 AppState，供 blocking 线程中的批量处理使用。
 pub fn check_interrupted(pause_flag: &AtomicBool, cancel_flag: &AtomicBool) -> Result<(), String> {
     if cancel_flag.load(Ordering::Relaxed) {
-        return Err("计算已取消".into());
+        return Err(crate::models::error_codes::COMPUTE_CANCELLED.to_string());
     }
     while pause_flag.load(Ordering::Relaxed) {
         if cancel_flag.load(Ordering::Relaxed) {
-            return Err("计算已取消".into());
+            return Err(crate::models::error_codes::COMPUTE_CANCELLED.to_string());
         }
         std::thread::sleep(Duration::from_millis(50));
     }

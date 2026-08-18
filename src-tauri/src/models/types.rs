@@ -55,7 +55,13 @@ pub struct HashResult {
     pub status: HashStatus,
     /// 是否来自缓存
     pub from_cache: bool,
-    /// 错误信息（仅状态为 Error 或 Mismatch 时有值）
+    /// 结构化错误码（i18n 用，仅状态为 Error 时有值）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_code: Option<String>,
+    /// 错误动态参数（文件路径、系统错误等不可枚举内容，供前端文案插值）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_detail: Option<String>,
+    /// 兜底错误信息（当 error_code 在前端无映射时显示）。后端不再写入本地化文案。
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error_message: Option<String>,
 }
@@ -184,7 +190,13 @@ pub struct VerifyResult {
     pub actual: String,
     /// 状态：match（一致）/ mismatch（不一致）/ error（文件缺失或计算失败）
     pub status: String,
-    /// 错误信息（仅 status 为 error 时有值）
+    /// 结构化错误码（i18n 用，仅 status 为 error 时有值）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_code: Option<String>,
+    /// 错误动态参数（文件路径、系统错误等不可枚举内容，供前端文案插值）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_detail: Option<String>,
+    /// 兜底错误信息（当 error_code 在前端无映射时显示）。后端不再写入本地化文案。
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error_message: Option<String>,
 }

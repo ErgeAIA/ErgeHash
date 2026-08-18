@@ -12,6 +12,7 @@ import { handleDroppedPaths } from "@/lib/dropHandler";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { FloatingProgress } from "@/components/FloatingProgress";
 import { SHORTCUT_BINDINGS, formatShortcut } from "@/lib/shortcuts";
+import { translateErrorCode } from "@/lib/errorMessages";
 
 /** 文件拖放列表组件，对应原始 DragDropFileListWidget */
 export function FileList({ className }: { className?: string }) {
@@ -573,7 +574,7 @@ export function FileList({ className }: { className?: string }) {
                     </span>
                     <span className="min-w-0 flex-1 flex items-baseline gap-2">
                       <Tooltip
-                        label={r.hashValue || r.errorMessage}
+                        label={r.hashValue || translateErrorCode(r.errorCode, r.errorDetail, t, r.errorMessage)}
                         className="flex-1 min-w-0"
                       >
                         <span
@@ -583,7 +584,7 @@ export function FileList({ className }: { className?: string }) {
                           )}
                         >
                           {r.status === "error"
-                            ? r.errorMessage ?? t("error")
+                            ? translateErrorCode(r.errorCode, r.errorDetail, t, r.errorMessage)
                             : r.hashValue || "—"}
                         </span>
                       </Tooltip>

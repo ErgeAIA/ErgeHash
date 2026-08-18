@@ -5,6 +5,8 @@ use tauri::AppHandle;
 use tauri_plugin_dialog::DialogExt;
 use walkdir::WalkDir;
 
+use crate::models::error_codes;
+
 /// 文件元数据（路径、大小）
 #[derive(Debug, serde::Serialize)]
 pub struct FileMetadata {
@@ -16,7 +18,9 @@ pub struct FileMetadata {
 #[tauri::command]
 pub fn get_file_metadata(file_path: String) -> Result<FileMetadata, String> {
     let path = Path::new(&file_path);
-    let metadata = fs::metadata(path).map_err(|e| e.to_string())?;
+    let metadata = fs::metadata(path).map_err(|e| {
+        format!("{}|{}", error_codes::APP_DATA_DIR_FAILED, e)
+    })?;
     Ok(FileMetadata {
         path: file_path,
         size: metadata.len(),
@@ -29,11 +33,11 @@ pub fn scan_directory(dir_path: String) -> Result<Vec<String>, String> {
     let path = Path::new(&dir_path);
 
     if !path.exists() {
-        return Err(format!("目录不存在: {}", dir_path));
+        return Err(format!("{}|{}", error_codes::DIR_NOT_FOUND, dir_path));
     }
 
     if !path.is_dir() {
-        return Err(format!("路径不是目录: {}", dir_path));
+        return Err(format!("{}|{}", error_codes::PATH_NOT_DIR, dir_path));
     }
 
     let mut files = Vec::new();
@@ -63,12 +67,12 @@ pub fn open_notepad() -> Result<(), String> {
     {
         std::process::Command::new("notepad.exe")
             .spawn()
-            .map_err(|e| format!("打开记事本失败: {}", e))?;
+            .map_err(|e| format!("{}|{}", error_codes::OPEN_NOTEPAD_FAILED, e))?;
         Ok(())
     }
     #[cfg(not(target_os = "windows"))]
     {
-        Err("记事本仅支持 Windows 平台".to_string())
+        Err(error_codes::NOTEPAD_WINDOWS_ONLY.to_string())
     }
 }
 

@@ -38,6 +38,8 @@ pub async fn calculate_hash(
                 elapsed_time: 0.0,
                 status: HashStatus::Success,
                 from_cache: true,
+                error_code: None,
+                error_detail: None,
                 error_message: None,
             });
         }
@@ -63,6 +65,8 @@ pub async fn calculate_hash(
         elapsed_time: elapsed,
         status: HashStatus::Success,
         from_cache: false,
+        error_code: None,
+        error_detail: None,
         error_message: None,
     })
 }
@@ -78,10 +82,13 @@ pub async fn quick_calculate_hash(
     let path = Path::new(&file_path);
 
     if !path.exists() {
-        return Err(format!("文件不存在: {}", file_path));
+        return Err(format!("{}|{}", crate::models::error_codes::FILE_NOT_FOUND, file_path));
     }
 
-    let file_size = path.metadata().map_err(|e| e.to_string())?.len();
+    let file_size = path
+        .metadata()
+        .map_err(|e| format!("{}|{}", crate::models::error_codes::APP_DATA_DIR_FAILED, e))?
+        .len();
 
     // 快速比较语义（对齐 PyQt）：≤1GB 读全文件（真哈希，避免前缀误判），>1GB 只读前 5MB
     let read_limit = if file_size > 1 * 1024 * 1024 * 1024 {
@@ -90,7 +97,9 @@ pub async fn quick_calculate_hash(
         file_size
     };
 
-    let mut file = File::open(path).map_err(|e| e.to_string())?;
+    let mut file = File::open(path).map_err(|e| {
+        format!("{}|{}", crate::models::error_codes::READ_FILE_FAILED, e)
+    })?;
     // 缓冲按实际读取量分配：至少 1MB 但不超过文件大小，避免小文件白白分配 1MB
     let buffer_len = CHUNK_SIZE.min(read_limit as usize);
     let mut buffer = vec![0u8; buffer_len];
@@ -116,6 +125,8 @@ pub async fn quick_calculate_hash(
         elapsed_time: start_time.elapsed().as_secs_f64(),
         status: HashStatus::Success,
         from_cache: false,
+        error_code: None,
+        error_detail: None,
         error_message: None,
     })
 }
@@ -152,12 +163,21 @@ fn do_calculate_hash(
     let path = Path::new(file_path);
 
     if !path.exists() {
-        return Err(format!("文件不存在: {}", file_path));
+        return Err(format!(
+            "{}|{}",
+            crate::models::error_codes::FILE_NOT_FOUND,
+            file_path
+        ));
     }
 
-    let file_size = path.metadata().map_err(|e| e.to_string())?.len();
+    let file_size = path
+        .metadata()
+        .map_err(|e| format!("{}|{}", crate::models::error_codes::APP_DATA_DIR_FAILED, e))?
+        .len();
 
-    let mut file = File::open(path).map_err(|e| e.to_string())?;
+    let mut file = File::open(path).map_err(|e| {
+        format!("{}|{}", crate::models::error_codes::READ_FILE_FAILED, e)
+    })?;
     let mut buffer = vec![0u8; CHUNK_SIZE];
     let mut total_read = 0u64;
 
@@ -169,7 +189,9 @@ fn do_calculate_hash(
     loop {
         state.check_interrupted()?;
 
-        let bytes_read = file.read(&mut buffer).map_err(|e| e.to_string())?;
+        let bytes_read = file.read(&mut buffer).map_err(|e| {
+            format!("{}|{}", crate::models::error_codes::READ_FILE_FAILED, e)
+        })?;
         if bytes_read == 0 {
             break;
         }
@@ -250,6 +272,8 @@ fn compute_full(
                 elapsed_time: 0.0,
                 status: HashStatus::Success,
                 from_cache: true,
+                error_code: None,
+                error_detail: None,
                 error_message: None,
             };
         }
@@ -270,18 +294,25 @@ fn compute_full(
                 elapsed_time: start.elapsed().as_secs_f64(),
                 status: HashStatus::Success,
                 from_cache: false,
+                error_code: None,
+                error_detail: None,
                 error_message: None,
             }
         }
-        Err(e) => HashResult {
-            file_path: file_path.to_string(),
-            algorithm,
-            hash_value: String::new(),
-            elapsed_time: start.elapsed().as_secs_f64(),
-            status: HashStatus::Error,
-            from_cache: false,
-            error_message: Some(e),
-        },
+        Err(e) => {
+            let (code, detail) = split_error(&e);
+            HashResult {
+                file_path: file_path.to_string(),
+                algorithm,
+                hash_value: String::new(),
+                elapsed_time: start.elapsed().as_secs_f64(),
+                status: HashStatus::Error,
+                from_cache: false,
+                error_code: Some(code),
+                error_detail: detail,
+                error_message: None,
+            }
+        }
     };
 
     result
@@ -338,7 +369,11 @@ pub fn verify_checksum_file(
                         expected: entry.hash_value.clone(),
                         actual: String::new(),
                         status: "error".to_string(),
-                        error_message: Some("路径越界，已拒绝校验".to_string()),
+                        error_code: Some(
+                            crate::models::error_codes::PATH_TRAVERSAL.to_string(),
+                        ),
+                        error_detail: None,
+                        error_message: None,
                     });
                     continue;
                 }
@@ -350,14 +385,19 @@ pub fn verify_checksum_file(
                     expected: entry.hash_value.clone(),
                     actual: String::new(),
                     status: "error".to_string(),
-                    error_message: Some(format!("文件不存在: {}", joined.display())),
+                    error_code: Some(
+                        crate::models::error_codes::FILE_NOT_FOUND.to_string(),
+                    ),
+                    error_detail: Some(joined.display().to_string()),
+                    error_message: None,
                 });
                 continue;
             }
         };
         let file_path = resolved.to_string_lossy().to_string();
         let algo = algo_from_str(&entry.algorithm);
-        let (status, actual, err) = match algo {
+        // 三元组：(status, actual, error_code, error_detail)
+        let (status, actual, err_code, err_detail) = match algo {
             Some(a) => {
                 let res = compute_full(&file_path, a, &app, state.inner());
                 match res.status {
@@ -367,16 +407,28 @@ pub fn verify_checksum_file(
                             if ok { "match".to_string() } else { "mismatch".to_string() },
                             res.hash_value,
                             None,
+                            None,
                         )
                     }
-                    HashStatus::Error => ("error".to_string(), String::new(), res.error_message),
-                    _ => ("error".to_string(), String::new(), res.error_message),
+                    HashStatus::Error => (
+                        "error".to_string(),
+                        String::new(),
+                        res.error_code,
+                        res.error_detail,
+                    ),
+                    _ => (
+                        "error".to_string(),
+                        String::new(),
+                        res.error_code,
+                        res.error_detail,
+                    ),
                 }
             }
             None => (
                 "error".to_string(),
                 String::new(),
-                Some(format!("不支持的算法: {}", entry.algorithm)),
+                Some(crate::models::error_codes::UNSUPPORTED_ALGORITHM.to_string()),
+                Some(entry.algorithm.clone()),
             ),
         };
         results.push(VerifyResult {
@@ -385,8 +437,19 @@ pub fn verify_checksum_file(
             expected: entry.hash_value,
             actual,
             status,
-            error_message: err,
+            error_code: err_code,
+            error_detail: err_detail,
+            error_message: None,
         });
     }
     Ok(results)
+}
+
+/// 将 `CODE|detail` 格式的后端错误字符串拆分为 (code, detail)。
+/// 若不含 `|`，则整体作为 code、detail 为 None。
+fn split_error(err: &str) -> (String, Option<String>) {
+    match err.split_once('|') {
+        Some((code, detail)) => (code.to_string(), Some(detail.to_string())),
+        None => (err.to_string(), None),
+    }
 }
