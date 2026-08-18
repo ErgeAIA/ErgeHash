@@ -36,8 +36,8 @@ Latest release: **v0.9.96**. All artifacts are built automatically by GitHub Act
 
 | Platform | Type                  | Expected download                       |
 | -------- | --------------------- | --------------------------------------- |
-| Windows  | NSIS installer        | `ErgeHash_0.9.96_x64-setup.exe`        |
-| Windows  | MSI installer         | `ErgeHash_0.9.96_x64_en-US.msi`        |
+| Windows  | NSIS installer (recommended for individuals) | `ErgeHash_0.9.96_x64-setup.exe`        |
+| Windows  | MSI installer (recommended for enterprises)   | `ErgeHash_0.9.96_x64_en-US.msi`        |
 | macOS   | DMG (Apple Silicon)   | `ErgeHash_0.9.96_aarch64.dmg`          |
 
 ### macOS notes

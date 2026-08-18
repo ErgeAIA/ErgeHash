@@ -36,8 +36,8 @@
 
 | 平台    | 类型           | 下载链接（预期）                                                                                          |
 | ------- | -------------- | --------------------------------------------------------------------------------------------------------- |
-| Windows | NSIS 安装包    | `ErgeHash_0.9.96_x64-setup.exe`                                                                           |
-| Windows | MSI 安装包     | `ErgeHash_0.9.96_x64_en-US.msi`                                                                           |
+| Windows | NSIS 安装包（推荐个人）    | `ErgeHash_0.9.96_x64-setup.exe`                                                                           |
+| Windows | MSI 安装包（推荐企业）     | `ErgeHash_0.9.96_x64_en-US.msi`                                                                           |
 | macOS  | DMG（Apple Silicon） | `ErgeHash_0.9.96_aarch64.dmg`                                                                      |
 
 ### macOS 平台说明
