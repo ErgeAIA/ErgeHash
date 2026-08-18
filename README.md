@@ -1,7 +1,162 @@
-# Tauri + React + Typescript
+# ErgeHash（二哈）
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+一款轻量、**跨平台**的桌面**文件哈希校验工具**。核心理念：**本地优先、零上传、极速批量校验、清晰可溯的结果呈现**。
 
-## Recommended IDE Setup
+[![BILIBILI](https://img.shields.io/badge/BILIBILI-%E5%AE%9D%E8%97%8F%E4%BA%8C%E5%93%A5AIA-00A4FF?style=for-the-badge&logo=bilibili&logoColor=white)](https://space.bilibili.com/67221461)
+[![GitHub stars](https://img.shields.io/github/stars/ErgeAIA/ErgeHash?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ErgeAIA/ErgeHash)
+[![License](https://img.shields.io/badge/License-Apache%202.0-2E7D32?style=for-the-badge&logo=apache&logoColor=white)](./LICENSE)
+[![Release](https://img.shields.io/github/v/release/ErgeAIA/ErgeHash?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ErgeAIA/ErgeHash/releases)
+[![Downloads](https://img.shields.io/github/downloads/ErgeAIA/ErgeHash/total?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ErgeAIA/ErgeHash/releases)
+[![Tauri](https://img.shields.io/badge/Tauri-2.0-FFC131?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Rust](https://img.shields.io/badge/Rust-stable-DEA584?style=for-the-badge&logo=rust&logoColor=black)](https://www.rust-lang.org)
+[![pnpm](https://img.shields.io/badge/pnpm-8+-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io)
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+[English README](./README.en.md)
+
+![ErgeHash](./public/ergehash-logo-horizontal.svg)
+
+## 核心功能
+
+- **多算法哈希计算**：支持 SHA-256、SHA-1、MD5、CRC32 等主流算法，可同时计算多个算法。
+- **批量校验**：支持多文件、文件夹递归批量计算；后端对同一文件**单趟读取**即算出所有选中算法，避免重复 IO。
+- **拖放即算**：将文件或文件夹直接拖入窗口即可开始计算（基于 Tauri 原生拖放）。
+- **校验文件导入与比对**：导入 `.md5` / `.sfv` / `.sha256` 等标准校验文件，自动按文件名分组并逐条比对，直观显示通过 / 失败。
+- **结果可溯**：树形文件列表呈现「算法 / 哈希值 / 耗时」，支持单项复制、结果导出为 CSV。
+- **跨平台**：基于 Tauri 2，提供 Windows 与 macOS（Apple Silicon）原生体验，代码层无平台硬依赖。
+- **主题与国际化**：内置明暗主题，支持中文 / 英文界面切换。
+- **本地优先**：所有计算在本地完成，文件绝不上传，无 telemetry。
+
+## 下载
+
+最新版本：**v0.9.96**。所有发行包由 GitHub Actions 自动构建，可在 [Releases](https://github.com/ErgeAIA/ErgeHash/releases) 页面下载。
+
+> 说明：下表为预期产物文件名，实际以 Release 页面列出的文件为准。
+
+| 平台    | 类型           | 下载链接（预期）                                                                                          |
+| ------- | -------------- | --------------------------------------------------------------------------------------------------------- |
+| Windows | NSIS 安装包    | `ErgeHash_0.9.96_x64-setup.exe`                                                                           |
+| Windows | MSI 安装包     | `ErgeHash_0.9.96_x64_en-US.msi`                                                                           |
+| macOS  | DMG（Apple Silicon） | `ErgeHash_0.9.96_aarch64.dmg`                                                                      |
+
+### macOS 平台说明
+
+- 当前 CI 仅在 **Apple Silicon（aarch64）** 上构建，Intel Mac 暂未提供原生包。
+- 由于未启用 macOS 代码签名（免费软件策略），首次打开请 **右键 → 打开** 以绕过 Gatekeeper 提示。后续若配置 Apple Developer ID 将进行签名与公证。
+
+## 从源码构建
+
+### 前置条件
+
+- Node.js 18+
+- Rust（stable，建议 1.77+）
+- pnpm 8+
+
+### 构建
+
+```bash
+# 安装前端依赖
+pnpm install
+
+# 开发模式（热重载）
+pnpm tauri dev
+
+# 生产构建（编译前端 + Rust，产出安装包）
+pnpm tauri build
+```
+
+### 前端检查
+
+```bash
+# 类型检查 + 前端构建
+pnpm run build
+```
+
+## 技术栈
+
+| 层级     | 技术                                    | 版本约束              |
+| -------- | --------------------------------------- | --------------------- |
+| 桌面框架 | Tauri 2                                 | = 2.11.0              |
+| 前端     | React 19 + TypeScript                   | React ^19, TS ~5.8    |
+| 构建     | Vite 7                                  | ^7.0                  |
+| 状态管理 | Zustand 5                               | ^5.0                  |
+| 样式     | Tailwind CSS 4 + CSS 变量主题           | ^4.3                  |
+| 国际化   | i18next + react-i18next                 | i18next ^26           |
+| 图标     | lucide-react                            | ^1.16                 |
+| 哈希算法 | sha2 / md-5 / sha1 / crc32fast (Rust)   | 0.10 / 0.10 / 0.10 / 1 |
+| 文件遍历 | walkdir + csv (Rust)                    | 2 / 1                 |
+| 后端语言 | Rust                                    | edition 2021          |
+| 包管理器 | pnpm                                    | >= 8                  |
+
+## 关键架构决策
+
+| 决策                          | 原因                                               |
+| ----------------------------- | -------------------------------------------------- |
+| 选择 Tauri 2 而非 Electron    | 更小的安装包、原生性能、Rust 安全性                |
+| 前后端严格分离                | Rust 处理所有文件 IO 与计算，前端专注 UI           |
+| 多算法单趟读取                | 一次读盘算出所有选中算法，大文件场景性能提升显著   |
+| CSS 变量主题系统              | 主题切换零重渲染、支持动态明/暗主题                |
+| 自托管 woff2 子集字体         | 规避中文字体体积，CJK 由系统字体回退               |
+
+## 使用指南
+
+### 基本流程
+
+1. **添加文件**：点击「打开文件」/「打开文件夹」，或直接把文件拖入窗口。
+2. **选择算法**：在左侧算法组勾选需要计算的哈希算法（可多选）。
+3. **查看结果**：右侧列表展示每个文件的算法、哈希值、耗时；点击哈希值可复制。
+4. **导入校验文件**：点击「导入验证文件」选择 `.md5` / `.sfv` 等，程序自动按文件名比对并标记通过 / 失败。
+5. **导出结果**：在结果区将当前计算结果导出为 CSV。
+
+### 界面元素
+
+- **标题栏**：菜单、折叠侧栏、主题切换、语言切换、窗口控制。
+- **导航栏（NavRail）**：LOGO、算法组、文件操作（打开 / 导入校验）、设置、关于、B 站入口。
+- **文件列表区**：预期哈希输入框、计算结果树、状态栏。
+
+### 快捷键
+
+| 功能         | 快捷键      |
+| ------------ | ----------- |
+| 打开文件     | `Ctrl + O`  |
+| 复制选中哈希 | `Ctrl + C`  |
+| 切换主题     | 标题栏按钮  |
+| 切换语言     | 标题栏按钮  |
+
+## 文档
+
+| 文档                              | 说明               |
+| --------------------------------- | ------------------ |
+| [CHANGELOG.md](./CHANGELOG.md)    | 中文版本更新日志   |
+| [CHANGELOG.en.md](./CHANGELOG.en.md) | 英文版本更新日志 |
+| [docs/design-system.md](./docs/design-system.md) | 设计系统规范     |
+| [AGENTS.md](./AGENTS.md)          | 开发规范与决策记录 |
+
+## 路线图
+
+- [x] Windows / macOS（Apple Silicon）双平台自动构建
+- [ ] Intel Mac 原生构建（交叉编译）
+
+> 说明：当前 macOS 构建产物仅限 Apple Silicon（aarch64），且未做代码签名与公证。Intel Mac 暂无法运行；在未签名的情况下，macOS 用户需「右键 → 打开」以绕过 Gatekeeper 的安全提示。正式分发需配置 Apple Developer ID 并完成公证。
+- [ ] macOS 代码签名与公证
+- [ ] Linux 构建评估（待定）：代码层无平台阻断，需 CI 加 `ubuntu-latest` 与 webkit2gtk 等系统依赖
+- [ ] 更多校验文件格式支持（如 `.sha512`、`.asc`  detached 签名校验）
+
+## 作者信息
+
+**宝藏二哥AIA / ErgeAIA** — 独立开发者，理念：三无分享（无门槛、无套路、无保留）。
+
+- 视频：[B 站](https://space.bilibili.com/67221461) · [知乎](https://www.zhihu.com/people/meli55a/posts)
+- 代码：[GitHub](https://github.com/ErgeAIA) · [Gitee](https://gitee.com/ErgeAIA)
+- 邮箱：ergeaia@agent.qq.com
+
+---
+
+<div align="center">
+如果 ErgeHash 帮到了你，欢迎点个 Star 鼓励一下！
+</div>
+
+## 许可证
+
+本项目基于 [Apache License 2.0](./LICENSE) 开源。
