@@ -34,16 +34,16 @@ A lightweight, cross-platform **desktop file hash verification tool**. Core phil
 
 Latest release: **v0.9.96**. All artifacts are built automatically by GitHub Actions on three platforms (Windows / macOS / Linux) and available on the [Releases](https://github.com/ErgeAIA/ErgeHash/releases) page.
 
-| Platform | Type                                          | File                                       |
-| -------- | --------------------------------------------- | ------------------------------------------ |
-| Windows  | NSIS installer (recommended for individuals)  | `ErgeHash_0.9.96_x64-setup.exe`            |
-| Windows  | MSI installer (recommended for enterprises)   | `ErgeHash_0.9.96_x64_en-US.msi`            |
-| macOS    | DMG (Apple Silicon)                           | `ErgeHash_0.9.96_aarch64.dmg`              |
-| macOS    | `.app` archive                                | `ErgeHash_aarch64.app.tar.gz`              |
-| Linux    | RPM (Fedora / openSUSE etc.)                  | `ErgeHash-0.9.96-1.x86_64.rpm`             |
-| Linux    | DEB (Debian / Ubuntu etc.)                    | `ErgeHash_0.9.96_amd64.deb`                |
-| Linux    | AppImage (universal)                          | `ErgeHash_0.9.96_amd64.AppImage`           |
-| Source   | Source code (zip / tar.gz)                    | see the bottom of the Release page         |
+| Platform | Type                                          | File                                                                                                                  |
+| -------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Windows  | NSIS installer (recommended for individuals)  | [ErgeHash_0.9.96_x64-setup.exe](https://github.com/ErgeAIA/ErgeHash/releases/download/v0.9.96/ErgeHash_0.9.96_x64-setup.exe) |
+| Windows  | MSI installer (recommended for enterprises)   | [ErgeHash_0.9.96_x64_en-US.msi](https://github.com/ErgeAIA/ErgeHash/releases/download/v0.9.96/ErgeHash_0.9.96_x64_en-US.msi) |
+| macOS    | DMG (Apple Silicon)                           | [ErgeHash_0.9.96_aarch64.dmg](https://github.com/ErgeAIA/ErgeHash/releases/download/v0.9.96/ErgeHash_0.9.96_aarch64.dmg) |
+| macOS    | `.app` archive                                | [ErgeHash_aarch64.app.tar.gz](https://github.com/ErgeAIA/ErgeHash/releases/download/v0.9.96/ErgeHash_aarch64.app.tar.gz) |
+| Linux    | RPM (Fedora / openSUSE etc.)                  | [ErgeHash-0.9.96-1.x86_64.rpm](https://github.com/ErgeAIA/ErgeHash/releases/download/v0.9.96/ErgeHash-0.9.96-1.x86_64.rpm) |
+| Linux    | DEB (Debian / Ubuntu etc.)                    | [ErgeHash_0.9.96_amd64.deb](https://github.com/ErgeAIA/ErgeHash/releases/download/v0.9.96/ErgeHash_0.9.96_amd64.deb) |
+| Linux    | AppImage (universal)                          | [ErgeHash_0.9.96_amd64.AppImage](https://github.com/ErgeAIA/ErgeHash/releases/download/v0.9.96/ErgeHash_0.9.96_amd64.AppImage) |
+| Source   | Source code (zip / tar.gz)                    | [v0.9.96.zip](https://github.com/ErgeAIA/ErgeHash/archive/refs/tags/v0.9.96.zip) · [v0.9.96.tar.gz](https://github.com/ErgeAIA/ErgeHash/archive/refs/tags/v0.9.96.tar.gz) |
 
 ### macOS notes
 
