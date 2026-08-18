@@ -13,7 +13,7 @@
 [![Rust](https://img.shields.io/badge/Rust-stable-DEA584?style=for-the-badge&logo=rust&logoColor=black)](https://www.rust-lang.org)
 [![pnpm](https://img.shields.io/badge/pnpm-8+-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io)
 
-[English README](./README.en.md)
+[English README](./README.en.md) · [CHANGELOG](./CHANGELOG.md)
 
 ![ErgeHash](./public/ergehash-logo-horizontal.svg)
 
@@ -45,6 +45,60 @@
 - 当前 CI 仅在 **Apple Silicon（aarch64）** 上构建，Intel Mac 暂未提供原生包。
 - 由于未启用 macOS 代码签名（免费软件策略），首次打开请 **右键 → 打开** 以绕过 Gatekeeper 提示。后续若配置 Apple Developer ID 将进行签名与公证。
 
+## 技术栈
+
+| 层级     | 技术                                    | 版本约束              |
+| -------- | --------------------------------------- | --------------------- |
+| 桌面框架 | Tauri 2                                 | = 2.11.0              |
+| 前端     | React 19 + TypeScript                   | React ^19, TS ~5.8    |
+| 构建     | Vite 7                                  | ^7.0                  |
+| 状态管理 | Zustand 5                               | ^5.0                  |
+| 样式     | Tailwind CSS 4 + CSS 变量主题           | ^4.3                  |
+| 国际化   | i18next + react-i18next                 | i18next ^26           |
+| 图标     | lucide-react                            | ^1.16                 |
+| 哈希算法 | sha2 / md-5 / sha1 / crc32fast (Rust)   | 0.10 / 0.10 / 0.10 / 1 |
+| 文件遍历 | walkdir + csv (Rust)                    | 2 / 1                 |
+| 后端语言 | Rust                                    | edition 2021          |
+| 包管理器 | pnpm                                    | >= 8                  |
+
+## 使用指南
+
+### 基本流程
+
+1. **添加文件**：点击「打开文件」/「打开文件夹」，或直接把文件拖入窗口。
+2. **选择算法**：在左侧算法组勾选需要计算的哈希算法（可多选）。
+3. **查看结果**：右侧列表展示每个文件的算法、哈希值、耗时；点击哈希值可复制。
+4. **导入校验文件**：点击「导入验证文件」选择 `.md5` / `.sfv` 等，程序自动按文件名比对并标记通过 / 失败。
+5. **导出结果**：在结果区将当前计算结果导出为 CSV。
+
+### 界面元素
+
+- **标题栏**：菜单、折叠侧栏、主题切换、语言切换、窗口控制。
+- **导航栏（NavRail）**：LOGO、算法组、文件操作（打开 / 导入校验）、设置、关于、B 站入口。
+- **文件列表区**：预期哈希输入框、计算结果树、状态栏。
+
+### 快捷键
+
+> 快捷键全局生效；macOS 下 `Ctrl` 显示为 `⌘`、`Alt` 显示为 `⌥`、`Shift` 显示为 `⇧`。
+
+| 功能                  | 快捷键                     |
+| --------------------- | -------------------------- |
+| 打开文件              | `Ctrl + O`                 |
+| 打开文件夹            | `Ctrl + Shift + O`         |
+| 导入校验文件          | `Ctrl + I`                 |
+| 开始校验              | `Ctrl + Enter`             |
+| 复制选中哈希          | `Ctrl + Alt + C`           |
+| 导出结果（CSV）       | `Ctrl + E`                 |
+| 查看历史              | `Ctrl + H`                 |
+| 清空历史              | `Ctrl + Alt + H`           |
+| 清空文件列表          | `Ctrl + Shift + Backspace` |
+| 切换主题              | `Ctrl + Alt + T`           |
+| 切换语言              | `Ctrl + Alt + L`           |
+| 折叠 / 展开侧栏       | `Ctrl + B`                 |
+| 打开设置              | `Ctrl + ,`                 |
+| 快速指南              | `Ctrl + /`                 |
+| 退出                  | `Ctrl + Q`                 |
+
 ## 从源码构建
 
 ### 前置条件
@@ -72,76 +126,6 @@ pnpm tauri build
 # 类型检查 + 前端构建
 pnpm run build
 ```
-
-## 技术栈
-
-| 层级     | 技术                                    | 版本约束              |
-| -------- | --------------------------------------- | --------------------- |
-| 桌面框架 | Tauri 2                                 | = 2.11.0              |
-| 前端     | React 19 + TypeScript                   | React ^19, TS ~5.8    |
-| 构建     | Vite 7                                  | ^7.0                  |
-| 状态管理 | Zustand 5                               | ^5.0                  |
-| 样式     | Tailwind CSS 4 + CSS 变量主题           | ^4.3                  |
-| 国际化   | i18next + react-i18next                 | i18next ^26           |
-| 图标     | lucide-react                            | ^1.16                 |
-| 哈希算法 | sha2 / md-5 / sha1 / crc32fast (Rust)   | 0.10 / 0.10 / 0.10 / 1 |
-| 文件遍历 | walkdir + csv (Rust)                    | 2 / 1                 |
-| 后端语言 | Rust                                    | edition 2021          |
-| 包管理器 | pnpm                                    | >= 8                  |
-
-## 关键架构决策
-
-| 决策                          | 原因                                               |
-| ----------------------------- | -------------------------------------------------- |
-| 选择 Tauri 2 而非 Electron    | 更小的安装包、原生性能、Rust 安全性                |
-| 前后端严格分离                | Rust 处理所有文件 IO 与计算，前端专注 UI           |
-| 多算法单趟读取                | 一次读盘算出所有选中算法，大文件场景性能提升显著   |
-| CSS 变量主题系统              | 主题切换零重渲染、支持动态明/暗主题                |
-| 自托管 woff2 子集字体         | 规避中文字体体积，CJK 由系统字体回退               |
-
-## 使用指南
-
-### 基本流程
-
-1. **添加文件**：点击「打开文件」/「打开文件夹」，或直接把文件拖入窗口。
-2. **选择算法**：在左侧算法组勾选需要计算的哈希算法（可多选）。
-3. **查看结果**：右侧列表展示每个文件的算法、哈希值、耗时；点击哈希值可复制。
-4. **导入校验文件**：点击「导入验证文件」选择 `.md5` / `.sfv` 等，程序自动按文件名比对并标记通过 / 失败。
-5. **导出结果**：在结果区将当前计算结果导出为 CSV。
-
-### 界面元素
-
-- **标题栏**：菜单、折叠侧栏、主题切换、语言切换、窗口控制。
-- **导航栏（NavRail）**：LOGO、算法组、文件操作（打开 / 导入校验）、设置、关于、B 站入口。
-- **文件列表区**：预期哈希输入框、计算结果树、状态栏。
-
-### 快捷键
-
-| 功能         | 快捷键      |
-| ------------ | ----------- |
-| 打开文件     | `Ctrl + O`  |
-| 复制选中哈希 | `Ctrl + C`  |
-| 切换主题     | 标题栏按钮  |
-| 切换语言     | 标题栏按钮  |
-
-## 文档
-
-| 文档                              | 说明               |
-| --------------------------------- | ------------------ |
-| [CHANGELOG.md](./CHANGELOG.md)    | 中文版本更新日志   |
-| [CHANGELOG.en.md](./CHANGELOG.en.md) | 英文版本更新日志 |
-| [docs/design-system.md](./docs/design-system.md) | 设计系统规范     |
-| [AGENTS.md](./AGENTS.md)          | 开发规范与决策记录 |
-
-## 路线图
-
-- [x] Windows / macOS（Apple Silicon）双平台自动构建
-- [ ] Intel Mac 原生构建（交叉编译）
-
-> 说明：当前 macOS 构建产物仅限 Apple Silicon（aarch64），且未做代码签名与公证。Intel Mac 暂无法运行；在未签名的情况下，macOS 用户需「右键 → 打开」以绕过 Gatekeeper 的安全提示。正式分发需配置 Apple Developer ID 并完成公证。
-- [ ] macOS 代码签名与公证
-- [ ] Linux 构建评估（待定）：代码层无平台阻断，需 CI 加 `ubuntu-latest` 与 webkit2gtk 等系统依赖
-- [ ] 更多校验文件格式支持（如 `.sha512`、`.asc`  detached 签名校验）
 
 ## 作者信息
 
