@@ -1,0 +1,66 @@
+name: Release
+
+# 触发：
+#   1) 手动：仓库 Actions 页 → Release → Run workflow
+#   2) 推 tag：git tag v0.9.96 && git push origin v0.9.96
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+# 创建 GitHub Release 需要写权限
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest   # 产出 .exe (NSIS 安装包) + .msi
+          - platform: macos-latest     # 产出 .app + .dmg（当前为 aarch64 / Apple Silicon）
+          - platform: ubuntu-latest    # 产出 .deb + .AppImage（Linux）
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # Linux 构建需要 WebKitGTK 等系统库
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            patchelf
+
+      - name: Build & upload release (Tauri)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # 版本取自 src-tauri/tauri.conf.json 的 "version"
+          tagName: v__VERSION__
+          releaseName: ErgeHash v__VERSION__
+          releaseBody: '下载下方对应平台的安装包。Windows 为 exe 安装程序；macOS 为 dmg（Apple Silicon）；Linux 为 deb 或 AppImage。'
+          releaseDraft: true   # 先建草稿，你确认无误后在 GitHub Releases 页面发布
+          prerelease: false
+          release: true

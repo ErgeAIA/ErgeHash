@@ -1,8 +1,8 @@
 [package]
 name = "erge-hash"
-version = "0.3.0"
+version = "0.9.96"
 description = "二哥的文件哈希检验工具"
-authors = ["B站🔥宝藏二哥AIA"]
+authors = ["B站🔥宝藏二哥AIA <ergeaia@agent.qq.com>"]
 edition = "2021"
 
 [package.metadata.tauri]
@@ -42,7 +42,6 @@ sha1 = "0.10"
 crc32fast = "1"
 chrono = { version = "0.4", features = ["serde"] }
 walkdir = "2"
-dirs = "6"
 csv = "1"
 tokio = { version = "1", features = ["sync", "parking_lot"] }
 thiserror = "2"

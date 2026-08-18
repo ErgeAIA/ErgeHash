@@ -972,12 +972,11 @@ dependencies = [
 
 [[package]]
 name = "erge-hash"
-version = "0.3.0"
+version = "0.9.96"
 dependencies = [
  "chrono",
  "crc32fast",
  "csv",
- "dirs",
  "md-5",
  "serde",
  "serde_json",
