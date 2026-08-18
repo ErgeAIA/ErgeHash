@@ -137,16 +137,16 @@ pnpm run build
 </td>
 <td>
 
-**About me**: Independent developer / Full-stack engineer / Product manager / Vibe Coding practitioner
+**About me**: Independent developer / Full-stack engineer / ComfyUI enthusiast / Vibe Coding practitioner
 
-**Tech stack**: Tauri · Rust · React · Python · Claude · Cursor · Trae
+**Tech stack**: Tauri · Rust · React · Python · Claude · ZCode · Workbuddy
 
 **Philosophy**: Share without barriers, tricks, or reservations
 
 **Links**:
-- 📺 [Bilibili](https://space.bilibili.com/67221461) · [Zhihu](https://www.zhihu.com/people/meli55a/posts) · WeChat
+- 📺 [Bilibili](https://space.bilibili.com/67221461) · [Zhihu](https://www.zhihu.com/people/meli55a/posts) · WeChat Official Account (ErgeAIA)
 - 🐙 [GitHub](https://github.com/ErgeAIA) · [Gitee](https://gitee.com/ErgeAIA)
-- 📦 Featured projects: [ErgeAIA-skills](https://github.com/ErgeAIA/ErgeAIA-skills) · [ErgeMD](https://github.com/ErgeAIA/ErgeMD) · [catapult-cn](https://github.com/ErgeAIA/catapult-cn)
+- 📦 Featured projects: [ErgeMD](https://github.com/ErgeAIA/ErgeMD) · [ErgeHash](https://github.com/ErgeAIA/ErgeHash) · [catapult-cn](https://github.com/ErgeAIA/catapult-cn)
 
 </td>
 </tr>

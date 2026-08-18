@@ -143,16 +143,16 @@ pnpm run build
 </td>
 <td>
 
-**关于我**：独立开发者 / 全栈工程师 / 产品经理 / Vibe Coding 实践者
+**关于我**：独立开发者 / 全栈工程师 / ComfyUI 爱好者 / Vibe Coding 实践者
 
-**技术栈**：Tauri · Rust · React · Python · Claude · Cursor · Trae
+**技术栈**：Tauri · Rust · React · Python · Claude · ZCode · Workbuddy
 
 **理念**：三无分享 — 无门槛、无套路、无保留
 
 **链接**：
-- 📺 [B 站](https://space.bilibili.com/67221461) · [知乎](https://www.zhihu.com/people/meli55a/posts) · 微信
+- 📺 [B 站](https://space.bilibili.com/67221461) · [知乎](https://www.zhihu.com/people/meli55a/posts) · 微信公众号(ErgeAIA)
 - 🐙 [GitHub](https://github.com/ErgeAIA) · [Gitee](https://gitee.com/ErgeAIA)
-- 📦 精选项目：[ErgeAIA-skills](https://github.com/ErgeAIA/ErgeAIA-skills) · [ErgeMD](https://github.com/ErgeAIA/ErgeMD) · [catapult-cn](https://github.com/ErgeAIA/catapult-cn)
+- 📦 精选项目：[ErgeMD](https://github.com/ErgeAIA/ErgeMD) · [ErgeHash](https://github.com/ErgeAIA/ErgeHash) · [catapult-cn](https://github.com/ErgeAIA/catapult-cn)
 
 </td>
 </tr>
