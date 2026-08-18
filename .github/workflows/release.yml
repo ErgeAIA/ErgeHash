@@ -31,6 +31,7 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 11
+          node-version: 24
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -65,4 +66,3 @@ jobs:
           releaseBody: '下载下方对应平台的安装包。Windows 为 exe 安装程序；macOS 为 dmg（Apple Silicon）；Linux 为 deb 或 AppImage。'
           releaseDraft: true   # 先建草稿，你确认无误后在 GitHub Releases 页面发布
           prerelease: false
-          release: true
