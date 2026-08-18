@@ -64,5 +64,5 @@ jobs:
           tagName: v__VERSION__
           releaseName: ErgeHash v__VERSION__
           releaseBody: '下载下方对应平台的安装包。Windows 为 exe 安装程序；macOS 为 dmg（Apple Silicon）；Linux 为 deb 或 AppImage。'
-          releaseDraft: true   # 先建草稿，你确认无误后在 GitHub Releases 页面发布
+          releaseDraft: false   # 推 tag 即自动发布（与 ErgeMD 一致，不再需要手动 Publish）
           prerelease: false
