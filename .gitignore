@@ -60,6 +60,10 @@ htmlcov/
 src-tauri/target
 src-tauri/*.log
 *.pdb
+# 重新包含 Tauri 图标（被 ~/.gitignore_global 的 `Icon?` 模式误伤，
+# Windows 平台下 git 会把 `Icon?` 误匹配到 src-tauri/icons/ 下的所有 PNG/ICO/ICNS）。
+!src-tauri/icons/
+!src-tauri/icons/**
 
 # User config (keep structure, ignore content)
 .ergehash/config.json
